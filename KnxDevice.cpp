@@ -144,11 +144,11 @@ void KnxDevice::task(void) {
     // STEP 3 : Send KNX messages following TX actions
     if (_state == IDLE) {
         if (_txActionList.Pop(action)) { // Data to be transmitted
-            Serial.println("Something to do");
+//            Serial.println("Something to do");
             switch (action.command) {
                 
                 case EIB_READ_REQUEST: // a read operation of a Com Object on the EIB network is required
-                    Serial.println("EIB_READ_REQUEST");
+//                    Serial.println("EIB_READ_REQUEST");
                     //_objectsList[action.index].CopyToTelegram(_txTelegram, KNX_COMMAND_VALUE_READ);
                     _comObjectsList[action.index].CopyAttributes(_txTelegram);
                     _txTelegram.ClearLongPayload();
@@ -160,7 +160,7 @@ void KnxDevice::task(void) {
                     break;
 
                 case EIB_RESPONSE_REQUEST: // a response operation of a Com Object on the EIB network is required
-                    Serial.println("EIB_RESPONSE_REQUEST");
+//                    Serial.println("EIB_RESPONSE_REQUEST");
                     _comObjectsList[action.index].CopyAttributes(_txTelegram);
                     _comObjectsList[action.index].CopyValue(_txTelegram);
                     _txTelegram.SetCommand(KNX_COMMAND_VALUE_RESPONSE);
@@ -171,24 +171,24 @@ void KnxDevice::task(void) {
 
                 case EIB_WRITE_REQUEST: // a write operation of a Com Object on the EIB network is required
                     // update the com obj value
-                    Serial.println("EIB_WRITE_REQUEST");
+//                    Serial.println("EIB_WRITE_REQUEST");
                     if ((_comObjectsList[action.index].GetLength()) <= 2)
                         _comObjectsList[action.index].UpdateValue(action.byteValue);
                     else {
                         _comObjectsList[action.index].UpdateValue(action.valuePtr);
                         free(action.valuePtr);
-                        Serial.println("EIB_WRITE_REQUEST2");
+//                        Serial.println("EIB_WRITE_REQUEST2");
                     }
                     // transmit the value through EIB network only if the Com Object has transmit attribute
                     if ((_comObjectsList[action.index].GetIndicator()) & KNX_COM_OBJ_T_INDICATOR) {
-                        Serial.println("EIB_WRITE_REQUEST3");
+//                        Serial.println("EIB_WRITE_REQUEST3");
                         _comObjectsList[action.index].CopyAttributes(_txTelegram);
                         _comObjectsList[action.index].CopyValue(_txTelegram);
                         _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
                         _txTelegram.UpdateChecksum();
-                        Serial.println("EIB_WRITE_REQUEST4");
+//                        Serial.println("EIB_WRITE_REQUEST4");
                         _tpuart->SendTelegram(_txTelegram);
-                        Serial.println("EIB_WRITE_REQUEST5");
+//                        Serial.println("EIB_WRITE_REQUEST5");
                         _state = TX_ONGOING;
                     }
                     break;
@@ -298,20 +298,20 @@ e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     type_tx_action action;
     byte *dptValue;
     byte length = _comObjectsList[objectIndex].GetLength();
-    Serial.println("Writing to actionlist0");
-    Serial.print("len: ");
-    Serial.println(length);
+//    Serial.println("Writing to actionlist0");
+//    Serial.print("len: ");
+//    Serial.println(length);
     if (length > 2) // check we are in long object case
     { // add WRITE action in the TX action queue
-        Serial.println("Writing to actionlist1");
+//        Serial.println("Writing to actionlist1");
         action.command = EIB_WRITE_REQUEST;
         action.index = objectIndex;
         dptValue = (byte *) malloc(length - 1); // allocate the memory for long value
         for (byte i = 0; i < length - 1; i++) dptValue[i] = valuePtr[i]; // copy value
-        Serial.println("Writing to actionlist2");
+//        Serial.println("Writing to actionlist2");
         action.valuePtr = (byte *) dptValue;
         _txActionList.Append(action);
-        Serial.println("Writing to actionlist3");
+//        Serial.println("Writing to actionlist3");
         return KNX_DEVICE_OK;
     }
     return KNX_DEVICE_ERROR;
@@ -397,10 +397,10 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                     _comObjectsList[targetedComObjIndex].UpdateValue(*(Knx._rxTelegram));
                     //We notify the upper layer of the update
                     if (Tools.isActive()) {
-                        Serial.println("Routing event to tools");
+//                        Serial.println("Routing event to tools");
                         knxToolsEvents(targetedComObjIndex);
                     } else {
-                        Serial.println("No event routing");
+//                        Serial.println("No event routing");
                         knxEvents(targetedComObjIndex);
                     }
                 }

@@ -33,7 +33,7 @@
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 // DEBUG :
-#define KNXDEVICE_DEBUG_INFO   // Uncomment to activate info traces
+//#define KNXDEVICE_DEBUG_INFO   // Uncomment to activate info traces
 
 // Values returned by the KnxDevice member functions :
 enum e_KnxDeviceStatus {

@@ -37,21 +37,31 @@ void knxEvents(byte index) {
 
 void setup() {
     
+//    Serial.begin(9600);
+//    while (!Serial) {
+//        ; // wait for serial port to connect. Needed for Leonardo only
+//    }  
+//    Serial.println("Hello Computer");
+////    Serial.println("Hello Computer1");
+    
+    
     pinMode(greenPin, OUTPUT);
     digitalWrite(greenPin, LOW);
 
+    // <Device ManufacturerId="57005" DeviceId="190" Revision="175">
+    
     Tools.init(/* TPUART serial port */ Serial1, 
             /* Prog Button Pin */ 3, 
             /* Prog LED Pin */ LED_BUILTIN, 
-            /* manufacturer */ 0x0000, 
-            /* device */ 0x00, 
-            /* revision */0x00);
+            /* manufacturer */ 57005, 
+            /* device */ 190, 
+            /* revision */175);
     
     // get parameter value for param #1
     byte paramValue[Tools.getParamSize(1)];
     Tools.getParamValue(1, paramValue);
     // --> value is now available in 'paramValue'
-    
+//    Serial.println("Hello Computer1b");
 }
 
 void loop() {

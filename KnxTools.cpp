@@ -26,13 +26,15 @@
 #include "KnxTools.h"
 #include <avr/wdt.h>
 
-//#define DEBUG
+#define DEBUG
+
+#define WRITEMEM
 
 #if defined(DEBUG)
 #include <SoftwareSerial.h>
 SoftwareSerial debugSerial(10, 11); // RX, TX
 char consolebuffer[80];
-#define CONSOLEDEBUG(...)  debugSerial.printf(__VA_ARGS__);
+#define CONSOLEDEBUG(...)  debugSerial.print(__VA_ARGS__);
 #define CONSOLEDEBUGLN(...)  debugSerial.println(__VA_ARGS__);
 #else
 #define CONSOLEDEBUG(...) 
@@ -76,10 +78,10 @@ KnxTools& Tools = KnxTools::Tools;
  * @param index
  */
 void knxToolsEvents(byte index) {
-#ifdef DEBUGSERIAL    
+
     CONSOLEDEBUG("knxToolsEvents index=");
     CONSOLEDEBUG(index);
-#endif    
+
     // if it's not a internal com object, route back to knxEvents()
     if (!Tools.internalComObject(index)) {
         knxEvents(index);
@@ -94,7 +96,6 @@ KnxTools::KnxTools() {
     debugSerial.begin(9600);
 #endif    
     CONSOLEDEBUGLN("Setup KnxTools");
-
 }
 
 /**
@@ -109,6 +110,7 @@ KnxTools::KnxTools() {
  * 
  */
 void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, word manufacturerID, byte deviceID, byte revisionID) {
+//    Serial.println("Hello Computer2");
     _initialized = true;
 
     _manufacturerID = manufacturerID;
@@ -172,11 +174,11 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
             Knx.setComObjectAddress(i, comObjAddr);
             CONSOLEDEBUG("ComObj #");
             CONSOLEDEBUG(i);
-            CONSOLEDEBUG("hi: ");
-            CONSOLEDEBUG(hi);
-            CONSOLEDEBUG("lo: ");
-            CONSOLEDEBUG(lo);
-            CONSOLEDEBUG("ga: ");
+            CONSOLEDEBUG(" HI: 0x");
+            CONSOLEDEBUG(hi,HEX);
+            CONSOLEDEBUG(" LO: 0x");
+            CONSOLEDEBUG(lo,HEX );
+            CONSOLEDEBUG(" GA: 0x");
             CONSOLEDEBUG(comObjAddr, HEX);
             CONSOLEDEBUGLN("");
         }
@@ -262,10 +264,11 @@ KnxComObject KnxTools::createProgComObject() {
 }
 
 /**
- * Reboot device via WatchDogTimer within 500ms
+ * Reboot device via WatchDogTimer within 1s
  */
 void KnxTools::reboot() {
-    wdt_enable( WDTO_500MS ); 
+//    wdt_enable( WDTO_500MS ); 
+    wdt_enable( WDTO_1S ); 
     while(1) {}
 }
 
@@ -434,6 +437,7 @@ void KnxTools::handleMsgReadProgrammingMode(byte msg[]) {
 
 void KnxTools::handleMsgWriteIndividualAddress(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgWriteIndividualAddress");
+#if defined(WRITEMEM)    
     EEPROM.update(EEPROM_INDIVIDUALADDRESS_HI, msg[2]);
     delay(10); // required?
 
@@ -443,6 +447,7 @@ void KnxTools::handleMsgWriteIndividualAddress(byte msg[]) {
     _deviceFlags |= 0x01; // add bit for "not using factory setting"
     EEPROM.update(EEPROM_DEVICE_FLAGS, _deviceFlags);
     delay(10); // required?
+#endif    
     _individualAddress = (msg[2] << 8) + (msg[3] << 0);
     sendAck();   
 }
@@ -473,12 +478,13 @@ void KnxTools::handleMsgWriteParameter(byte msg[]) {
     byte index = msg[0];
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
-
+#if defined(WRITEMEM)    
     // write byte by byte
     for (byte i = 0; i < paramLen; i++) {
         EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
         delay(10); // really required?
     }
+#endif
     sendAck();
 }
 
@@ -524,8 +530,9 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
         
         word ga = (gaHi << 8) + (gaLo << 0);
         Knx.setComObjectAddress(comObjId, ga);
-        
+#if defined(WRITEMEM)            
         // write to eeprom?!
+#endif
     }
     sendAck();
 }
