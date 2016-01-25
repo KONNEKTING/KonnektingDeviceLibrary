@@ -284,13 +284,14 @@ void KnxTools::reboot() {
 
 bool KnxTools::internalComObject(byte index) {
 
-    CONSOLEDEBUGLN("");
+    CONSOLEDEBUGLN("-----------------------------");
     CONSOLEDEBUG("internalComObject index=");
     CONSOLEDEBUGLN(index);
     bool consumed = false;
     switch (index) {
         case 0: // object index 0 has been updated
 
+            
             CONSOLEDEBUGLN("About to read 14 bytes");
             byte buffer[14];
             Knx.read(0, buffer);
@@ -370,7 +371,10 @@ bool KnxTools::internalComObject(byte index) {
 }
 
 void KnxTools::sendAck(byte errorcode, byte indexinformation){
-    CONSOLEDEBUGLN("sendNAck");
+    CONSOLEDEBUG("sendAck errorcode=");
+    CONSOLEDEBUG(errorcode, HEX);
+    CONSOLEDEBUG("indexinformation=");
+    CONSOLEDEBUGLN(indexinformation, HEX);
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ACK;
@@ -405,10 +409,18 @@ void KnxTools::handleMsgReadDeviceInfo(byte msg[]) {
 
 void KnxTools::handleMsgRestart(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgRestart");
-    sendAck(0x00, 0x00);
     
-    // trigger restart
-    reboot();
+    byte hi = (_individualAddress >> 8) & 0xff;
+    byte lo = (_individualAddress >> 0) & 0xff;
+    
+    if (hi==msg[2] && lo==msg[3]) {
+        CONSOLEDEBUGLN("matching IA");    
+        // trigger restart
+        reboot();
+    } else {
+        CONSOLEDEBUGLN("no matching IA");
+    }
+    
 }
 
 void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
