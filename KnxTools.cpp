@@ -26,6 +26,11 @@
 #include "KnxTools.h"
 #include <avr/wdt.h>
 
+/*
+ * !!!!! IMPORTANT !!!!!
+ * if "#define DEBUG" is set, you must run your KONNEKTING Suite with "-Dde.root1.slicknx.konnekting.debug=true" 
+ * A release-version of your development MUST NOT contain "#define DEBUG" ...
+ */
 #define DEBUG
 
 #define WRITEMEM
@@ -148,7 +153,7 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
     _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 2);
 
     _deviceFlags = EEPROM.read(EEPROM_DEVICE_FLAGS);
-
+    
     CONSOLEDEBUG("_deviceFlags: ");
     CONSOLEDEBUG(_deviceFlags, BIN);
     CONSOLEDEBUGLN("bin");
@@ -213,6 +218,7 @@ int KnxTools::calcParamSkipBytes(byte index) {
 }
 
 byte KnxTools::getParamSize(byte index) {
+    // FIXME check index to prevent out of bounds issues!
     return _paramLenghtList[index];
 }
 
@@ -359,16 +365,19 @@ bool KnxTools::internalComObject(byte index) {
 
 }
 
-void KnxTools::sendAck(){
-    CONSOLEDEBUGLN("sendAck");
+void KnxTools::sendAck(byte errorcode, byte indexinformation){
+    CONSOLEDEBUGLN("sendNAck");
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ACK;
-    for (byte i=2;i<14;i++){
+    response[2] = errorcode;
+    response[3] = indexinformation;
+    for (byte i=4;i<14;i++){
         response[i] = 0;
     }
     Knx.write(0, response);    
 }
+
 
 void KnxTools::handleMsgReadDeviceInfo(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgReadDeviceInfo");
@@ -392,7 +401,7 @@ void KnxTools::handleMsgReadDeviceInfo(byte msg[]) {
 
 void KnxTools::handleMsgRestart(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgRestart");
-    sendAck();
+    sendAck(0x00, 0x00);
     
     // trigger restart
     reboot();
@@ -410,7 +419,7 @@ void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
     } else {
         CONSOLEDEBUGLN("no match");
     }
-    sendAck();
+    sendAck(0x00, 0x00);
 }
 
 void KnxTools::handleMsgReadProgrammingMode(byte msg[]) {
@@ -449,7 +458,7 @@ void KnxTools::handleMsgWriteIndividualAddress(byte msg[]) {
     delay(10); // required?
 #endif    
     _individualAddress = (msg[2] << 8) + (msg[3] << 0);
-    sendAck();   
+    sendAck(0x00, 0x00);
 }
 
 void KnxTools::handleMsgReadIndividualAddress(byte msg[]) {
@@ -475,6 +484,8 @@ void KnxTools::handleMsgReadIndividualAddress(byte msg[]) {
 void KnxTools::handleMsgWriteParameter(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgWriteParameter");
 
+    // FIXME check param index --> NACK
+    
     byte index = msg[0];
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
@@ -485,7 +496,7 @@ void KnxTools::handleMsgWriteParameter(byte msg[]) {
         delay(10); // really required?
     }
 #endif
-    sendAck();
+    sendAck(0x00, 0x00);
 }
 
 void KnxTools::handleMsgReadParameter(byte msg[]) {
@@ -534,7 +545,7 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
         // write to eeprom?!
 #endif
     }
-    sendAck();
+    sendAck(0x00, 0x00);
 }
 
 void KnxTools::handleMsgReadComObject(byte msg[]) {

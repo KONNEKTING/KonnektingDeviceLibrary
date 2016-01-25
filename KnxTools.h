@@ -100,8 +100,8 @@ private:
 
     void reboot();
 
-    // prog methods
-    void sendAck();
+    // prog methods    
+    void sendAck(byte errorcode, byte indexinformation);
     void handleMsgReadDeviceInfo(byte* msg);
     void handleMsgRestart(byte* msg);
     void handleMsgWriteProgrammingMode(byte* msg);
