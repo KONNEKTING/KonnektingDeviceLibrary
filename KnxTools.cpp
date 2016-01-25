@@ -1,24 +1,25 @@
-//    This file is part of Arduino Knx Bus Device library.
-
-//    Copyright (C) 2015 Alexander Christian <info@root1.de>
-
-//    The Arduino Knx Bus Device library is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/*
+ *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights reserved.
+ *    This file is part of KONNEKTING Knx Device Library.
+ * 
+ *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*
  * Knx Programming via GroupWrite-telegram
  * 
- * @author Alexander Christian <info@root1.de>
+ * @author Alexander Christian <info(at)root1.de>
  * @since 2015-11-06
  * @license GPLv3
  */

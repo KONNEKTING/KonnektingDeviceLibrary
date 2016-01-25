@@ -1,6 +1,12 @@
 #include <KnxDevice.h>
 
+#ifdef ARDUINO_ARCH_ESP8266
+// fake LED-BUILTIN for ESP8266
+#define LED_BUILTIN 16
+#endif
+
 int greenPin = LED_BUILTIN; // onboard LED
+
 
 // Definition of the Communication Objects attached to the device
 KnxComObject KnxDevice::_comObjectsList[] = {
