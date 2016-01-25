@@ -379,6 +379,9 @@ static word lastByteRxTimeMicrosec;
               //sent the correct ACK service now
               // the ACK info must be sent latest 1,7 ms after receiving the address type octet of an addressed frame
               _serial.write(TPUART_RX_ACK_SERVICE_ADDRESSED);
+              
+              // dirty workaround fpr sending ACk just before reset?
+//              _serial.flush();
             }
             else
             { // Message NOT addressed to us
@@ -386,6 +389,9 @@ static word lastByteRxTimeMicrosec;
               //sent the correct ACK service now
               // the ACK info must be sent latest 1,7 ms after receiving the address type octet of an addressed frame
               _serial.write(TPUART_RX_ACK_SERVICE_NOT_ADDRESSED);
+              
+              // dirty workaround fpr sending ACk just before reset?
+//              _serial.flush();
             }
           } 
           break;
