@@ -37,6 +37,7 @@ extern void knxToolsEvents(byte index);
 
 class KnxTools {
     static byte _paramLenghtList[];
+    static const byte _paramsNb;                // Nb of attached Parameters
 
     // Constructor, Destructor
     KnxTools(); // private constructor (singleton design pattern)
@@ -47,6 +48,7 @@ class KnxTools {
 
 public:
     static KnxTools Tools;
+                                                    // The value shall be provided by the end-user
 
     void init(HardwareSerial& serial, int progButtonPin, int progLedPin, word manufacturerID, byte deviceID, byte revisionID);
 

@@ -16,7 +16,7 @@ byte KnxTools::_paramLenghtList[] = {
     /* Param Index 1 */ 2,
     /* Param Index 2 */ 4,
 };
-
+const byte KnxTools::_paramsNb = sizeof (_paramLenghtList); // do no change this code
 
 bool state = false;
 

@@ -344,7 +344,7 @@ boolean KnxDevice::isActive(void) const {
 // Typically usage is end-user application stored Group Address in EEPROM
 e_KnxDeviceStatus KnxDevice::setComObjectAddress(byte index, word addr) {
     if (_state != INIT) return KNX_DEVICE_ERROR;
-    if (index >= _comObjectsNb) return KNX_DEVICE_ERROR;
+    if (index >= _comObjectsNb) return KNX_DEVICE_INVALID_INDEX;
     _comObjectsList[index].SetAddr(addr);
     return KNX_DEVICE_OK;
 }

@@ -218,12 +218,15 @@ int KnxTools::calcParamSkipBytes(byte index) {
 }
 
 byte KnxTools::getParamSize(byte index) {
-    // FIXME check index to prevent out of bounds issues!
     return _paramLenghtList[index];
 }
 
 void KnxTools::getParamValue(int index, byte value[]) {
 
+    if (index > _paramsNb){
+        return;
+    }
+    
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
 
@@ -484,9 +487,14 @@ void KnxTools::handleMsgReadIndividualAddress(byte msg[]) {
 void KnxTools::handleMsgWriteParameter(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgWriteParameter");
 
-    // FIXME check param index --> NACK
     
     byte index = msg[0];
+    // FIXME check param index --> NACK
+    
+    if (index > _paramsNb) {
+        sendAck(KNX_DEVICE_INVALID_INDEX, index);
+    }
+    
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
 #if defined(WRITEMEM)    
@@ -540,10 +548,14 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
         byte gaLo = msg[tupelOffset + 2];
         
         word ga = (gaHi << 8) + (gaLo << 0);
-        Knx.setComObjectAddress(comObjId, ga);
+        e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
+        if (result != KNX_DEVICE_ERROR) {
+            sendAck(result, comObjId);
+        } else {
 #if defined(WRITEMEM)            
         // write to eeprom?!
 #endif
+        }
     }
     sendAck(0x00, 0x00);
 }
