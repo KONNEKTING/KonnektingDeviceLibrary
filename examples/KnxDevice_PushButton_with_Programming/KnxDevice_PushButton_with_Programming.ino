@@ -1,10 +1,5 @@
 #include <KnxDevice.h>
 
-#ifdef ARDUINO_ARCH_ESP8266
-// fake LED-BUILTIN for ESP8266
-#define LED_BUILTIN 16
-#endif
-
 int greenPin = LED_BUILTIN; // onboard LED
 
 
@@ -43,20 +38,12 @@ void knxEvents(byte index) {
 
 void setup() {
     
-//    Serial.begin(9600);
-//    while (!Serial) {
-//        ; // wait for serial port to connect. Needed for Leonardo only
-//    }  
-//    Serial.println("Hello Computer");
-////    Serial.println("Hello Computer1");
-    
-    
     pinMode(greenPin, OUTPUT);
     digitalWrite(greenPin, LOW);
 
     // <Device ManufacturerId="57005" DeviceId="190" Revision="175">
     
-    Tools.init(/* TPUART serial port */ Serial1, 
+    Tools.init(/* TPUART serial port */ Serial, 
             /* Prog Button Pin */ 3, 
             /* Prog LED Pin */ LED_BUILTIN, 
             /* manufacturer */ 57005, 

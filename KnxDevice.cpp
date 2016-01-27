@@ -44,6 +44,10 @@ KnxDevice& Knx = KnxDevice::Knx;
 // Constructor
 
 KnxDevice::KnxDevice() {
+//#ifdef __AVR_ATmega328P__
+//    // to overcome WDT infinite reboot-loop issue    
+//    _reboot = false;
+//#endif        
     _state = INIT;
     _tpuart = NULL;
     _txActionList = ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE>();
@@ -111,6 +115,13 @@ void KnxDevice::end() {
 // This function call shall be placed in the "loop()" Arduino function
 
 void KnxDevice::task(void) {
+    
+//#ifdef __AVR_ATmega328P__
+//    // to overcome WDT infinite reboot-loop issue    
+//    if (!_reboot) {
+//        wdt_reset();
+//    }   
+//#endif    
     type_tx_action action;
     word nowTimeMillis, nowTimeMicros;
     

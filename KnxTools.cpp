@@ -25,7 +25,7 @@
  */
 
 #include "KnxTools.h"
-#include <avr/wdt.h>
+
 
 /*
  * !!!!! IMPORTANT !!!!!
@@ -277,9 +277,12 @@ KnxComObject KnxTools::createProgComObject() {
  * Reboot device via WatchDogTimer within 1s
  */
 void KnxTools::reboot() {
+//#ifdef __AVR_ATmega328P__
+//    // to overcome WDT infinite reboot-loop issue    
+//    Knx._reboot = true;
+//#endif    
 //    wdt_enable( WDTO_500MS ); 
-    wdt_enable( WDTO_1S ); 
-    while(1) {}
+//    while(1) {}
 }
 
 bool KnxTools::internalComObject(byte index) {

@@ -30,6 +30,7 @@
 #include <Arduino.h> 
 #include <KnxDevice.h>
 #include <EEPROM.h>
+#include <avr/wdt.h>
 
 
 

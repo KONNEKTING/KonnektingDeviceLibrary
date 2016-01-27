@@ -124,7 +124,7 @@ class KnxDevice {
     String *_debugStrPtr;
     static const char _debugInfoText[];
 #endif
-
+    
   // Constructor, Destructor
     KnxDevice();  // private constructor (singleton design pattern)
     ~KnxDevice() {}  // private destructor (singleton design pattern)
@@ -132,7 +132,10 @@ class KnxDevice {
 
   public:
     static KnxDevice Knx; // unique KnxDevice instance (singleton design pattern)
-
+//#ifdef __AVR_ATmega328P__
+//    // to overcome WDT infinite reboot-loop issue    
+//    bool _reboot;
+//#endif  
     int getNumberOfComObjects();
     // Start the KNX Device
     // return KNX_DEVICE_ERROR (255) if begin() failed
@@ -199,6 +202,7 @@ class KnxDevice {
 
     // Inline Debug function (definition later in this file)
     void DebugInfo(const char[]) const;
+    
 };
 
 #if defined(KNXDEVICE_DEBUG_INFO)
