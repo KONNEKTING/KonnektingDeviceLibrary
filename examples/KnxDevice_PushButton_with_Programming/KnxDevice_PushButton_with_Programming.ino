@@ -54,7 +54,6 @@ void setup() {
     byte paramValue[Tools.getParamSize(1)];
     Tools.getParamValue(1, paramValue);
     // --> value is now available in 'paramValue'
-//    Serial.println("Hello Computer1b");
 }
 
 void loop() {

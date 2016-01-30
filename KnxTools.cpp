@@ -102,6 +102,21 @@ KnxTools::KnxTools() {
     debugSerial.begin(9600);
 #endif    
     CONSOLEDEBUGLN("Setup KnxTools");
+    
+#ifdef ESP8266
+    CONSOLEDEBUG("Setup ESP8266 ... ");
+
+    // disable WIFI
+    WiFi.mode(WIFI_OFF);
+    WiFi.forceSleepBegin();
+    delay(100);
+    
+    // enable 1k EEPROM on ESP8266 platform
+    EEPROM.begin(1024);
+    
+    CONSOLEDEBUGLN("*DONE*");
+#endif    
+    
 }
 
 /**
@@ -277,6 +292,11 @@ KnxComObject KnxTools::createProgComObject() {
  * Reboot device via WatchDogTimer within 1s
  */
 void KnxTools::reboot() {
+#ifdef ESP8266 
+    CONSOLEDEBUGLN("ESP8266 restart");
+    ESP.restart()
+#endif
+    
 //#ifdef __AVR_ATmega328P__
 //    // to overcome WDT infinite reboot-loop issue    
 //    Knx._reboot = true;
@@ -435,6 +455,13 @@ void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
     if (msg[2] == ownHI && msg[3] == ownLO) {
         CONSOLEDEBUGLN("match");
         setProgState(msg[4] == 0x01); 
+#ifdef ESP8266
+        if (msg[4] == 0x00) {
+            CONSOLEDEBUGLN("ESP8266: EEPROM.commit()");
+            EEPROM.commit();
+        }
+#endif                
+        
     } else {
         CONSOLEDEBUGLN("no match");
     }
@@ -466,14 +493,17 @@ void KnxTools::handleMsgReadProgrammingMode(byte msg[]) {
 void KnxTools::handleMsgWriteIndividualAddress(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgWriteIndividualAddress");
 #if defined(WRITEMEM)    
-    EEPROM.update(EEPROM_INDIVIDUALADDRESS_HI, msg[2]);
+    //EEPROM.update(EEPROM_INDIVIDUALADDRESS_HI, msg[2]);
+    memoryUpdate(EEPROM_INDIVIDUALADDRESS_HI, msg[2]);
     delay(10); // required?
 
-    EEPROM.update(EEPROM_INDIVIDUALADDRESS_LO, msg[3]);
+    //EEPROM.update(EEPROM_INDIVIDUALADDRESS_LO, msg[3]);
+    memoryUpdate(EEPROM_INDIVIDUALADDRESS_LO, msg[3]);
     delay(10); // required?
 
     _deviceFlags |= 0x01; // add bit for "not using factory setting"
-    EEPROM.update(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    //EEPROM.update(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    memoryUpdate(EEPROM_DEVICE_FLAGS, _deviceFlags);
     delay(10); // required?
 #endif    
     _individualAddress = (msg[2] << 8) + (msg[3] << 0);
@@ -516,7 +546,8 @@ void KnxTools::handleMsgWriteParameter(byte msg[]) {
 #if defined(WRITEMEM)    
     // write byte by byte
     for (byte i = 0; i < paramLen; i++) {
-        EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
+        //EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
+        memoryUpdate(_paramTableStartindex + skipBytes + i, msg[3 + i]);
         delay(10); // really required?
     }
 #endif
@@ -606,3 +637,14 @@ void KnxTools::handleMsgReadComObject(byte msg[]) {
 
 }
 
+void KnxTools::memoryUpdate(int index, byte data){
+#ifdef ESP8266    
+    CONSOLEDEBUGLN("ESP8266: EEPROM.update");
+    byte d = EEPROM.read(index);
+    if (d!=data) {
+        EEPROM.write(index, data);
+    }
+#else
+    EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
+#endif   
+}

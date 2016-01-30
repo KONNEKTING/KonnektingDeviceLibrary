@@ -30,7 +30,14 @@
 #include <Arduino.h> 
 #include <KnxDevice.h>
 #include <EEPROM.h>
+
+#ifndef ESP8266 
 #include <avr/wdt.h>
+#endif
+
+#ifdef ESP8266
+#define LED_BUILTIN 16
+#endif
 
 
 
@@ -116,6 +123,8 @@ private:
     void handleMsgReadParameter(byte* msg);
     void handleMsgWriteComObject(byte* msg);
     void handleMsgReadComObject(byte* msg);
+    
+    void memoryUpdate(int index, byte date);
 
 };
 

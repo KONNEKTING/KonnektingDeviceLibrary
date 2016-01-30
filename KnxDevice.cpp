@@ -248,8 +248,8 @@ template <typename T> e_KnxDeviceStatus KnxDevice::read(byte objectIndex, T& ret
 }
 
 template e_KnxDeviceStatus KnxDevice::read <boolean>(byte objectIndex, boolean& returnedValue);
-template e_KnxDeviceStatus KnxDevice::read <unsigned char>(byte objectIndex, unsigned char& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <char>(byte objectIndex, char& returnedValue);
+template e_KnxDeviceStatus KnxDevice::read <unsigned char>(byte objectIndex, unsigned char& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <unsigned int>(byte objectIndex, unsigned int& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <int>(byte objectIndex, int& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <unsigned long>(byte objectIndex, unsigned long& returnedValue);
