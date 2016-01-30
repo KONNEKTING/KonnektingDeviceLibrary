@@ -68,9 +68,9 @@ enum e_KnxDeviceState {
 
 // Action types
 enum e_KnxDeviceTxActionType {
-  EIB_READ_REQUEST,
-  EIB_WRITE_REQUEST,
-  EIB_RESPONSE_REQUEST
+  KNX_READ_REQUEST,
+  KNX_WRITE_REQUEST,
+  KNX_RESPONSE_REQUEST
 };
 
 struct struct_tx_action{
@@ -162,7 +162,7 @@ class KnxDevice {
 
     // Update com object functions :
     // For all the update functions, the com object value is updated locally
-    // and a telegram is sent on the EIB bus if the object has both COMMUNICATION & TRANSMIT attributes set
+    // and a telegram is sent on the KNX bus if the object has both COMMUNICATION & TRANSMIT attributes set
 
     // Update an usual format com object
     // Supported DPT types are short com object, U16, V16, U32, V32, F16 and F32
@@ -172,7 +172,7 @@ class KnxDevice {
     e_KnxDeviceStatus write(byte objectIndex, byte valuePtr[]);
     
 
-    // Com Object EIB Bus Update request
+    // Com Object KNX Bus Update request
     // Request the local object to be updated with the value from the bus
     // NB : the function is asynchroneous, the update completion is notified by the knxEvents() callback
     void update(byte objectIndex);

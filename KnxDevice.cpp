@@ -128,7 +128,7 @@ void KnxDevice::task(void) {
     // STEP 1 : Initialize Com Objects having Init Read attribute
     if (!_initCompleted) {
         nowTimeMillis = millis();
-        // To avoid EIB bus overloading, we wait for 500 ms between each Init read request
+        // To avoid KNX bus overloading, we wait for 500 ms between each Init read request
         if (TimeDeltaWord(nowTimeMillis, _lastInitTimeMillis) > 500) {
             while ((_initIndex < _comObjectsNb) && (_comObjectsList[_initIndex].GetValidity())) _initIndex++;
 
@@ -140,7 +140,7 @@ void KnxDevice::task(void) {
 #if defined(KNXDEVICE_DEBUG_INFO) || defined(KNXDEVICE_DEBUG_INFO_VERBOSE)
                 _nbOfInits++;
 #endif
-                action.command = EIB_READ_REQUEST;
+                action.command = KNX_READ_REQUEST;
                 action.index = _initIndex;
                 _txActionList.Append(action);
                 _lastInitTimeMillis = millis(); // Update the timer
@@ -148,7 +148,7 @@ void KnxDevice::task(void) {
         }
     }
 
-    // STEP 2 : Get new received EIB messages from the TPUART
+    // STEP 2 : Get new received KNX messages from the TPUART
     // The TPUART RX task is executed every 400 us
     nowTimeMicros = micros();
     if (TimeDeltaWord(nowTimeMicros, _lastRXTimeMicros) > 400) {
@@ -162,8 +162,8 @@ void KnxDevice::task(void) {
 //            Serial.println("Something to do");
             switch (action.command) {
                 
-                case EIB_READ_REQUEST: // a read operation of a Com Object on the EIB network is required
-//                    Serial.println("EIB_READ_REQUEST");
+                case KNX_READ_REQUEST: // a read operation of a Com Object on the KNX network is required
+//                    Serial.println("KNX_READ_REQUEST");
                     //_objectsList[action.index].CopyToTelegram(_txTelegram, KNX_COMMAND_VALUE_READ);
                     _comObjectsList[action.index].CopyAttributes(_txTelegram);
                     _txTelegram.ClearLongPayload();
@@ -174,8 +174,8 @@ void KnxDevice::task(void) {
                     _state = TX_ONGOING;
                     break;
 
-                case EIB_RESPONSE_REQUEST: // a response operation of a Com Object on the EIB network is required
-//                    Serial.println("EIB_RESPONSE_REQUEST");
+                case KNX_RESPONSE_REQUEST: // a response operation of a Com Object on the KNX network is required
+//                    Serial.println("KNX_RESPONSE_REQUEST");
                     _comObjectsList[action.index].CopyAttributes(_txTelegram);
                     _comObjectsList[action.index].CopyValue(_txTelegram);
                     _txTelegram.SetCommand(KNX_COMMAND_VALUE_RESPONSE);
@@ -184,26 +184,26 @@ void KnxDevice::task(void) {
                     _state = TX_ONGOING;
                     break;
 
-                case EIB_WRITE_REQUEST: // a write operation of a Com Object on the EIB network is required
+                case KNX_WRITE_REQUEST: // a write operation of a Com Object on the KNX network is required
                     // update the com obj value
-//                    Serial.println("EIB_WRITE_REQUEST");
+//                    Serial.println("KNX_WRITE_REQUEST");
                     if ((_comObjectsList[action.index].GetLength()) <= 2)
                         _comObjectsList[action.index].UpdateValue(action.byteValue);
                     else {
                         _comObjectsList[action.index].UpdateValue(action.valuePtr);
                         free(action.valuePtr);
-//                        Serial.println("EIB_WRITE_REQUEST2");
+//                        Serial.println("KNX_WRITE_REQUEST2");
                     }
-                    // transmit the value through EIB network only if the Com Object has transmit attribute
+                    // transmit the value through KNX network only if the Com Object has transmit attribute
                     if ((_comObjectsList[action.index].GetIndicator()) & KNX_COM_OBJ_T_INDICATOR) {
-//                        Serial.println("EIB_WRITE_REQUEST3");
+//                        Serial.println("KNX_WRITE_REQUEST3");
                         _comObjectsList[action.index].CopyAttributes(_txTelegram);
                         _comObjectsList[action.index].CopyValue(_txTelegram);
                         _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
                         _txTelegram.UpdateChecksum();
-//                        Serial.println("EIB_WRITE_REQUEST4");
+//                        Serial.println("KNX_WRITE_REQUEST4");
                         _tpuart->SendTelegram(_txTelegram);
-//                        Serial.println("EIB_WRITE_REQUEST5");
+//                        Serial.println("KNX_WRITE_REQUEST5");
                         _state = TX_ONGOING;
                     }
                     break;
@@ -213,7 +213,7 @@ void KnxDevice::task(void) {
         }
     }
 
-    // STEP 4 : LET THE TP-UART TRANSMIT EIB MESSAGES
+    // STEP 4 : LET THE TP-UART TRANSMIT KNX MESSAGES
     // The TPUART TX task is executed every 800 us
     nowTimeMicros = micros();
     if (TimeDeltaWord(nowTimeMicros, _lastTXTimeMicros) > 800) {
@@ -270,7 +270,7 @@ e_KnxDeviceStatus KnxDevice::read(byte objectIndex, byte returnedValue[]) {
 // Update an usual format com object
 // Supported DPT types are short com object, U16, V16, U32, V32, F16 and F32
 // The Com Object value is updated locally
-// And a telegram is sent on the EIB bus if the com object has communication & transmit attributes
+// And a telegram is sent on the KNX bus if the com object has communication & transmit attributes
 
 template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T value) {
     type_tx_action action;
@@ -288,7 +288,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T val
         } else action.valuePtr = destValue;
     }
     // add WRITE action in the TX action queue
-    action.command = EIB_WRITE_REQUEST;
+    action.command = KNX_WRITE_REQUEST;
     action.index = objectIndex;
     _txActionList.Append(action);
     return KNX_DEVICE_OK;
@@ -307,7 +307,7 @@ template e_KnxDeviceStatus KnxDevice::write <double>(byte objectIndex, double va
 
 // Update any type of com object (rough DPT value shall be provided)
 // The Com Object value is updated locally
-// And a telegram is sent on the EIB bus if the com object has communication & transmit attributes
+// And a telegram is sent on the KNX bus if the com object has communication & transmit attributes
 
 e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     type_tx_action action;
@@ -319,7 +319,7 @@ e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     if (length > 2) // check we are in long object case
     { // add WRITE action in the TX action queue
 //        Serial.println("Writing to actionlist1");
-        action.command = EIB_WRITE_REQUEST;
+        action.command = KNX_WRITE_REQUEST;
         action.index = objectIndex;
         dptValue = (byte *) malloc(length - 1); // allocate the memory for long value
         for (byte i = 0; i < length - 1; i++) dptValue[i] = valuePtr[i]; // copy value
@@ -333,13 +333,13 @@ e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
 }
 
 
-// Com Object EIB Bus Update request
+// Com Object KNX Bus Update request
 // Request the local object to be updated with the value from the bus
 // NB : the function is asynchroneous, the update completion is notified by the knxEvents() callback
 
 void KnxDevice::update(byte objectIndex) {
     type_tx_action action;
-    action.command = EIB_READ_REQUEST;
+    action.command = KNX_READ_REQUEST;
     action.index = objectIndex;
     _txActionList.Append(action);
 }
@@ -376,7 +376,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
     byte targetedComObjIndex; // index of the Com Object targeted by the event
 
     // Manage RECEIVED MESSAGES
-    if (event == TPUART_EVENT_RECEIVED_EIB_TELEGRAM) {
+    if (event == TPUART_EVENT_RECEIVED_KNX_TELEGRAM) {
         Knx._state = IDLE;
         targetedComObjIndex = Knx._tpuart->GetTargetedComObjectIndex();
 
@@ -386,7 +386,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                 // READ command coming from the bus
                 // if the Com Object has read attribute, then add RESPONSE action in the TX action list
                 if ((_comObjectsList[targetedComObjIndex].GetIndicator()) & KNX_COM_OBJ_R_INDICATOR) { // The targeted Com Object can indeed be read
-                    action.command = EIB_RESPONSE_REQUEST;
+                    action.command = KNX_RESPONSE_REQUEST;
                     action.index = targetedComObjIndex;
                     Knx._txActionList.Append(action);
                 }
@@ -394,7 +394,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
             case KNX_COMMAND_VALUE_RESPONSE:
                 Knx.DebugInfo("RESP req.\n");
-                // RESPONSE command coming from EIB network, we update the value of the corresponding Com Object.
+                // RESPONSE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has UPDATE attribute
                 if ((_comObjectsList[targetedComObjIndex].GetIndicator()) & KNX_COM_OBJ_U_INDICATOR) {
                     _comObjectsList[targetedComObjIndex].UpdateValue(*(Knx._rxTelegram));
@@ -406,7 +406,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
             case KNX_COMMAND_VALUE_WRITE:
                 Knx.DebugInfo("WRITE req.\n");
-                // WRITE command coming from EIB network, we update the value of the corresponding Com Object.
+                // WRITE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has WRITE attribute
                 if ((_comObjectsList[targetedComObjIndex].GetIndicator()) & KNX_COM_OBJ_W_INDICATOR) {
                     _comObjectsList[targetedComObjIndex].UpdateValue(*(Knx._rxTelegram));

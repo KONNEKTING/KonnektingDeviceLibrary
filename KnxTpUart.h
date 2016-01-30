@@ -67,7 +67,7 @@
 
 // Services from TPUART (TPUART -> hostcontroller) :
 // 3 types of data are transmitted from TPUART to the host :
-// 1) EIB bus data (transparently transmitted). Format = EIB control field byte + rest of the telegram
+// 1) KNX bus data (transparently transmitted). Format = KNX control field byte + rest of the telegram
 // 2) Additional information from the TP-UART. Format = 1 data byte
 // 3) Immediate acknowledge services (BUS MONITOR mode only)
 #define TPUART_RESET_INDICATION               0x03
@@ -75,8 +75,8 @@
 #define TPUART_DATA_CONFIRM_FAILED            0x0B
 #define TPUART_STATE_INDICATION               0x07
 #define TPUART_STATE_INDICATION_MASK          0x07
-#define EIB_CONTROL_FIELD_PATTERN_MASK   B11010011
-#define EIB_CONTROL_FIELD_VALID_PATTERN  B10010000 // Only Standard Frame Format "10" is handled
+#define KNX_CONTROL_FIELD_PATTERN_MASK   B11010011
+#define KNX_CONTROL_FIELD_VALID_PATTERN  B10010000 // Only Standard Frame Format "10" is handled
 
 // Mask for STATE INDICATION service
 #define TPUART_STATE_INDICATION_SLAVE_COLLISION_MASK  0x80
@@ -92,8 +92,8 @@ enum type_KnxTpUartMode { NORMAL,
 // Definition of the TP-UART events sent to the application layer
 enum e_KnxTpUartEvent { 
   TPUART_EVENT_RESET = 0,                    // reset received from the TPUART device
-  TPUART_EVENT_RECEIVED_EIB_TELEGRAM,        // a new addressed EIB Telegram has been received
-  TPUART_EVENT_EIB_TELEGRAM_RECEPTION_ERROR, // a new addressed EIB telegram reception failed
+  TPUART_EVENT_RECEIVED_KNX_TELEGRAM,        // a new addressed KNX Telegram has been received
+  TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR, // a new addressed KNX telegram reception failed
   TPUART_EVENT_STATE_INDICATION              // new TPUART state indication received
  };
 
@@ -107,18 +107,18 @@ enum e_TpUartRxState {
   RX_STOPPED,                               // TPUART reset event received, RX activity is stopped
   RX_INIT,                                  // The RX part is awaiting init execution
   RX_IDLE_WAITING_FOR_CTRL_FIELD,           // Idle, no reception ongoing
-  RX_EIB_TELEGRAM_RECEPTION_STARTED,        // Telegram reception started (address evaluation not done yet)
-  RX_EIB_TELEGRAM_RECEPTION_ADDRESSED,      // Addressed telegram reception ongoing
-  RX_EIB_TELEGRAM_RECEPTION_LENGTH_INVALID, // The telegram being received is too long
-  RX_EIB_TELEGRAM_RECEPTION_NOT_ADDRESSED   // Tegram reception ongoing but not addressed
+  RX_KNX_TELEGRAM_RECEPTION_STARTED,        // Telegram reception started (address evaluation not done yet)
+  RX_KNX_TELEGRAM_RECEPTION_ADDRESSED,      // Addressed telegram reception ongoing
+  RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID, // The telegram being received is too long
+  RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED   // Tegram reception ongoing but not addressed
 };
 
 typedef struct {
   e_TpUartRxState state;        // Current TPUART RX state
   KnxTelegram receivedTelegram; // Where each received telegram is stored (the content is overwritten on each telegram reception)
-                                // A TPUART_EVENT_RECEIVED_EIB_TELEGRAM event notifies each content change
+                                // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
   byte addressedComObjectIndex; // Where the index to the targeted com object is stored (the value is overwritten on each telegram reception)
-                                // A TPUART_EVENT_RECEIVED_EIB_TELEGRAM event notifies each content change
+                                // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
 } type_tpuart_rx;
 
 // --- Definitions for the TRANSMISSION  part ----
@@ -128,7 +128,7 @@ enum e_TpUartTxState {
   TX_STOPPED,                  // TPUART reset event received, TX activity is stopped
   TX_INIT,                     // The TX part is awaiting init execution
   TX_IDLE,                     // Idle, no transmission ongoing
-  TX_TELEGRAM_SENDING_ONGOING, // EIB telegram transmission ongoing
+  TX_TELEGRAM_SENDING_ONGOING, // KNX telegram transmission ongoing
   TX_WAITING_ACK               // Telegram transmitted, waiting for ACK/NACK
 };
 
@@ -208,7 +208,7 @@ static const char _debugErrorText[];
     byte GetStateIndication(void) const;
 
     // Get the reference to the telegram received by the TPUART
-    // NB : every received telegram content change is notified by a "TPUART_EVENT_RECEIVED_EIB_TELEGRAM" event
+    // NB : every received telegram content change is notified by a "TPUART_EVENT_RECEIVED_KNX_TELEGRAM" event
     KnxTelegram& GetReceivedTelegram(void);
 
     // Get the index of the com object targeted by the last received telegram
@@ -244,7 +244,7 @@ static const char _debugErrorText[];
     byte SendTelegram(KnxTelegram& sentTelegram);
 
     // Reception task
-    // This function shall be called periodically in order to allow a correct reception of the EIB bus data
+    // This function shall be called periodically in order to allow a correct reception of the KNX bus data
     // Assuming the TPUART speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
     // is transmitted in 0,58ms.
     // In order not to miss any End Of Packets (i.e. a gap from 2 to 2,5ms), the function shall be called at a max period of 0,5ms.
@@ -252,7 +252,7 @@ static const char _debugErrorText[];
     void RXTask(void);
 
     // Transmission task
-    // This function shall be called periodically in order to allow a correct transmission of the EIB bus data
+    // This function shall be called periodically in order to allow a correct transmission of the KNX bus data
     // Assuming the TP-Uart speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
     // is transmitted in 0,58ms.
     // Sending one byte of a telegram consists in transmitting 2 characters (1,16ms)

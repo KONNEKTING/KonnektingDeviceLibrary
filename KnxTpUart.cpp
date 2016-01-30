@@ -246,7 +246,7 @@ byte KnxTpUart::SendTelegram(KnxTelegram& sentTelegram)
 
 
 // Reception task
-// This function shall be called periodically in order to allow a correct reception of the EIB bus data
+// This function shall be called periodically in order to allow a correct reception of the KNX bus data
 // Assuming the TPUART speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
 // is transmitted in 0,58ms.
 // In order not to miss any End Of Packets (i.e. a gap from 2 to 2,5ms), the function shall be called at a max period of 0,5ms.
@@ -255,13 +255,13 @@ void KnxTpUart::RXTask(void)
 {
 byte incomingByte;
 word nowTime;
-static byte readBytesNb; // Nb of read bytes during an EIB telegram reception
+static byte readBytesNb; // Nb of read bytes during an KNX telegram reception
 static KnxTelegram telegram; // telegram being received
 static byte addressedComObjectIndex; // index of the com object targeted by the received telegram
 static word lastByteRxTimeMicrosec;
 
 // === STEP 1 : Check EOP in case a Telegram is being received ===
-  if (_rx.state >= RX_EIB_TELEGRAM_RECEPTION_STARTED)
+  if (_rx.state >= RX_KNX_TELEGRAM_RECEPTION_STARTED)
   { // a telegram reception is ongoing
     nowTime = (word) micros(); // word cast because a 65ms looping counter is long enough
     if(TimeDeltaWord(nowTime,lastByteRxTimeMicrosec) > 2000 /* 2 ms */ )
@@ -269,25 +269,25 @@ static word lastByteRxTimeMicrosec;
 
       switch (_rx.state)
       {
-        case RX_EIB_TELEGRAM_RECEPTION_STARTED : // we are not supposed to get EOP now, the telegram is incomplete
-        case RX_EIB_TELEGRAM_RECEPTION_LENGTH_INVALID :
-          _evtCallbackFct(TPUART_EVENT_EIB_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
+        case RX_KNX_TELEGRAM_RECEPTION_STARTED : // we are not supposed to get EOP now, the telegram is incomplete
+        case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID :
+          _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
           break;
 
-        case RX_EIB_TELEGRAM_RECEPTION_ADDRESSED :
+        case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED :
           if (telegram.IsChecksumCorrect())
           { // checksum correct, let's update the _rx struct with the received telegram and correct index
         	telegram.Copy(_rx.receivedTelegram);
             _rx.addressedComObjectIndex  = addressedComObjectIndex;
-            _evtCallbackFct(TPUART_EVENT_RECEIVED_EIB_TELEGRAM); // Notify the new received telegram
+            _evtCallbackFct(TPUART_EVENT_RECEIVED_KNX_TELEGRAM); // Notify the new received telegram
           }
           else
           {  // checksum incorrect, notify error
-            _evtCallbackFct(TPUART_EVENT_EIB_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
+            _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
           }
           break;
 
-        // case RX_EIB_TELEGRAM_RECEPTION_NOT_ADDRESSED : break; // nothing to do!
+        // case RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED : break; // nothing to do!
       
         default : break; 
       } // end of switch
@@ -306,10 +306,10 @@ static word lastByteRxTimeMicrosec;
     switch (_rx.state)
     {
       case RX_IDLE_WAITING_FOR_CTRL_FIELD:
-          // CASE OF EIB MESSAGE
-          if ((incomingByte & EIB_CONTROL_FIELD_PATTERN_MASK) == EIB_CONTROL_FIELD_VALID_PATTERN)
+          // CASE OF KNX MESSAGE
+          if ((incomingByte & KNX_CONTROL_FIELD_PATTERN_MASK) == KNX_CONTROL_FIELD_VALID_PATTERN)
           {
-            _rx.state = RX_EIB_TELEGRAM_RECEPTION_STARTED; 
+            _rx.state = RX_KNX_TELEGRAM_RECEPTION_STARTED; 
             readBytesNb = 1; telegram.WriteRawByte(incomingByte,0);
           }
           // CASE OF TPUART_DATA_CONFIRM_SUCCESS NOTIFICATION
@@ -359,23 +359,23 @@ static word lastByteRxTimeMicrosec;
           // else ignore "0" value sent on Reset by TPUART prior to TPUART_RESET_INDICATION
           break;
 
-      case RX_EIB_TELEGRAM_RECEPTION_STARTED :
+      case RX_KNX_TELEGRAM_RECEPTION_STARTED :
           telegram.WriteRawByte(incomingByte,readBytesNb);
           readBytesNb++;
 
           if (readBytesNb==3) 
           {  // We have just received the source address
-             // we check whether the received EIB telegram is coming from us (i.e. telegram is sent by the TPUART itself)
+             // we check whether the received KNX telegram is coming from us (i.e. telegram is sent by the TPUART itself)
             if ( telegram.GetSourceAddress() == _physicalAddr )
             { // the message is coming from us, we consider it as not addressed and we don't send any ACK service
-              _rx.state = RX_EIB_TELEGRAM_RECEPTION_NOT_ADDRESSED;
+              _rx.state = RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED;
             }
           }
           else if (readBytesNb==6) // We have just read the routing field containing the address type and the payload length
           { // We check if the message is addressed to us in order to send the appropriate acknowledge
             if(IsAddressAssigned(telegram.GetTargetAddress(), addressedComObjectIndex))
             { // Message addressed to us
-              _rx.state = RX_EIB_TELEGRAM_RECEPTION_ADDRESSED;
+              _rx.state = RX_KNX_TELEGRAM_RECEPTION_ADDRESSED;
               //sent the correct ACK service now
               // the ACK info must be sent latest 1,7 ms after receiving the address type octet of an addressed frame
               _serial.write(TPUART_RX_ACK_SERVICE_ADDRESSED);
@@ -385,7 +385,7 @@ static word lastByteRxTimeMicrosec;
             }
             else
             { // Message NOT addressed to us
-              _rx.state = RX_EIB_TELEGRAM_RECEPTION_NOT_ADDRESSED;
+              _rx.state = RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED;
               //sent the correct ACK service now
               // the ACK info must be sent latest 1,7 ms after receiving the address type octet of an addressed frame
               _serial.write(TPUART_RX_ACK_SERVICE_NOT_ADDRESSED);
@@ -396,8 +396,8 @@ static word lastByteRxTimeMicrosec;
           } 
           break;
 
-      case RX_EIB_TELEGRAM_RECEPTION_ADDRESSED :
-          if (readBytesNb == KNX_TELEGRAM_MAX_SIZE) _rx.state = RX_EIB_TELEGRAM_RECEPTION_LENGTH_INVALID;
+      case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED :
+          if (readBytesNb == KNX_TELEGRAM_MAX_SIZE) _rx.state = RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID;
           else
           {
           telegram.WriteRawByte(incomingByte,readBytesNb);
@@ -405,8 +405,8 @@ static word lastByteRxTimeMicrosec;
           }
           break;
 
-    //  case RX_EIB_TELEGRAM_RECEPTION_LENGTH_INVALID : break; // if the message is too long, nothing to do except waiting for EOP
-    //  case RX_EIB_TELEGRAM_RECEPTION_NOT_ADDRESSED : break; // if the message is not addressed, nothing to do except waiting for EOP
+    //  case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID : break; // if the message is too long, nothing to do except waiting for EOP
+    //  case RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED : break; // if the message is not addressed, nothing to do except waiting for EOP
 
       default : break;
     } // switch (_rx.state)
@@ -415,7 +415,7 @@ static word lastByteRxTimeMicrosec;
 
 
 // Transmission task
-// This function shall be called periodically in order to allow a correct transmission of the EIB bus data
+// This function shall be called periodically in order to allow a correct transmission of the KNX bus data
 // Assuming the TP-Uart speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
 // is transmitted in 0,58ms.
 // Sending one byte of a telegram consists in transmitting 2 characters (1,16ms)
@@ -450,7 +450,7 @@ static word sentMessageTimeMillisec;
     // In case a telegram reception has just started, and the ACK has not been sent yet,
     // we block the transmission (for around 3,3ms) till the ACK is sent
     // In that way, the TX buffer will remain empty and the ACK will be sent immediately
-    if (_rx.state != RX_EIB_TELEGRAM_RECEPTION_STARTED)
+    if (_rx.state != RX_KNX_TELEGRAM_RECEPTION_STARTED)
     {
       {
         if (_tx.nbRemainingBytes == 1)

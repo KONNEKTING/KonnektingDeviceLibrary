@@ -202,7 +202,7 @@ ___
   _Update any usual format com object_
 
 * **Description:** update the value of a group object. This function is relevant for objects with usual format, see table below.
-In case the object has COMMUNICATION and TRANSMIT flags set, then a telegram is emitted on the EIB bus, thus the new value is propagated to the other devices.
+In case the object has COMMUNICATION and TRANSMIT flags set, then a telegram is emitted on the KNX bus, thus the new value is propagated to the other devices.
 * **Parameters:** "objectIndex" is the index (in the list) of the object to be updated. "value" is the new value. value can be any standard C type (boolean, uchar, char, uint, int, ulong, long, float, double types).
 * **Return:** KNX_DEVICE_OK (0) when everything went well, KNX_DEVICE_NOT_IMPLEMENTED (254) in case of F32 conversion, KNX_DEVICE_ERROR (255) in case of unsupported group object format.
 * **Examples:**

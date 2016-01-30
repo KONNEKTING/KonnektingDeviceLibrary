@@ -2,11 +2,11 @@
 // /!\ Tests performed using a MEGA board (2 UARTs required : Serial for CLI/traces, Serial1 for TPUART)
 // the Arduino UART1 is connected to a TP-UART 2 Evaluation Board
 // A push button device is connected to the KNX bus :
-//  - one of its channels is configured on EIB address 0x0001
-//  - one of its channels is configured on EIB address 0x0003
+//  - one of its channels is configured on KNX address 0x0001
+//  - one of its channels is configured on KNX address 0x0003
 // A switch actuator device is connected to the KNX bus :
-//  - one of its channels is configured on EIB address 0x0001
-//  - the feedback status of the channel is configured on EIB address 0x0002
+//  - one of its channels is configured on KNX address 0x0001
+//  - the feedback status of the channel is configured on KNX address 0x0002
 
 #include <KnxDevice.h>
 // NB 1 : "KNXTPUART_DEBUG_INFO" and "KNXTPUART_DEBUG_ERROR" flags shall be set in order to get KnxTpUart traces
@@ -63,7 +63,7 @@ word now = (word) micros();
 void eventCallback(e_KnxTpUartEvent evt)
 {
   if ( evt == TPUART_EVENT_RESET) resetEvt++;
-  if ( evt == TPUART_EVENT_RECEIVED_EIB_TELEGRAM) newTgEvt++;
+  if ( evt == TPUART_EVENT_RECEIVED_KNX_TELEGRAM) newTgEvt++;
   if ( evt == TPUART_EVENT_STATE_INDICATION) newStateEvt++;
 }
 

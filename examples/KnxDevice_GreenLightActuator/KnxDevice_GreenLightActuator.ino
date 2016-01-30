@@ -2,7 +2,7 @@
 // 
 // Required environment :
 // - a KNX network with a TPUART board and a push button device 
-// - Configure one of the push button channel in TOGGLE mode on EIB address 0.0.2 in ETS
+// - Configure one of the push button channel in TOGGLE mode on KNX address 0.0.2 in ETS
 // - Arduino Mini Pro with its serial port connected to HW TPUART interface
 // - green and red leds plus pull-up resistors connected to digital ports 7&9
 
