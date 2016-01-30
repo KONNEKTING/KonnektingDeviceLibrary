@@ -12,12 +12,12 @@ KnxComObject KnxDevice::_comObjectsList[] = {
 const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
 
 // Definition of parameter size
-byte KnxTools::_paramLenghtList[] = {
-    /* Param Index 0 */ 1,
-    /* Param Index 1 */ 2,
-    /* Param Index 2 */ 4,
+byte KnxTools::_paramSizeList[] = {
+    /* Param Index 0 */ PARAM_UINT8,
+    /* Param Index 1 */ PARAM_INT16,
+    /* Param Index 2 */ PARAM_UINT32,
 };
-const byte KnxTools::_numberOfParams = sizeof (_paramLenghtList); // do no change this code
+const byte KnxTools::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
 bool state = false;
 

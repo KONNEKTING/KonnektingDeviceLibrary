@@ -39,13 +39,19 @@
 #define LED_BUILTIN 16
 #endif
 
+#define PARAM_INT8 1
+#define PARAM_UINT8 1
+#define PARAM_INT16 2
+#define PARAM_UINT16 2
+#define PARAM_INT32 4
+#define PARAM_UINT32 4
 
 
 // process intercepted knxEvents-calls with this method
 extern void knxToolsEvents(byte index);
 
 class KnxTools {
-    static byte _paramLenghtList[];
+    static byte _paramSizeList[];
     static const byte _numberOfParams;                // Nb of attached Parameters
 
     // Constructor, Destructor

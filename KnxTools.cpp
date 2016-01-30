@@ -236,7 +236,7 @@ int KnxTools::calcParamSkipBytes(byte index) {
 }
 
 byte KnxTools::getParamSize(byte index) {
-    return _paramLenghtList[index];
+    return _paramSizeList[index];
 }
 
 void KnxTools::getParamValue(int index, byte value[]) {
