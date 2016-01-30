@@ -9,7 +9,7 @@ KnxComObject KnxDevice::_comObjectsList[] = {
     /* Index 1 : */ KnxComObject(G_ADDR(0, 0, 1), KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
     /* Index 2 : */ KnxComObject(G_ADDR(0, 0, 2), KNX_DPT_1_001, COM_OBJ_SENSOR),
 };
-const byte KnxDevice::_comObjectsNb = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
+const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
 
 // Definition of parameter size
 byte KnxTools::_paramLenghtList[] = {
@@ -17,7 +17,7 @@ byte KnxTools::_paramLenghtList[] = {
     /* Param Index 1 */ 2,
     /* Param Index 2 */ 4,
 };
-const byte KnxTools::_paramsNb = sizeof (_paramLenghtList); // do no change this code
+const byte KnxTools::_numberOfParams = sizeof (_paramLenghtList); // do no change this code
 
 bool state = false;
 

@@ -17,7 +17,7 @@ KnxComObject KnxDevice::_comObjectsList[] =
 /* Index 0 : */ KnxComObject(G_ADDR(0,0,2), KNX_DPT_1_001 /* 1.001 B1 DPT_Switch */ , COM_OBJ_LOGIC_IN_INIT /* Logical Input Object with Init Read */ ) ,
 };
 
-const byte KnxDevice::_comObjectsNb = sizeof(_comObjectsList) / sizeof(KnxComObject); // do no change this code
+const byte KnxDevice::_numberOfComObjects = sizeof(_comObjectsList) / sizeof(KnxComObject); // do no change this code
 
 // Callback function to handle com objects updates
 void knxEvents(byte index) {

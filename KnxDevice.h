@@ -85,7 +85,6 @@ struct struct_tx_action{
     byte *valuePtr; // Field used in case of long value (width > 1 byte), space is allocated dynamically
   };
 };// type_tx_action;
-
 typedef struct struct_tx_action type_tx_action;
 
 
@@ -105,86 +104,138 @@ template <typename T> e_KnxDeviceStatus ConvertToDpt(T value, byte dpt[], byte d
 
 
 class KnxDevice {
-    static KnxComObject _comObjectsList[];          // List of Com Objects attached to the KNX Device
-                                                    // The definition shall be provided by the end-user
-    static const byte _comObjectsNb;                // Nb of attached Com Objects
-                                                    // The value shall be provided by the end-user
-    e_KnxDeviceState _state;                        // Current KnxDevice state
-    KnxTpUart *_tpuart;                             // TPUART associated to the KNX Device
-    ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; // Queue of transmit actions to be performed
-    boolean _initCompleted;                         // True when all the Com Object with Init attr have been initialized
-    byte _initIndex;                                // Index to the last initiated object
-    word _lastInitTimeMillis;                       // Time (in msec) of the last init (read) request on the bus
-    word _lastRXTimeMicros;                         // Time (in msec) of the last Tpuart Rx activity;
-    word _lastTXTimeMicros;                         // Time (in msec) of the last Tpuart Tx activity;
-    KnxTelegram _txTelegram;                        // Telegram object used for telegrams sending
-    KnxTelegram *_rxTelegram;                       // Reference to the telegram received by the TPUART
+        
+    // List of Com Objects attached to the KNX Device
+    // The definition shall be provided by the end-user
+    static KnxComObject _comObjectsList[];          
+    
+    // Nb of attached Com Objects
+    // The value shall be provided by the end-user
+    static const byte _numberOfComObjects;                
+    
+    // Current KnxDevice state
+    e_KnxDeviceState _state;  
+    
+    // TPUART associated to the KNX Device
+    KnxTpUart *_tpuart;                             
+    
+    // Queue of transmit actions to be performed
+    ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; 
+    
+    // True when all the Com Object with Init attr have been initialized
+    boolean _initCompleted;                         
+    
+    // Index to the last initiated object
+    byte _initIndex;                                
+    
+    // Time (in msec) of the last init (read) request on the bus
+    word _lastInitTimeMillis;                       
+    
+    // Time (in msec) of the last Tpuart Rx activity;
+    word _lastRXTimeMicros;                         
+    
+    // Time (in msec) of the last Tpuart Tx activity;
+    word _lastTXTimeMicros;                         
+    
+    // Telegram object used for telegrams sending
+    KnxTelegram _txTelegram;                        
+    
+    // Reference to the telegram received by the TPUART
+    KnxTelegram *_rxTelegram;                       
+    
 #if defined(KNXDEVICE_DEBUG_INFO)
     byte _nbOfInits;                                // Nb of Initialized Com Objects
     String *_debugStrPtr;
     static const char _debugInfoText[];
 #endif
     
-  // Constructor, Destructor
-    KnxDevice();  // private constructor (singleton design pattern)
-    ~KnxDevice() {}  // private destructor (singleton design pattern)
-    KnxDevice (const KnxDevice&); // private copy constructor (singleton design pattern) 
+    // Constructor, Destructor
+    // private constructor (singleton design pattern)
+    KnxDevice();  
+    // private destructor (singleton design pattern)
+    ~KnxDevice() {}  
+    // private copy constructor (singleton design pattern) 
+    KnxDevice (const KnxDevice&); 
 
+    
   public:
-    static KnxDevice Knx; // unique KnxDevice instance (singleton design pattern)
-//#ifdef __AVR_ATmega328P__
-//    // to overcome WDT infinite reboot-loop issue    
-//    bool _reboot;
-//#endif  
+      
+    // unique KnxDevice instance (singleton design pattern)      
+    static KnxDevice Knx; 
+    
     int getNumberOfComObjects();
-    // Start the KNX Device
-    // return KNX_DEVICE_ERROR (255) if begin() failed
-    // else return KNX_DEVICE_OK
+    
+    /*
+     * Start the KNX Device
+     * return KNX_DEVICE_ERROR (255) if begin() failed
+     * else return KNX_DEVICE_OK
+     */
     e_KnxDeviceStatus begin(HardwareSerial& serial, word physicalAddr);
 
-    // Stop the KNX Device
+    /*
+     * Stop the KNX Device
+     */ 
     void end();
 
-    // KNX device execution task
-    // This function shall be called in the "loop()" Arduino function
+    /*
+     * KNX device execution task
+     * This function shall be called in the "loop()" Arduino function
+     */
     void task(void);
 
-    // Quick method to read a short (<=1 byte) com object
-    // NB : The returned value will be hazardous in case of use with long objects
+    /* 
+     * Quick method to read a short (<=1 byte) com object
+     * NB : The returned value will be hazardous in case of use with long objects
+     */
     byte read(byte objectIndex);  
 
-    // Read an usual format com object
-    // Supported DPT formats are short com object, U16, V16, U32, V32, F16 and F32
+    /*
+     *  Read an usual format com object
+     * Supported DPT formats are short com object, U16, V16, U32, V32, F16 and F32
+     */
     template <typename T>  e_KnxDeviceStatus read(byte objectIndex, T& returnedValue);
 
-    // Read any type of com object (DPT value provided as is)
+    /*
+     *  Read any type of com object (DPT value provided as is)
+     */
     e_KnxDeviceStatus read(byte objectIndex, byte returnedValue[]);
 
     // Update com object functions :
     // For all the update functions, the com object value is updated locally
     // and a telegram is sent on the KNX bus if the object has both COMMUNICATION & TRANSMIT attributes set
 
-    // Update an usual format com object
-    // Supported DPT types are short com object, U16, V16, U32, V32, F16 and F32
+    /*
+     * Update an usual format com object
+     * Supported DPT types are short com object, U16, V16, U32, V32, F16 and F32
+     */
     template <typename T>  e_KnxDeviceStatus write(byte objectIndex, T value);
 
-    // Update any type of com object (rough DPT value shall be provided)
+    /*
+     * Update any type of com object (rough DPT value shall be provided)
+     */
     e_KnxDeviceStatus write(byte objectIndex, byte valuePtr[]);
     
 
-    // Com Object KNX Bus Update request
-    // Request the local object to be updated with the value from the bus
-    // NB : the function is asynchroneous, the update completion is notified by the knxEvents() callback
+    /*
+     * Com Object KNX Bus Update request
+     * Request the local object to be updated with the value from the bus
+     * NB : the function is asynchroneous, the update completion is notified by the knxEvents() callback
+     */
     void update(byte objectIndex);
 
     // The function returns true if there is rx/tx activity ongoing, else false
     boolean isActive(void) const;
     
-    // Overwrite the address of an attache Com Object
-    // Overwriting is allowed only when the KnxDevice is in INIT state
-    // Typically usage is end-user application stored Group Address in EEPROM
+    /*
+     * Overwrite the address of an attache Com Object
+     * Overwriting is allowed only when the KnxDevice is in INIT state
+     * Typically usage is end-user application stored Group Address in EEPROM
+     */
     e_KnxDeviceStatus setComObjectAddress(byte index, word addr);
-    // Gets the address of an commobjects
+    
+    /*
+     *  Gets the address of an commobjects
+     */
     word getComObjectAddress(byte index);
     
     // Inline Debug function (definition later in this file)
@@ -194,13 +245,19 @@ class KnxDevice {
 #endif
 
   private:
-    // Static GetTpUartEvents() function called by the KnxTpUart layer (callback)
+    /*
+     * Static GetTpUartEvents() function called by the KnxTpUart layer (callback)
+     */
     static void GetTpUartEvents(e_KnxTpUartEvent event);
 
-    // Static TxTelegramAck() function called by the KnxTpUart layer (callback)
+    /* 
+     * Static TxTelegramAck() function called by the KnxTpUart layer (callback)
+     */
     static void TxTelegramAck(e_TpUartTxAck);
 
-    // Inline Debug function (definition later in this file)
+    /* 
+     * Inline Debug function (definition later in this file)
+     */
     void DebugInfo(const char[]) const;
     
 };

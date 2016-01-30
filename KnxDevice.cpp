@@ -61,7 +61,7 @@ KnxDevice::KnxDevice() {
 }
 
 int KnxDevice::getNumberOfComObjects() {
-    return _comObjectsNb;
+    return _numberOfComObjects;
 }
 
 
@@ -81,7 +81,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
         DebugInfo("Init Error!\n");
         return KNX_DEVICE_ERROR;
     }
-    _tpuart->AttachComObjectsList(_comObjectsList, _comObjectsNb);
+    _tpuart->AttachComObjectsList(_comObjectsList, _numberOfComObjects);
     _tpuart->SetEvtCallback(&KnxDevice::GetTpUartEvents);
     _tpuart->SetAckCallback(&KnxDevice::TxTelegramAck);
     _tpuart->Init();
@@ -130,9 +130,9 @@ void KnxDevice::task(void) {
         nowTimeMillis = millis();
         // To avoid KNX bus overloading, we wait for 500 ms between each Init read request
         if (TimeDeltaWord(nowTimeMillis, _lastInitTimeMillis) > 500) {
-            while ((_initIndex < _comObjectsNb) && (_comObjectsList[_initIndex].GetValidity())) _initIndex++;
+            while ((_initIndex < _numberOfComObjects) && (_comObjectsList[_initIndex].GetValidity())) _initIndex++;
 
-            if (_initIndex == _comObjectsNb) {
+            if (_initIndex == _numberOfComObjects) {
                 _initCompleted = true; // All the Com Object initialization have been performed
                 //  DebugInfo(String("KNXDevice INFO: Com Object init completed, ")+ String( _nbOfInits) + String("objs initialized.\n"));
             } else { // Com Object to be initialised has been found
@@ -359,7 +359,7 @@ boolean KnxDevice::isActive(void) const {
 // Typically usage is end-user application stored Group Address in EEPROM
 e_KnxDeviceStatus KnxDevice::setComObjectAddress(byte index, word addr) {
     if (_state != INIT) return KNX_DEVICE_ERROR;
-    if (index >= _comObjectsNb) return KNX_DEVICE_INVALID_INDEX;
+    if (index >= _numberOfComObjects) return KNX_DEVICE_INVALID_INDEX;
     _comObjectsList[index].SetAddr(addr);
     return KNX_DEVICE_OK;
 }

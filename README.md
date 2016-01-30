@@ -75,7 +75,7 @@ KnxComObject KnxDevice::_comObjectsList[] =
 };
 ```
 ___
-**`const byte KnxDevice::_comObjectsNb = sizeof(_comObjectsList) / sizeof(KnxComObject);`**
+**`const byte KnxDevice::_numberOfComObjects = sizeof(_comObjectsList) / sizeof(KnxComObject);`**
 * **Description:** Define the number of group objects in the list. Simply copy the above code as is in your Arduino sketch!
 
 ### 2/ Start/Stop/Run the KNX device

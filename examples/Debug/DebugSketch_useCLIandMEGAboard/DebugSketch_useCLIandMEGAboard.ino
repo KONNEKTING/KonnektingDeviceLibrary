@@ -22,7 +22,7 @@ KnxComObject KnxDevice::_comObjectsList[] =
   /* Index 3 */ KnxComObject(G_ADDR(3,0,1), KNX_DPT_9_004 /* 9.004 F16 DPT_Value_Lux */ , COM_OBJ_LOGIC_IN) , // Logical Input Object
 };
 
-const byte KnxDevice::_comObjectsNb = sizeof(_comObjectsList) / sizeof(KnxComObject); // do no change this code
+const byte KnxDevice::_numberOfComObjects = sizeof(_comObjectsList) / sizeof(KnxComObject); // do no change this code
 
 float luminosity;
 

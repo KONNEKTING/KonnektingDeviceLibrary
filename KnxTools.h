@@ -46,7 +46,7 @@ extern void knxToolsEvents(byte index);
 
 class KnxTools {
     static byte _paramLenghtList[];
-    static const byte _paramsNb;                // Nb of attached Parameters
+    static const byte _numberOfParams;                // Nb of attached Parameters
 
     // Constructor, Destructor
     KnxTools(); // private constructor (singleton design pattern)

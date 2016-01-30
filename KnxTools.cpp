@@ -241,7 +241,7 @@ byte KnxTools::getParamSize(byte index) {
 
 void KnxTools::getParamValue(int index, byte value[]) {
 
-    if (index > _paramsNb){
+    if (index > _numberOfParams){
         return;
     }
     
@@ -540,7 +540,7 @@ void KnxTools::handleMsgWriteParameter(byte msg[]) {
     byte index = msg[0];
     // FIXME check param index --> NACK
     
-    if (index > _paramsNb) {
+    if (index > _numberOfParams) {
         sendAck(KNX_DEVICE_INVALID_INDEX, index);
     }
     
