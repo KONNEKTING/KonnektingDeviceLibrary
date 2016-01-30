@@ -645,6 +645,6 @@ void KnxTools::memoryUpdate(int index, byte data){
         EEPROM.write(index, data);
     }
 #else
-    EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
+    EEPROM.update(index, data);
 #endif   
 }
