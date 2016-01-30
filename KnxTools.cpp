@@ -25,7 +25,9 @@
  */
 
 #include "KnxTools.h"
-
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#endif
 
 /*
  * !!!!! IMPORTANT !!!!!
@@ -292,17 +294,18 @@ KnxComObject KnxTools::createProgComObject() {
  * Reboot device via WatchDogTimer within 1s
  */
 void KnxTools::reboot() {
+    
 #ifdef ESP8266 
     CONSOLEDEBUGLN("ESP8266 restart");
-    ESP.restart()
+    ESP.restart();    
 #endif
     
 //#ifdef __AVR_ATmega328P__
 //    // to overcome WDT infinite reboot-loop issue    
 //    Knx._reboot = true;
 //#endif    
-//    wdt_enable( WDTO_500MS ); 
-//    while(1) {}
+    wdt_enable( WDTO_500MS ); 
+    while(1) {}
 }
 
 bool KnxTools::internalComObject(byte index) {
