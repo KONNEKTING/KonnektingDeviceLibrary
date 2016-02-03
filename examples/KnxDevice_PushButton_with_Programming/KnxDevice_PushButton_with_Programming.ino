@@ -1,6 +1,10 @@
 #include <KnxDevice.h>
 
-int greenPin = LED_BUILTIN; // onboard LED
+#ifdef ESP8266
+int progLedPin = BUILTIN_LED; // ESP8266 uses wrong constant. See PR: https://github.com/esp8266/Arduino/pull/1556
+#else
+int progLedPin = LED_BUILTIN; 
+#endif
 
 
 // Definition of the Communication Objects attached to the device
@@ -28,24 +32,25 @@ void knxEvents(byte index) {
     state = !state;
 
     if (state) {
-        digitalWrite(greenPin, HIGH);
+        digitalWrite(progLedPin, HIGH);
         Knx.write(2, true );
     } else {
-        digitalWrite(greenPin, LOW);
+        digitalWrite(progLedPin, LOW);
         Knx.write(2, false );
     }
+    
 };
 
 void setup() {
     
-    pinMode(greenPin, OUTPUT);
-    digitalWrite(greenPin, LOW);
+    pinMode(progLedPin, OUTPUT);
+    digitalWrite(progLedPin, LOW);
 
     // <Device ManufacturerId="57005" DeviceId="190" Revision="175">
     
-    Tools.init(/* TPUART serial port */ Serial, 
+    Tools.init(/* TPUART serial port */ Serial, /* Nano/ProMini use 'Serial', Leonardo/Micro use 'Serial1'*/
             /* Prog Button Pin */ 3, 
-            /* Prog LED Pin */ LED_BUILTIN, 
+            /* Prog LED Pin */ progLedPin, 
             /* manufacturer */ 57005, 
             /* device */ 190, 
             /* revision */175);
@@ -54,6 +59,8 @@ void setup() {
     byte paramValue[Tools.getParamSize(1)];
     Tools.getParamValue(1, paramValue);
     // --> value is now available in 'paramValue'
+
+    // setup GPIOs here!
 }
 
 void loop() {

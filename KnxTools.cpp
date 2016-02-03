@@ -300,12 +300,17 @@ void KnxTools::reboot() {
     ESP.restart();    
 #endif
     
-//#ifdef __AVR_ATmega328P__
-//    // to overcome WDT infinite reboot-loop issue    
-//    Knx._reboot = true;
-//#endif    
+#ifdef __AVR_ATmega328P__
+    // to overcome WDT infinite reboot-loop issue
+    // see: https://github.com/arduino/Arduino/issues/4492
+    CONSOLEDEBUGLN("software reset NOW");
+    delay(1000);
+    asm volatile ("  jmp 0");  
+#else     
     wdt_enable( WDTO_500MS ); 
     while(1) {}
+#endif    
+    
 }
 
 bool KnxTools::internalComObject(byte index) {
@@ -651,3 +656,10 @@ void KnxTools::memoryUpdate(int index, byte data){
     EEPROM.update(index, data);
 #endif   
 }
+
+#ifdef SOFTWARE_RESET
+// Restarts program from beginning but does not reset the peripherals and registers
+void softwareReset() {
+  
+}
+#endif
