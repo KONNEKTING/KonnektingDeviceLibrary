@@ -3,49 +3,71 @@
 <script type="text/javascript">
 
 function calcIntGA() {
-	var first = document.getElementById('first').value;	
-	var second = document.getElementById('second').value;	
-	var third = document.getElementById('third').value;	
-	
-	var intGA = first << 11 | second << 8 | third;
-	document.getElementById('intGA').value = intGA;
+    var first = document.getElementById('first').value;	
+    var second = document.getElementById('second').value;	
+    var third = document.getElementById('third').value;	
 
-	document.getElementById('hexGA').value = intGA.toString(16);	
+    var intGA = first << 11 | second << 8 | third;
+    document.getElementById('intGA').value = intGA;
+
+    document.getElementById('hexGA').value = intGA.toString(16);	
 }
 
 function calcFromHexGA() {
-	var hex = document.getElementById('hexGA').value;
-	var asInt = parseInt(hex, 16);
+    var hex = document.getElementById('hexGA').value;
+    var asInt = parseInt(hex, 16);
 
-	document.getElementById('intGA').value = asInt;
+    document.getElementById('intGA').value = asInt;
 
-	document.getElementById('first').value = (asInt >> 11);	
-	document.getElementById('second').value = (asInt >> 8) & 7;	
-	document.getElementById('third').value = (asInt & 0xFF);	
+    document.getElementById('first').value = (asInt >> 11);	
+    document.getElementById('second').value = (asInt >> 8) & 7;	
+    document.getElementById('third').value = (asInt & 0xFF);	
+}
+
+function calcFromIntGA() {
+    var asInt = document.getElementById('intGA').value;
+    var asHex = parseInt(asInt).toString(16);
+
+    document.getElementById('hexGA').value = asHex;
+
+    document.getElementById('first').value = (asInt >> 11);	
+    document.getElementById('second').value = (asInt >> 8) & 7;	
+    document.getElementById('third').value = (asInt & 0xFF);	
 }
 
 // ------------------------
 
 function calcIntIA() {
-	var area = document.getElementById('area').value;	
-	var line = document.getElementById('line').value;	
-	var member = document.getElementById('member').value;	
-	
-	var intIA = area << 12 | line << 8 | member;
-	document.getElementById('intIA').value = intIA;
+    var area = document.getElementById('area').value;	
+    var line = document.getElementById('line').value;	
+    var member = document.getElementById('member').value;	
 
-	document.getElementById('hexIA').value = intIA.toString(16);	
+    var intIA = area << 12 | line << 8 | member;
+    document.getElementById('intIA').value = intIA;
+
+    document.getElementById('hexIA').value = intIA.toString(16);	
 }
 
 function calcFromHexIA() {
-	var hex = document.getElementById('hexIA').value;
-	var asInt = parseInt(hex, 16);
+    var hex = document.getElementById('hexIA').value;
+    var asInt = parseInt(hex, 16);
 
-	document.getElementById('intIA').value = asInt;
+    document.getElementById('intIA').value = asInt;
 
-	document.getElementById('area').value = (asInt >> 11);	
-	document.getElementById('line').value = (asInt >> 8) & 7;	
-	document.getElementById('member').value = (asInt & 0xFF);	
+    document.getElementById('area').value = (asInt >> 11);	
+    document.getElementById('line').value = (asInt >> 8) & 7;	
+    document.getElementById('member').value = (asInt & 0xFF);	
+}
+
+function calcFromIntIA() {
+    var asInt = document.getElementById('intIA').value;
+    var asHex = parseInt(asInt).toString(16);
+
+    document.getElementById('hexIA').value = asHex;
+
+    document.getElementById('area').value = (asInt >> 12);	
+    document.getElementById('line').value = (asInt >> 8) & 7;	
+    document.getElementById('member').value = (asInt & 0xFF);	
 }
 
 </script>
@@ -57,59 +79,56 @@ function calcFromHexIA() {
 <h3>Group Address Calculator</h3>
 
 <table>
-	<tr>       
-		<td>GA:</td>
-		<td>
-			<input style="width:40px" type="text" id="first" name="first" length="5" onChange="javascript:calcIntGA();">/
-			<input style="width:40px" type="text" id="second" name="second" length="5" onChange="javascript:calcIntGA();">/
-			<input style="width:40px" type="text" id="third" name="third" length="5" onChange="javascript:calcIntGA();">
-		</td>
-	</tr>
-	
-	<tr>
-		<td>HEX:</td>
-		<td>
-			<input style="width:140px" type="text" id="hexGA" name="hexGA" length="10" onChange="javascript:calcFromHexGA();">
-		</td>
-	</tr>
+    <tr>       
+        <td>GA:</td>
+        <td>
+            <input style="width:40px" type="text" id="first" name="first" length="5" onChange="javascript:calcIntGA();">/
+            <input style="width:40px" type="text" id="second" name="second" length="5" onChange="javascript:calcIntGA();">/
+            <input style="width:40px" type="text" id="third" name="third" length="5" onChange="javascript:calcIntGA();">
+        </td>
+    </tr>
 
-	<tr>
-		<td>DEC:</td>
-		<td>
-			<input style="width:140px" type="text" id="intGA" name="intGA" length="10">
-		</td>
-	</tr>
+    <tr>
+        <td>HEX:</td>
+        <td>
+            <input style="width:140px" type="text" id="hexGA" name="hexGA" length="10" onChange="javascript:calcFromHexGA();">
+        </td>
+    </tr>
+
+    <tr>
+        <td>DEC:</td>
+        <td>
+            <input style="width:140px" type="text" id="intGA" name="intGA" length="10" onChange="javascript:calcFromIntGA();">
+        </td>
+    </tr>
 </table>
 
 <h3>Individual Address Calculator</h3>
 
 <table>
-	<tr>       
-		<td>IA:</td>
-		<td>
-			<input style="width:40px" type="text" id="area" name="area" length="5" onChange="javascript:calcIntIA();">.
-			<input style="width:40px" type="text" id="line" name="line" length="5" onChange="javascript:calcIntIA();">.
-			<input style="width:40px" type="text" id="member" name="member" length="5" onChange="javascript:calcIntIA();">
-		</td>
-	</tr>
-	
-	<tr>
-		<td>HEX:</td>
-		<td>
-			<input style="width:140px" type="text" id="hexIA" name="hexIA" length="10" onChange="javascript:calcFromHexIA();">
-		</td>
-	</tr>
+    <tr>       
+        <td>IA:</td>
+        <td>
+            <input style="width:40px" type="text" id="area" name="area" length="5" onChange="javascript:calcIntIA();">.
+            <input style="width:40px" type="text" id="line" name="line" length="5" onChange="javascript:calcIntIA();">.
+            <input style="width:40px" type="text" id="member" name="member" length="5" onChange="javascript:calcIntIA();">
+        </td>
+    </tr>
 
-	<tr>
-		<td>DEC:</td>
-		<td>
-			<input style="width:140px" type="text" id="intIA" name="intIA" length="10">
-		</td>
-	</tr>
+    <tr>
+        <td>HEX:</td>
+        <td>
+            <input style="width:140px" type="text" id="hexIA" name="hexIA" length="10" onChange="javascript:calcFromHexIA();">
+        </td>
+    </tr>
+
+    <tr>
+        <td>DEC:</td>
+        <td>
+            <input style="width:140px" type="text" id="intIA" name="intIA" length="10" onChange="javascript:calcFromIntIA();">
+        </td>
+    </tr>
 </table>
-
-
-
 
 </body>
 </html>
