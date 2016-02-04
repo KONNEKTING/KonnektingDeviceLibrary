@@ -48,7 +48,7 @@ void setup() {
 
     // <Device ManufacturerId="57005" DeviceId="190" Revision="175">
     
-    Tools.init(/* TPUART serial port */ Serial, /* Nano/ProMini use 'Serial', Leonardo/Micro use 'Serial1'*/
+    Tools.init(/* TPUART serial port */ Serial1, /* Nano/ProMini use 'Serial', Leonardo/Micro use 'Serial1'*/
             /* Prog Button Pin */ 3, 
             /* Prog LED Pin */ progLedPin, 
             /* manufacturer */ 57005, 
