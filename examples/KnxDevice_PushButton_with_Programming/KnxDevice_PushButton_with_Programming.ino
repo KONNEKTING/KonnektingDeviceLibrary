@@ -1,19 +1,31 @@
 // comment following line to disable DEBUG mode
 #define DEBUG debugSerial
 
-// no need to comment, depends on "#define DEBUG ..."
+// no need to comment, you can leave it as it is as long you do not change the "#define DEBUG debugSerial" line
 #ifdef DEBUG
 #include <SoftwareSerial.h>
 SoftwareSerial debugSerial(10, 11); // RX, TX
 #endif
 
-
+// include KnxDevice library
 #include <KnxDevice.h>
 
+
+// define programming-led PIN
 #ifdef ESP8266
-int progLedPin = BUILTIN_LED; // ESP8266 uses wrong constant. See PR: https://github.com/esp8266/Arduino/pull/1556
+#define PROG_LED_PIN BUILTIN_LED // ESP8266 uses wrong constant. See PR: https://github.com/esp8266/Arduino/pull/1556
 #else
-int progLedPin = LED_BUILTIN; 
+#define PROG_LED_PIN LED_BUILTIN  // defaults to on-board LED for AVR Arduinos
+#endif
+
+// define programming-button PIN
+#define PROG_BUTTON_PIN 3
+
+// define KNX Transceiver serial port
+#ifdef __AVR_ATmega328P__
+#define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
+#else
+#define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
 #endif
 
 
@@ -42,29 +54,30 @@ void knxEvents(byte index) {
     state = !state;
 
     if (state) {
-        digitalWrite(progLedPin, HIGH);
+        digitalWrite(PROG_LED_PIN, HIGH);
         Knx.write(2, true );
     } else {
-        digitalWrite(progLedPin, LOW);
+        digitalWrite(PROG_LED_PIN, LOW);
         Knx.write(2, false );
     }
     
 };
 
 void setup() {
+
 // if debug mode is enabled, setup serial port with 9600 baud    
 #ifdef DEBUG
     DEBUG.begin(9600);
 #endif
     
-    pinMode(progLedPin, OUTPUT);
-    digitalWrite(progLedPin, LOW);
-
-    // <Device ManufacturerId="57005" DeviceId="190" Revision="175">
+    // set well defined state for LED pin for this special sample. Can be skipped in other sketches.
+    pinMode(PROG_LED_PIN, OUTPUT);
+    digitalWrite(PROG_LED_PIN, LOW);
     
-    Tools.init(/* TPUART serial port */ Serial1, /* Nano/ProMini use 'Serial', Leonardo/Micro use 'Serial1'*/
-            /* Prog Button Pin */ 3, 
-            /* Prog LED Pin */ progLedPin, 
+    // Initialize KNX enabled Arduino Board
+    Tools.init(/* KNX transceiver serial port */ KNX_SERIAL, 
+            /* Prog Button Pin */ PROG_BUTTON_PIN, 
+            /* Prog LED Pin */ PROG_LED_PIN, 
             /* manufacturer */ 57005, 
             /* device */ 190, 
             /* revision */175);
