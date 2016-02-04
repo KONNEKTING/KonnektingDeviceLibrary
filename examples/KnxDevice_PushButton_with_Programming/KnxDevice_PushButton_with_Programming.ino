@@ -1,3 +1,13 @@
+// comment following line to disable DEBUG mode
+#define DEBUG debugSerial
+
+// no need to comment, depends on "#define DEBUG ..."
+#ifdef DEBUG
+#include <SoftwareSerial.h>
+SoftwareSerial debugSerial(10, 11); // RX, TX
+#endif
+
+
 #include <KnxDevice.h>
 
 #ifdef ESP8266
@@ -42,6 +52,10 @@ void knxEvents(byte index) {
 };
 
 void setup() {
+// if debug mode is enabled, setup serial port with 9600 baud    
+#ifdef DEBUG
+    DEBUG.begin(9600);
+#endif
     
     pinMode(progLedPin, OUTPUT);
     digitalWrite(progLedPin, LOW);
@@ -55,10 +69,16 @@ void setup() {
             /* device */ 190, 
             /* revision */175);
     
-    // get parameter value for param #1
+    // get parameter value for param #0
     byte paramValue[Tools.getParamSize(1)];
-    Tools.getParamValue(1, paramValue);
+    Tools.getParamValue(0, paramValue);
     // --> value is now available in 'paramValue'
+    
+#ifdef DEBUG
+    DEBUG.print("param #0: 0x");
+    DEBUG.print(paramValue[0], HEX);
+    DEBUG.println("");
+#endif    
 
     // setup GPIOs here!
 }

@@ -34,16 +34,15 @@
  * if "#define DEBUG" is set, you must run your KONNEKTING Suite with "-Dde.root1.slicknx.konnekting.debug=true" 
  * A release-version of your development MUST NOT contain "#define DEBUG" ...
  */
-#define DEBUG 1
+//#define DEBUG 1
 
+// comment just for debugging purpose to disable memory write
 #define WRITEMEM 1
 
 #if defined(DEBUG)
-#include <SoftwareSerial.h>
-SoftwareSerial debugSerial(10, 11); // RX, TX
 char consolebuffer[80];
-#define CONSOLEDEBUG(...)  debugSerial.print(__VA_ARGS__);
-#define CONSOLEDEBUGLN(...)  debugSerial.println(__VA_ARGS__);
+#define CONSOLEDEBUG(...)  DEBUG.print(__VA_ARGS__);
+#define CONSOLEDEBUGLN(...)  DEBUG.println(__VA_ARGS__);
 #else
 #define CONSOLEDEBUG(...) 
 #define CONSOLEDEBUGLN(...)
@@ -101,9 +100,6 @@ void knxToolsEvents(byte index) {
  * Constructor
  */
 KnxTools::KnxTools() {
-#ifdef DEBUG   
-    debugSerial.begin(9600);
-#endif    
     CONSOLEDEBUGLN("\n\n\n\nSetup KnxTools");
     
 #ifdef ESP8266
