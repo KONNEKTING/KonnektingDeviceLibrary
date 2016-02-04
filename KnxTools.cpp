@@ -231,7 +231,7 @@ int KnxTools::calcParamSkipBytes(byte index) {
     // calc bytes to skip
     int skipBytes = 0;
     if (index > 0) {
-        for (byte i = 0; i < index - 1; i++) {
+        for (byte i = 0; i < index; i++) {
             skipBytes += getParamSize(i);
         }
     }
@@ -244,16 +244,36 @@ byte KnxTools::getParamSize(byte index) {
 
 void KnxTools::getParamValue(int index, byte value[]) {
 
-    if (index > _numberOfParams){
+    if (index > _numberOfParams-1){
         return;
     }
     
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
-
+    
+    CONSOLEDEBUG("getParamValue: index=");
+    CONSOLEDEBUG(index);
+    CONSOLEDEBUG(" _paramTableStartindex=");
+    CONSOLEDEBUG(_paramTableStartindex);
+    CONSOLEDEBUG(" skipBytes=");
+    CONSOLEDEBUG(skipBytes);
+    CONSOLEDEBUG(" paramLen=");
+    CONSOLEDEBUG(paramLen);
+    CONSOLEDEBUGLN("");
+    
     // read byte by byte
     for (byte i = 0; i < paramLen; i++) {
-        value[i] = EEPROM.read(_paramTableStartindex + skipBytes + i);
+        
+        int addr = _paramTableStartindex + skipBytes + i;
+        
+        value[i] = EEPROM.read(addr);
+        CONSOLEDEBUG(" val[");
+        CONSOLEDEBUG(i);
+        CONSOLEDEBUG("]@");
+        CONSOLEDEBUG(addr);
+        CONSOLEDEBUG(" --> 0x");
+        CONSOLEDEBUG(value[i], HEX);
+        CONSOLEDEBUGLN("");
     }
 }
 
@@ -416,9 +436,10 @@ void KnxTools::sendAck(byte errorcode, byte indexinformation){
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ACK;
-    response[2] = errorcode;
-    response[3] = indexinformation;
-    for (byte i=4;i<14;i++){
+    response[2] = (errorcode==0x00?0x00:0xFF);
+    response[3] = errorcode;
+    response[4] = indexinformation;
+    for (byte i=5;i<14;i++){
         response[i] = 0x00;
     }
     Knx.write(0, response);    
@@ -548,20 +569,28 @@ void KnxTools::handleMsgReadIndividualAddress(byte msg[]) {
 
 void KnxTools::handleMsgWriteParameter(byte msg[]) {
     CONSOLEDEBUGLN("handleMsgWriteParameter");
-
     
-    byte index = msg[0];
-    // FIXME check param index --> NACK
+    byte index = msg[2];  
     
-    if (index > _numberOfParams) {
+    if (index > _numberOfParams-1) {
         sendAck(KNX_DEVICE_INVALID_INDEX, index);
+        return;
     }
     
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
+    
+    CONSOLEDEBUG("id=");
+    CONSOLEDEBUG(index);
+    CONSOLEDEBUGLN("")
 #if defined(WRITEMEM)    
     // write byte by byte
     for (byte i = 0; i < paramLen; i++) {
+        CONSOLEDEBUG(" data[");
+        CONSOLEDEBUG(i);
+        CONSOLEDEBUG("]=0x");
+        CONSOLEDEBUG(msg[3 + i],HEX);
+        CONSOLEDEBUGLN("");
         //EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
         memoryUpdate(_paramTableStartindex + skipBytes + i, msg[3 + i]);
     }
@@ -690,4 +719,111 @@ void KnxTools::memoryUpdate(int index, byte data){
     if (isFactorySetting()) {
         
     }
+}
+
+/*
+ *  #define PARAM_INT8 1
+    #define PARAM_UINT8 1
+    #define PARAM_INT16 2
+    #define PARAM_UINT16 2
+    #define PARAM_INT32 4
+    #define PARAM_UINT32 4
+ */
+
+uint8_t KnxTools::getUINT8Param(byte index){    
+    if (getParamSize(index)!=PARAM_UINT8) {
+        CONSOLEDEBUG("Requested UINT8 param for index ");
+        CONSOLEDEBUG(index);
+        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        return 0;
+    }
+    
+    byte paramValue[1];
+    getParamValue(index, paramValue);
+    
+    return paramValue[0];
+}
+
+int8_t KnxTools::getINT8Param(byte index) {
+    if (getParamSize(index)!=PARAM_INT8) {
+        CONSOLEDEBUG("Requested INT8 param for index ");
+        CONSOLEDEBUG(index);
+        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        return 0;
+    }
+    
+    byte paramValue[1];
+    getParamValue(index, paramValue);
+    
+    return paramValue[0];
+}
+
+uint16_t KnxTools::getUINT16Param(byte index) {
+    if (getParamSize(index)!=PARAM_UINT16) {
+        CONSOLEDEBUG("Requested UINT16 param for index ");
+        CONSOLEDEBUG(index);
+        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        return 0;
+    }
+    
+    byte paramValue[2];
+    getParamValue(index, paramValue);
+    
+    uint16_t val = (paramValue[1] << 8) + (paramValue[0] << 0);
+    
+    return val;
+}
+
+int16_t KnxTools::getINT16Param(byte index) {
+    if (getParamSize(index)!=PARAM_INT16) {
+        CONSOLEDEBUG("Requested INT16 param for index ");
+        CONSOLEDEBUG(index);
+        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        return 0;
+    }
+    
+    byte paramValue[2];
+    getParamValue(index, paramValue);
+    
+    CONSOLEDEBUG(" int16: [1]=0x");
+    CONSOLEDEBUG(paramValue[0],HEX);
+    CONSOLEDEBUG(" [0]=0x");
+    CONSOLEDEBUG(paramValue[1],HEX);
+    CONSOLEDEBUGLN("");
+    
+    int16_t val = (paramValue[1] << 8) + (paramValue[0] << 0);
+    
+    return val;
+}
+
+uint32_t KnxTools::getUINT32Param(byte index){
+    if (getParamSize(index)!=PARAM_UINT32) {
+        CONSOLEDEBUG("Requested UINT32 param for index ");
+        CONSOLEDEBUG(index);
+        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        return 0;
+    }
+    
+    byte paramValue[4];
+    getParamValue(index, paramValue);
+    
+    uint32_t val = (paramValue[1] <<24) + (paramValue[1] <<16) + (paramValue[1] << 8) + (paramValue[0] << 0);
+    
+    return val;
+}
+
+int32_t KnxTools::getINT32Param(byte index) {
+    if (getParamSize(index)!=PARAM_INT32) {
+        CONSOLEDEBUG("Requested UINT32 param for index ");
+        CONSOLEDEBUG(index);
+        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        return 0;
+    }
+    
+    byte paramValue[4];
+    getParamValue(index, paramValue);
+    
+    int32_t val = (paramValue[1] <<24) + (paramValue[1] <<16) + (paramValue[1] << 8) + (paramValue[0] << 0);
+    
+    return val;
 }

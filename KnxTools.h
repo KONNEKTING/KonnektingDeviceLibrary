@@ -83,6 +83,15 @@ public:
 
     byte getParamSize(byte index);
     void getParamValue(int index, byte* value);
+    
+    uint8_t getUINT8Param(byte index);
+    int8_t getINT8Param(byte index);
+    
+    uint16_t getUINT16Param(byte index);
+    int16_t getINT16Param(byte index);
+    
+    uint32_t getUINT32Param(byte index);
+    int32_t getINT32Param(byte index);
 
     /**
      * Check whether the Knx Tools is initialized (Tools.init(...)) and therefore active or not

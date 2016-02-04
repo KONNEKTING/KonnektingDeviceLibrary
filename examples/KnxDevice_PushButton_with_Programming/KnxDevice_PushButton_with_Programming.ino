@@ -42,6 +42,13 @@ byte KnxTools::_paramSizeList[] = {
     /* Param Index 0 */ PARAM_UINT8,
     /* Param Index 1 */ PARAM_INT16,
     /* Param Index 2 */ PARAM_UINT32,
+    /* Param Index 3 */ PARAM_UINT8,
+    /* Param Index 4 */ PARAM_UINT8,
+    /* Param Index 5 */ PARAM_UINT8,
+    /* Param Index 6 */ PARAM_UINT8,
+    /* Param Index 7 */ PARAM_UINT8,
+    /* Param Index 8 */ PARAM_UINT8,
+    /* Param Index 9 */ PARAM_UINT8,
 };
 const byte KnxTools::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
@@ -82,14 +89,17 @@ void setup() {
             /* device */ 190, 
             /* revision */175);
     
-    // get parameter value for param #0
-    byte paramValue[Tools.getParamSize(1)];
-    Tools.getParamValue(0, paramValue);
-    // --> value is now available in 'paramValue'
-    
 #ifdef DEBUG
-    DEBUG.print("param #0: 0x");
-    DEBUG.print(paramValue[0], HEX);
+    DEBUG.print("param #0: ");
+    DEBUG.print(Tools.getUINT8Param(0));
+    DEBUG.println("");
+    
+    DEBUG.print("param #1: ");
+    DEBUG.print(Tools.getINT16Param(1));
+    DEBUG.println("");
+    
+    DEBUG.print("param #2: ");
+    DEBUG.print(Tools.getUINT32Param(2));
     DEBUG.println("");
 #endif    
 
