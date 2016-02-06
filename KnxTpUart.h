@@ -52,6 +52,7 @@
 #define KNX_TPUART_ERROR_NOT_INIT_STATE        254
 #define KNX_TPUART_ERROR_NULL_EVT_CALLBACK_FCT 253
 #define KNX_TPUART_ERROR_NULL_ACK_CALLBACK_FCT 252
+#define KNX_TPUART_ERROR_RESET                 251
 
 
 // Services to TPUART (hostcontroller -> TPUART) :
