@@ -99,6 +99,7 @@ byte attempts = 10;
 
     for (nowTime = startTime = (word) millis() ; TimeDeltaWord(nowTime,startTime) < 1000 /* 1 sec */ ; nowTime = (word)millis())
     {
+        
       if (_serial.available() > 0) 
       {
         if (_serial.read() == TPUART_RESET_INDICATION)

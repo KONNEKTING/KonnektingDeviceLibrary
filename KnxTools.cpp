@@ -214,7 +214,11 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
     }
     CONSOLEDEBUG("IA: 0x");
     CONSOLEDEBUGLN(_individualAddress, HEX);
-    Knx.begin(serial, _individualAddress);
+    e_KnxDeviceStatus status;
+    status = Knx.begin(serial, _individualAddress);
+    CONSOLEDEBUG("KnxDevice startup status: ");
+    CONSOLEDEBUG(status, HEX);
+    CONSOLEDEBUGLN("");
 }
 
 bool KnxTools::isActive() {

@@ -1,5 +1,5 @@
 // comment following line to disable DEBUG mode
-#define DEBUG debugSerial
+//#define DEBUG debugSerial
 
 // no need to comment, you can leave it as it is as long you do not change the "#define DEBUG debugSerial" line
 #ifdef DEBUG

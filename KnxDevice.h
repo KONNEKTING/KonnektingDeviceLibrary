@@ -37,12 +37,13 @@
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 // DEBUG :
-//#define KNXDEVICE_DEBUG_INFO   // Uncomment to activate info traces
+#define KNXDEVICE_DEBUG_INFO   // Uncomment to activate info traces
 
 // Values returned by the KnxDevice member functions :
 enum e_KnxDeviceStatus {
   KNX_DEVICE_OK = 0,
   KNX_DEVICE_INVALID_INDEX = 1,
+  KNX_DEVICE_INIT_ERROR = 2,
   KNX_DEVICE_NOT_IMPLEMENTED = 254,
   KNX_DEVICE_ERROR = 255
 };
