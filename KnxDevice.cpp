@@ -68,12 +68,12 @@ int KnxDevice::getNumberOfComObjects() {
 e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     _tpuart = new KnxTpUart(serial, physicalAddr, NORMAL);
     _rxTelegram = &_tpuart->GetReceivedTelegram();
-    delay(1000); // Workaround for init issue with bus-powered arduino
+    //delay(10000); // Workaround for init issue with bus-powered arduino
     // the issue is reproduced on one (faulty?) TPUART device only, so remove it for the moment.
     if (_tpuart->Reset() != KNX_TPUART_OK) {
-        delete(_tpuart);
-        _tpuart = NULL;
-        _rxTelegram = NULL;
+        //delete(_tpuart);
+        //_tpuart = NULL;
+        //_rxTelegram = NULL;
         DebugInfo("Init Error!\n");
         return KNX_DEVICE_INIT_ERROR;
     }

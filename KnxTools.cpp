@@ -37,7 +37,7 @@
 #define DEBUG
 
 // comment just for debugging purpose to disable memory write
-#define WRITEMEM 1
+//#define WRITEMEM 1
 
 #ifdef DEBUG
 #include <SoftwareSerial.h>
@@ -219,6 +219,8 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
     CONSOLEDEBUG("KnxDevice startup status: 0x");
     CONSOLEDEBUG(status, HEX);
     CONSOLEDEBUGLN("");
+    
+    if (status != KNX_DEVICE_OK) {CONSOLEDEBUGLN("knx init ERROR, stop here!!");while(1);}
 }
 
 bool KnxTools::isActive() {
