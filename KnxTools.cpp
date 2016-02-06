@@ -191,15 +191,15 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
 
         // ComObjects
         // at most 255 com objects
-        for (byte i = 0; i < Knx.getNumberOfComObjects()*2; i+=2) {
-            byte hi = EEPROM.read(i + EEPROM_COMOBJECTTABLE_START);
-            byte lo = EEPROM.read(i + EEPROM_COMOBJECTTABLE_START + 1);
+        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
+            byte hi = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*2));
+            byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*2) + 1);
             word comObjAddr = (hi << 8) + (lo << 0);
-            Knx.setComObjectAddress(i+1, comObjAddr);
-            CONSOLEDEBUG("ComObj ID=");
-            CONSOLEDEBUG(i);
-            CONSOLEDEBUG(" index=");
+            Knx.setComObjectAddress(i, comObjAddr);
+            CONSOLEDEBUG("ComObj index=");
             CONSOLEDEBUG((i+1));
+            CONSOLEDEBUG(" Suite-ID=");
+            CONSOLEDEBUG(i);
             CONSOLEDEBUG(" HI: 0x");
             CONSOLEDEBUG(hi,HEX);
             CONSOLEDEBUG(" LO: 0x");
