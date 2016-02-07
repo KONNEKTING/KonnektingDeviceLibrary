@@ -195,7 +195,7 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
             byte hi = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*2));
             byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*2) + 1);
             word comObjAddr = (hi << 8) + (lo << 0);
-            Knx.setComObjectAddress(i, comObjAddr);
+            Knx.setComObjectAddress((i+1), comObjAddr);
             CONSOLEDEBUG("ComObj index=");
             CONSOLEDEBUG((i+1));
             CONSOLEDEBUG(" Suite-ID=");
@@ -220,7 +220,11 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
     CONSOLEDEBUG(status, HEX);
     CONSOLEDEBUGLN("");
     
-    if (status != KNX_DEVICE_OK) {CONSOLEDEBUGLN("knx init ERROR, stop here!!");while(1);}
+    if (status != KNX_DEVICE_OK) {
+        CONSOLEDEBUGLN("Knx init ERROR. retry after reboot!!");
+        delay(500);
+        reboot();
+    }
 }
 
 bool KnxTools::isActive() {
