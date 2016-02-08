@@ -10,13 +10,7 @@ SoftwareSerial debugSerial(10, 11); // RX, TX
 // include KnxDevice library
 #include <KnxDevice.h>
 
-
-// define programming-led PIN
-#ifdef ESP8266
-#define PROG_LED_PIN BUILTIN_LED // ESP8266 uses wrong constant. See PR: https://github.com/esp8266/Arduino/pull/1556
-#else
 #define PROG_LED_PIN LED_BUILTIN  // defaults to on-board LED for AVR Arduinos
-#endif
 
 // define programming-button PIN
 #define PROG_BUTTON_PIN 3
