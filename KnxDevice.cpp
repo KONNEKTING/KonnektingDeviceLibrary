@@ -235,7 +235,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::read(byte objectIndex, T& ret
     }
 }
 
-template e_KnxDeviceStatus KnxDevice::read <boolean>(byte objectIndex, boolean& returnedValue);
+template e_KnxDeviceStatus KnxDevice::read <bool>(byte objectIndex, bool& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <char>(byte objectIndex, char& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <unsigned char>(byte objectIndex, unsigned char& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <unsigned int>(byte objectIndex, unsigned int& returnedValue);
@@ -282,7 +282,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T val
     return KNX_DEVICE_OK;
 }
 
-template e_KnxDeviceStatus KnxDevice::write <boolean>(byte objectIndex, boolean value);
+template e_KnxDeviceStatus KnxDevice::write <bool>(byte objectIndex, bool value);
 template e_KnxDeviceStatus KnxDevice::write <unsigned char>(byte objectIndex, unsigned char value);
 template e_KnxDeviceStatus KnxDevice::write <char>(byte objectIndex, char value);
 template e_KnxDeviceStatus KnxDevice::write <unsigned int>(byte objectIndex, unsigned int value);
