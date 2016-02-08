@@ -36,6 +36,9 @@
  */
 #define DEBUG
 
+// DEBUG PROTOCOL HANDLING
+#define DEBUG_PROTOCOL
+
 // comment just for debugging purpose to disable memory write
 #define WRITEMEM 1
 
@@ -87,9 +90,9 @@ KnxTools& Tools = KnxTools::Tools;
  */
 void knxToolsEvents(byte index) {
 
-    CONSOLEDEBUG("\n\nknxToolsEvents index=");
+    CONSOLEDEBUG(F("\n\nknxToolsEvents index="));
     CONSOLEDEBUG(index);
-    CONSOLEDEBUGLN(" ");
+    CONSOLEDEBUGLN(F(" "));
 
     // if it's not a internal com object, route back to knxEvents()
     if (!Tools.internalComObject(index)) {
@@ -104,7 +107,7 @@ KnxTools::KnxTools() {
 #ifdef DEBUG
     knxToolsDebugSerial.begin(9600);
 #endif    
-    CONSOLEDEBUGLN("\n\n\n\nSetup KnxTools");
+    CONSOLEDEBUGLN(F("\n\n\n\nSetup KnxTools"));
     
 #ifdef ESP8266
     CONSOLEDEBUG("Setup ESP8266 ... ");
@@ -153,19 +156,19 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
     attachInterrupt(digitalPinToInterrupt(_progButton), KnxToolsProgButtonPressed, RISING);
 
     // hardcoded stuff
-    CONSOLEDEBUG("Manufacturer: ");
+    CONSOLEDEBUG(F("Manufacturer: "));
     CONSOLEDEBUG(_manufacturerID, HEX);
-    CONSOLEDEBUGLN("hex");
+    CONSOLEDEBUGLN(F("hex"));
 
     CONSOLEDEBUG("Device: ");
     CONSOLEDEBUG(_deviceID, HEX);
-    CONSOLEDEBUGLN("hex");
+    CONSOLEDEBUGLN(F("hex"));
 
-    CONSOLEDEBUG("Revision: ");
+    CONSOLEDEBUG(F("Revision: "));
     CONSOLEDEBUG(_revisionID, HEX);
-    CONSOLEDEBUGLN("hex");
+    CONSOLEDEBUGLN(F("hex"));
 
-    CONSOLEDEBUG("numberOfCommObjects: ");
+    CONSOLEDEBUG(F("numberOfCommObjects: "));
     CONSOLEDEBUGLN(Knx.getNumberOfComObjects());
 
     // calc index of parameter table in eeprom --> depends on number of com objects
@@ -173,13 +176,13 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
 
     _deviceFlags = EEPROM.read(EEPROM_DEVICE_FLAGS);
     
-    CONSOLEDEBUG("_deviceFlags: ");
+    CONSOLEDEBUG(F("_deviceFlags: "));
     CONSOLEDEBUG(_deviceFlags, BIN);
-    CONSOLEDEBUGLN("bin");
+    CONSOLEDEBUGLN(F("bin"));
 
     _individualAddress = P_ADDR(1, 1, 254);
     if (!isFactorySetting()) {
-        CONSOLEDEBUGLN("Using EEPROM");
+        CONSOLEDEBUGLN(F("Using EEPROM"));
         /*
          * Read eeprom stuff
          */
@@ -196,32 +199,32 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
             byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*2) + 1);
             word comObjAddr = (hi << 8) + (lo << 0);
             Knx.setComObjectAddress((i+1), comObjAddr);
-            CONSOLEDEBUG("ComObj index=");
+            CONSOLEDEBUG(F("ComObj index="));
             CONSOLEDEBUG((i+1));
-            CONSOLEDEBUG(" Suite-ID=");
+            CONSOLEDEBUG(F(" Suite-ID="));
             CONSOLEDEBUG(i);
-            CONSOLEDEBUG(" HI: 0x");
+            CONSOLEDEBUG(F(" HI: 0x"));
             CONSOLEDEBUG(hi,HEX);
-            CONSOLEDEBUG(" LO: 0x");
+            CONSOLEDEBUG(F(" LO: 0x"));
             CONSOLEDEBUG(lo,HEX );
-            CONSOLEDEBUG(" GA: 0x");
+            CONSOLEDEBUG(F(" GA: 0x"));
             CONSOLEDEBUG(comObjAddr, HEX);
-            CONSOLEDEBUGLN("");
+            CONSOLEDEBUGLN(F(""));
         }
 
     } else {
-        CONSOLEDEBUGLN("Using FACTORY");
+        CONSOLEDEBUGLN(F("Using FACTORY"));
     }
-    CONSOLEDEBUG("IA: 0x");
+    CONSOLEDEBUG(F("IA: 0x"));
     CONSOLEDEBUGLN(_individualAddress, HEX);
     e_KnxDeviceStatus status;
     status = Knx.begin(serial, _individualAddress);
-    CONSOLEDEBUG("KnxDevice startup status: 0x");
+    CONSOLEDEBUG(F("KnxDevice startup status: 0x"));
     CONSOLEDEBUG(status, HEX);
-    CONSOLEDEBUGLN("");
+    CONSOLEDEBUGLN(F(""));
     
     if (status != KNX_DEVICE_OK) {
-        CONSOLEDEBUGLN("Knx init ERROR. retry after reboot!!");
+        CONSOLEDEBUGLN(F("Knx init ERROR. retry after reboot!!"));
         delay(500);
         reboot();
     }
@@ -261,15 +264,15 @@ void KnxTools::getParamValue(int index, byte value[]) {
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
     
-    CONSOLEDEBUG("getParamValue: index=");
+    CONSOLEDEBUG(F("getParamValue: index="));
     CONSOLEDEBUG(index);
-    CONSOLEDEBUG(" _paramTableStartindex=");
+    CONSOLEDEBUG(F(" _paramTableStartindex="));
     CONSOLEDEBUG(_paramTableStartindex);
-    CONSOLEDEBUG(" skipBytes=");
+    CONSOLEDEBUG(F(" skipBytes="));
     CONSOLEDEBUG(skipBytes);
-    CONSOLEDEBUG(" paramLen=");
+    CONSOLEDEBUG(F(" paramLen="));
     CONSOLEDEBUG(paramLen);
-    CONSOLEDEBUGLN("");
+    CONSOLEDEBUGLN(F(""));
     
     // read byte by byte
     for (byte i = 0; i < paramLen; i++) {
@@ -277,20 +280,20 @@ void KnxTools::getParamValue(int index, byte value[]) {
         int addr = _paramTableStartindex + skipBytes + i;
         
         value[i] = EEPROM.read(addr);
-        CONSOLEDEBUG(" val[");
+        CONSOLEDEBUG(F(" val["));
         CONSOLEDEBUG(i);
-        CONSOLEDEBUG("]@");
+        CONSOLEDEBUG(F("]@"));
         CONSOLEDEBUG(addr);
-        CONSOLEDEBUG(" --> 0x");
+        CONSOLEDEBUG(F(" --> 0x"));
         CONSOLEDEBUG(value[i], HEX);
-        CONSOLEDEBUGLN("");
+        CONSOLEDEBUGLN(F(""));
     }
 }
 
 // local helper method got the prog-button-interrupt
 
 void KnxToolsProgButtonPressed() {
-    CONSOLEDEBUGLN("PROGBUTTON toggle");
+    CONSOLEDEBUGLN(F("PROGBUTTON toggle"));
     Tools.toggleProgState();
 }
 
@@ -310,16 +313,16 @@ void KnxTools::setProgState(bool state) {
     if (state == true) {
         _progState = true;
         digitalWrite(_progLED, HIGH);
-        CONSOLEDEBUGLN("PROGBUTTON 1");
+        CONSOLEDEBUGLN(F("PROGBUTTON 1"));
     } else if (state == false) {
         _progState = false;
         digitalWrite(_progLED, LOW);
-        CONSOLEDEBUGLN("PROGBUTTON 0");
+        CONSOLEDEBUGLN(F("PROGBUTTON 0"));
     }
 }
 
 KnxComObject KnxTools::createProgComObject() {
-    CONSOLEDEBUGLN("createProgComObject");
+    CONSOLEDEBUGLN(F("createProgComObject"));
     return /* Index 0 */ KnxComObject(G_ADDR(15,7,255), KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
 }
 
@@ -337,11 +340,11 @@ void KnxTools::reboot() {
 #ifdef __AVR_ATmega328P__
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
-    CONSOLEDEBUGLN("software reset NOW");
+    CONSOLEDEBUGLN(F("software reset NOW"));
     delay(500);
     asm volatile ("  jmp 0");  
 #else     
-    CONSOLEDEBUGLN("WDT reset NOW");
+    CONSOLEDEBUGLN(F("WDT reset NOW"));
     wdt_enable( WDTO_500MS ); 
     while(1) {}
 #endif    
@@ -350,7 +353,7 @@ void KnxTools::reboot() {
 
 bool KnxTools::internalComObject(byte index) {
 
-    CONSOLEDEBUG("internalComObject index=");
+    CONSOLEDEBUG(F("internalComObject index="));
     CONSOLEDEBUGLN(index);
     bool consumed = false;
     switch (index) {
@@ -361,36 +364,37 @@ bool KnxTools::internalComObject(byte index) {
             byte buffer[14];
             Knx.read(0, buffer);
 //            CONSOLEDEBUGLN("done reading 14 bytes");
-
+#ifdef DEBUG_PROTOCOL
             for (int i = 0; i < 14; i++) {
-                CONSOLEDEBUG("buffer[");
+                CONSOLEDEBUG(F("buffer["));
                 CONSOLEDEBUG(i);
-                CONSOLEDEBUG("]\thex=0x");
+                CONSOLEDEBUG(F("]\thex=0x"));
                 CONSOLEDEBUG(buffer[i], HEX);
-                CONSOLEDEBUG("  \tbin=");
+                CONSOLEDEBUG(F("  \tbin="));
                 CONSOLEDEBUGLN(buffer[i], BIN);
             }
+#endif
 
             byte protocolversion = buffer[0];
             byte msgType = buffer[1];
 
-            CONSOLEDEBUG("protocolversion=0x");
+            CONSOLEDEBUG(F("protocolversion=0x"));
             CONSOLEDEBUGLN(protocolversion,HEX);
             
-            CONSOLEDEBUG("msgType=0x");
+            CONSOLEDEBUG(F("msgType=0x"));
             CONSOLEDEBUGLN(msgType,HEX);
 
             if (protocolversion != PROTOCOLVERSION) {
-                CONSOLEDEBUG("Unsupported protocol version. Using ");
+                CONSOLEDEBUG(F("Unsupported protocol version. Using "));
                 CONSOLEDEBUG(PROTOCOLVERSION);
-                CONSOLEDEBUG(" Got: ");
+                CONSOLEDEBUG(F(" Got: "));
                 CONSOLEDEBUG(protocolversion);
-                CONSOLEDEBUGLN("!");
+                CONSOLEDEBUGLN(F("!"));
             } else {
 
                 switch (msgType) {
                     case MSGTYPE_ACK:
-                        CONSOLEDEBUGLN("Will not handle received ACK. Skipping message.");        
+                        CONSOLEDEBUGLN(F("Will not handle received ACK. Skipping message."));
                         break;
                     case MSGTYPE_READ_DEVICE_INFO:
                         handleMsgReadDeviceInfo(buffer);
@@ -423,9 +427,9 @@ bool KnxTools::internalComObject(byte index) {
                         handleMsgReadComObject(buffer);
                         break;
                     default:
-                        CONSOLEDEBUG("Unsupported msgtype: 0x");
+                        CONSOLEDEBUG(F("Unsupported msgtype: 0x"));
                         CONSOLEDEBUG(msgType, HEX);
-                        CONSOLEDEBUGLN(" !!! Skipping message.");
+                        CONSOLEDEBUGLN(F(" !!! Skipping message."));
                         break;
                 }
 
@@ -439,9 +443,9 @@ bool KnxTools::internalComObject(byte index) {
 }
 
 void KnxTools::sendAck(byte errorcode, byte indexinformation){
-    CONSOLEDEBUG("sendAck errorcode=0x");
+    CONSOLEDEBUG(F("sendAck errorcode=0x"));
     CONSOLEDEBUG(errorcode, HEX);
-    CONSOLEDEBUG(" indexinformation=0x");
+    CONSOLEDEBUG(F(" indexinformation=0x"));
     CONSOLEDEBUGLN(indexinformation, HEX);
     byte response[14];
     response[0] = PROTOCOLVERSION;
@@ -457,7 +461,7 @@ void KnxTools::sendAck(byte errorcode, byte indexinformation){
 
 
 void KnxTools::handleMsgReadDeviceInfo(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgReadDeviceInfo");
+    CONSOLEDEBUGLN(F("handleMsgReadDeviceInfo"));
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ANSWER_DEVICE_INFO;
@@ -477,29 +481,35 @@ void KnxTools::handleMsgReadDeviceInfo(byte msg[]) {
 }
 
 void KnxTools::handleMsgRestart(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgRestart");
+    CONSOLEDEBUGLN(F("handleMsgRestart"));
     
     byte hi = (_individualAddress >> 8) & 0xff;
     byte lo = (_individualAddress >> 0) & 0xff;
     
     if (hi==msg[2] && lo==msg[3]) {
-        CONSOLEDEBUGLN("matching IA");    
+#ifdef DEBUG_PROTOCOL
+        CONSOLEDEBUGLN(F("matching IA"));    
+#endif
         // trigger restart
         reboot();
     } else {
-        CONSOLEDEBUGLN("no matching IA");
+#ifdef DEBUG_PROTOCOL
+        CONSOLEDEBUGLN(F("no matching IA"));
+#endif
     }
     
 }
 
 void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgWriteProgrammingMode");
+    CONSOLEDEBUGLN(F("handleMsgWriteProgrammingMode"));
     //word addr = (msg[2] << 8) + (msg[3] << 0);
     
     byte ownHI = (_individualAddress >> 8) & 0xff;
     byte ownLO = (_individualAddress >> 0) & 0xff;
     if (msg[2] == ownHI && msg[3] == ownLO) {
-        CONSOLEDEBUGLN("match");
+#ifdef DEBUG_PROTOCOL
+        CONSOLEDEBUGLN(F("match"));
+#endif
         setProgState(msg[4] == 0x01); 
 #ifdef ESP8266
         if (msg[4] == 0x00) {
@@ -509,13 +519,13 @@ void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
 #endif                
         
     } else {
-        CONSOLEDEBUGLN("no match");
+        CONSOLEDEBUGLN(F("no match"));
     }
     sendAck(0x00, 0x00);
 }
 
 void KnxTools::handleMsgReadProgrammingMode(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgReadProgrammingMode");
+    CONSOLEDEBUGLN(F("handleMsgReadProgrammingMode"));
     if (_progState) {
         byte response[14];
         response[0] = PROTOCOLVERSION;
@@ -537,19 +547,18 @@ void KnxTools::handleMsgReadProgrammingMode(byte msg[]) {
 }
 
 void KnxTools::handleMsgWriteIndividualAddress(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgWriteIndividualAddress");
+    CONSOLEDEBUGLN(F("handleMsgWriteIndividualAddress"));
 #if defined(WRITEMEM)    
     memoryUpdate(EEPROM_INDIVIDUALADDRESS_HI, msg[2]);
     memoryUpdate(EEPROM_INDIVIDUALADDRESS_LO, msg[3]);
     
-    CONSOLEDEBUG("DeviceFlags before=0x");
-    CONSOLEDEBUG(_deviceFlags, HEX);
-    CONSOLEDEBUGLN("");
     // see: http://stackoverflow.com/questions/3920307/how-can-i-remove-a-flag-in-c
     _deviceFlags &= ~0x80; // remove factory setting bit (left most bit))
-    CONSOLEDEBUG("DeviceFlags after =0x");
+#ifdef DEBUG_PROTOCOL
+    CONSOLEDEBUG(F("DeviceFlags after =0x"));
     CONSOLEDEBUG(_deviceFlags, HEX);
-    CONSOLEDEBUGLN("");
+    CONSOLEDEBUGLN(F(""));
+#endif
     
     memoryUpdate(EEPROM_DEVICE_FLAGS, _deviceFlags);
 #endif    
@@ -558,7 +567,7 @@ void KnxTools::handleMsgWriteIndividualAddress(byte msg[]) {
 }
 
 void KnxTools::handleMsgReadIndividualAddress(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgReadIndividualAddress");
+    CONSOLEDEBUGLN(F("handleMsgReadIndividualAddress"));
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;
@@ -578,7 +587,7 @@ void KnxTools::handleMsgReadIndividualAddress(byte msg[]) {
 }
 
 void KnxTools::handleMsgWriteParameter(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgWriteParameter");
+    CONSOLEDEBUGLN(F("handleMsgWriteParameter"));
     
     byte index = msg[2];  
     
@@ -589,18 +598,23 @@ void KnxTools::handleMsgWriteParameter(byte msg[]) {
     
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
-    
-    CONSOLEDEBUG("id=");
+
+#ifdef DEBUG_PROTOCOL
+    CONSOLEDEBUG(F("id="));
     CONSOLEDEBUG(index);
-    CONSOLEDEBUGLN("")
+    CONSOLEDEBUGLN(F(""))
+#endif
+            
 #if defined(WRITEMEM)    
     // write byte by byte
     for (byte i = 0; i < paramLen; i++) {
-        CONSOLEDEBUG(" data[");
+#ifdef DEBUG_PROTOCOL
+        CONSOLEDEBUG(F(" data["));
         CONSOLEDEBUG(i);
-        CONSOLEDEBUG("]=0x");
+        CONSOLEDEBUG(F("]=0x"));
         CONSOLEDEBUG(msg[3 + i],HEX);
-        CONSOLEDEBUGLN("");
+        CONSOLEDEBUGLN(F(""));
+#endif
         //EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
         memoryUpdate(_paramTableStartindex + skipBytes + i, msg[3 + i]);
     }
@@ -609,7 +623,7 @@ void KnxTools::handleMsgWriteParameter(byte msg[]) {
 }
 
 void KnxTools::handleMsgReadParameter(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgReadParameter");
+    CONSOLEDEBUGLN(F("handleMsgReadParameter"));
     byte index = msg[0];
 
     byte paramSize = getParamSize(index);
@@ -637,30 +651,30 @@ void KnxTools::handleMsgReadParameter(byte msg[]) {
 }
 
 void KnxTools::handleMsgWriteComObject(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgWriteComObject");
+    CONSOLEDEBUGLN(F("handleMsgWriteComObject"));
     byte tupels = msg[2];
 
     for (byte tupelNumber = 0; tupelNumber < tupels; tupelNumber++) {
         
         byte tupelOffset = 3 + (tupelNumber*3);
-        
-        CONSOLEDEBUG("tupelOffset=");
-        CONSOLEDEBUGLN(tupelOffset);
-        
         byte comObjId = msg[tupelOffset + 0];
         byte gaHi = msg[tupelOffset + 1];
         byte gaLo = msg[tupelOffset + 2];
         word ga = (gaHi << 8) + (gaLo << 0);
         
-        CONSOLEDEBUG("CO id=");
+#ifdef DEBUG_PROTOCOL
+        CONSOLEDEBUG(F("tupelOffset="));
+        CONSOLEDEBUGLN(tupelOffset);
+        CONSOLEDEBUG(F("CO id="));
         CONSOLEDEBUG(comObjId);
-        CONSOLEDEBUG(" hi=0x");
+        CONSOLEDEBUG(F(" hi=0x"));
         CONSOLEDEBUG(gaHi, HEX);
-        CONSOLEDEBUG(" lo=0x");
+        CONSOLEDEBUG(F(" lo=0x"));
         CONSOLEDEBUG(gaHi, HEX);
-        CONSOLEDEBUG(" ga=0x");
+        CONSOLEDEBUG(F(" ga=0x"));
         CONSOLEDEBUG(ga, HEX);
-        CONSOLEDEBUGLN("");
+        CONSOLEDEBUGLN(F(""));
+#endif
         
         
         e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
@@ -678,7 +692,9 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
 }
 
 void KnxTools::handleMsgReadComObject(byte msg[]) {
-    CONSOLEDEBUGLN("handleMsgReadComObject");
+#ifdef DEBUG_PROTOCOL
+    CONSOLEDEBUGLN(F("handleMsgReadComObject"));
+#endif
     byte numberOfComObjects = msg[2];
 
     byte response[14];
@@ -710,14 +726,14 @@ void KnxTools::handleMsgReadComObject(byte msg[]) {
 void KnxTools::memoryUpdate(int index, byte data){
     
     
-    CONSOLEDEBUG("memUpdate: index=");    
+    CONSOLEDEBUG(F("memUpdate: index="));    
     CONSOLEDEBUG(index);
-    CONSOLEDEBUG(" data=0x");
+    CONSOLEDEBUG(F(" data=0x"));
     CONSOLEDEBUG(data, HEX);
-    CONSOLEDEBUGLN("");
+    CONSOLEDEBUGLN(F(""));
     
 #ifdef ESP8266    
-    CONSOLEDEBUGLN("ESP8266: EEPROM.update");
+    CONSOLEDEBUGLN(F("ESP8266: EEPROM.update"));
     byte d = EEPROM.read(index);
     if (d!=data) {
         EEPROM.write(index, data);
@@ -742,9 +758,9 @@ void KnxTools::memoryUpdate(int index, byte data){
 
 uint8_t KnxTools::getUINT8Param(byte index){    
     if (getParamSize(index)!=PARAM_UINT8) {
-        CONSOLEDEBUG("Requested UINT8 param for index ");
+        CONSOLEDEBUG(F("Requested UINT8 param for index "));
         CONSOLEDEBUG(index);
-        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        CONSOLEDEBUG(F(" but param has different length! Will Return 0."));
         return 0;
     }
     
@@ -756,9 +772,9 @@ uint8_t KnxTools::getUINT8Param(byte index){
 
 int8_t KnxTools::getINT8Param(byte index) {
     if (getParamSize(index)!=PARAM_INT8) {
-        CONSOLEDEBUG("Requested INT8 param for index ");
+        CONSOLEDEBUG(F("Requested INT8 param for index "));
         CONSOLEDEBUG(index);
-        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        CONSOLEDEBUG(F(" but param has different length! Will Return 0."));
         return 0;
     }
     
@@ -770,9 +786,9 @@ int8_t KnxTools::getINT8Param(byte index) {
 
 uint16_t KnxTools::getUINT16Param(byte index) {
     if (getParamSize(index)!=PARAM_UINT16) {
-        CONSOLEDEBUG("Requested UINT16 param for index ");
+        CONSOLEDEBUG(F("Requested UINT16 param for index "));
         CONSOLEDEBUG(index);
-        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        CONSOLEDEBUG(F(" but param has different length! Will Return 0."));
         return 0;
     }
     
@@ -786,20 +802,20 @@ uint16_t KnxTools::getUINT16Param(byte index) {
 
 int16_t KnxTools::getINT16Param(byte index) {
     if (getParamSize(index)!=PARAM_INT16) {
-        CONSOLEDEBUG("Requested INT16 param for index ");
+        CONSOLEDEBUG(F("Requested INT16 param for index "));
         CONSOLEDEBUG(index);
-        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        CONSOLEDEBUG(F(" but param has different length! Will Return 0."));
         return 0;
     }
     
     byte paramValue[2];
     getParamValue(index, paramValue);
     
-    CONSOLEDEBUG(" int16: [1]=0x");
+    CONSOLEDEBUG(F(" int16: [1]=0x"));
     CONSOLEDEBUG(paramValue[0],HEX);
-    CONSOLEDEBUG(" [0]=0x");
+    CONSOLEDEBUG(F(" [0]=0x"));
     CONSOLEDEBUG(paramValue[1],HEX);
-    CONSOLEDEBUGLN("");
+    CONSOLEDEBUGLN(F(""));
     
     int16_t val = (paramValue[1] << 8) + (paramValue[0] << 0);
     
@@ -808,9 +824,9 @@ int16_t KnxTools::getINT16Param(byte index) {
 
 uint32_t KnxTools::getUINT32Param(byte index){
     if (getParamSize(index)!=PARAM_UINT32) {
-        CONSOLEDEBUG("Requested UINT32 param for index ");
+        CONSOLEDEBUG(F("Requested UINT32 param for index "));
         CONSOLEDEBUG(index);
-        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        CONSOLEDEBUG(F(" but param has different length! Will Return 0."));
         return 0;
     }
     
@@ -824,9 +840,9 @@ uint32_t KnxTools::getUINT32Param(byte index){
 
 int32_t KnxTools::getINT32Param(byte index) {
     if (getParamSize(index)!=PARAM_INT32) {
-        CONSOLEDEBUG("Requested UINT32 param for index ");
+        CONSOLEDEBUG(F("Requested UINT32 param for index "));
         CONSOLEDEBUG(index);
-        CONSOLEDEBUG(" but param has different length! Will Return 0.");
+        CONSOLEDEBUG(F(" but param has different length! Will Return 0."));
         return 0;
     }
     
