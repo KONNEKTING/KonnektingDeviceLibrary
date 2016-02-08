@@ -37,7 +37,7 @@
 #define DEBUG
 
 // comment just for debugging purpose to disable memory write
-//#define WRITEMEM 1
+#define WRITEMEM 1
 
 #ifdef DEBUG
 #include <SoftwareSerial.h>
