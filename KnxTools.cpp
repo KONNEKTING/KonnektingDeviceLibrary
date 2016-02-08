@@ -37,7 +37,7 @@
 #define DEBUG
 
 // DEBUG PROTOCOL HANDLING
-#define DEBUG_PROTOCOL
+//#define DEBUG_PROTOCOL
 
 // comment just for debugging purpose to disable memory write
 #define WRITEMEM 1
