@@ -795,7 +795,7 @@ uint16_t KnxTools::getUINT16Param(byte index) {
     byte paramValue[2];
     getParamValue(index, paramValue);
     
-    uint16_t val = (paramValue[1] << 8) + (paramValue[0] << 0);
+    uint16_t val = (paramValue[0] << 8) + (paramValue[1] << 0);
     
     return val;
 }
@@ -817,7 +817,7 @@ int16_t KnxTools::getINT16Param(byte index) {
     CONSOLEDEBUG(paramValue[1],HEX);
     CONSOLEDEBUGLN(F(""));
     
-    int16_t val = (paramValue[1] << 8) + (paramValue[0] << 0);
+    int16_t val = (paramValue[0] << 8) + (paramValue[1] << 0);
     
     return val;
 }
@@ -832,8 +832,8 @@ uint32_t KnxTools::getUINT32Param(byte index){
     
     byte paramValue[4];
     getParamValue(index, paramValue);
-    
-    uint32_t val = (paramValue[1] <<24) + (paramValue[1] <<16) + (paramValue[1] << 8) + (paramValue[0] << 0);
+	
+    uint32_t val = ((uint32_t)paramValue[0] <<24) + ((uint32_t)paramValue[1] <<16) + ((uint32_t)paramValue[2] << 8) + ((uint32_t)paramValue[3] << 0);
     
     return val;
 }
@@ -849,7 +849,7 @@ int32_t KnxTools::getINT32Param(byte index) {
     byte paramValue[4];
     getParamValue(index, paramValue);
     
-    int32_t val = (paramValue[1] <<24) + (paramValue[1] <<16) + (paramValue[1] << 8) + (paramValue[0] << 0);
+    int32_t val = ((uint32_t)paramValue[0] <<24) + ((uint32_t)paramValue[1] <<16) + ((uint32_t)paramValue[2] << 8) + ((uint32_t)paramValue[3] << 0);
     
     return val;
 }
