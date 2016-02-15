@@ -34,7 +34,7 @@
  * if "#define DEBUG" is set, you must run your KONNEKTING Suite with "-Dde.root1.slicknx.konnekting.debug=true" 
  * A release-version of your development MUST NOT contain "#define DEBUG" ...
  */
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #include <SoftwareSerial.h>
@@ -68,33 +68,19 @@ KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMo
 #ifdef DEBUG
     knxTpuartDebugSerial.begin(9600);
 #endif       
-    CONSOLEDEBUGLN(F("1"));
     _rx.state = RX_RESET;
-    CONSOLEDEBUGLN(F("1.1"));
     _rx.addressedComObjectIndex = 0;
-    CONSOLEDEBUGLN(F("1.2"));
     _tx.state = TX_RESET;
-    CONSOLEDEBUGLN(F("1.3"));
     _tx.sentTelegram = NULL;
-    CONSOLEDEBUGLN(F("1.4"));
     _tx.ackFctPtr = NULL;
-    CONSOLEDEBUGLN(F("1.5"));
     _tx.nbRemainingBytes = 0;
-    CONSOLEDEBUGLN(F("1.6"));
     _tx.txByteIndex = 0;
-    CONSOLEDEBUGLN(F("1.7"));
     _stateIndication = 0;
-    CONSOLEDEBUGLN(F("1.8"));
     _evtCallbackFct = NULL;
-    CONSOLEDEBUGLN(F("1.9"));
     _comObjectsList = NULL;
-    CONSOLEDEBUGLN(F("1.10"));
     _assignedComObjectsNb = 0;
-    CONSOLEDEBUGLN(F("1.11"));
     _orderedIndexTable = NULL;
-    CONSOLEDEBUGLN(F("1.12"));
     _stateIndication = 0;
-    CONSOLEDEBUGLN(F("1.13"));
 #if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
     _debugStrPtr = NULL;
 #endif
@@ -117,36 +103,26 @@ KnxTpUart::~KnxTpUart() {
 // Return KNX_TPUART_ERROR in case of TPUART Reset failure
 
 byte KnxTpUart::Reset(void) {
-    CONSOLEDEBUGLN(F("2"));
     word startTime, nowTime;
     byte attempts = 10;
 
-    CONSOLEDEBUGLN(F("3"));
     // HOT RESET case
     if ((_rx.state > RX_RESET) || (_tx.state > TX_RESET)) { 
-        CONSOLEDEBUGLN(F("4"));    
         // stop the serial communication before restarting it
         _serial.end(); 
-        CONSOLEDEBUGLN(F("5"));
         _rx.state = RX_RESET;
         _tx.state = TX_RESET;
     }
-    CONSOLEDEBUGLN(F("6"));
     // CONFIGURATION OF THE ARDUINO USART WITH CORRECT FRAME FORMAT (19200, 8 bits, parity even, 1 stop bit)
     _serial.begin(19200, SERIAL_8E1);
-
-    CONSOLEDEBUGLN(F("7"));
+    
     while (attempts--) { // we send a RESET REQUEST and wait for the reset indication answer
         // the sequence is repeated every sec as long as we do not get the reset indication 
-        CONSOLEDEBUGLN(F("8.1"));
         _serial.write(TPUART_RESET_REQ); // send RESET REQUEST
-        CONSOLEDEBUGLN(F("8.2"));
+        
         for (nowTime = startTime = (word) millis(); TimeDeltaWord(nowTime, startTime) < 1000 /* 1 sec */; nowTime = (word) millis()) {
-//            CONSOLEDEBUGLN(F("9"));
             if (_serial.available() > 0) {
-                CONSOLEDEBUGLN(F("10"));
                 if (_serial.read() == TPUART_RESET_INDICATION) {
-                    CONSOLEDEBUGLN(F("11"));
                     _rx.state = RX_INIT;
                     _tx.state = TX_INIT;
                     DebugInfo("Reset successful\n");
@@ -155,9 +131,7 @@ byte KnxTpUart::Reset(void) {
             }
         } // 1 sec ellapsed
     } // while(attempts--)
-    CONSOLEDEBUGLN(F("12"));
     _serial.end();
-    CONSOLEDEBUGLN(F("13"));
     DebugError("Reset failed, no answer from TPUART device\n");
     return KNX_TPUART_ERROR;
 }
