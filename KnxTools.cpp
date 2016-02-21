@@ -37,7 +37,7 @@
 #define DEBUG
 
 // DEBUG PROTOCOL HANDLING
-//#define DEBUG_PROTOCOL
+#define DEBUG_PROTOCOL
 
 // comment just for debugging purpose to disable memory write
 #define WRITEMEM 1
@@ -676,7 +676,7 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
     CONSOLEDEBUG(F(" hi=0x"));
     CONSOLEDEBUG(gaHi, HEX);
     CONSOLEDEBUG(F(" lo=0x"));
-    CONSOLEDEBUG(gaHi, HEX);
+    CONSOLEDEBUG(gaLo, HEX);
     CONSOLEDEBUG(F(" ga=0x"));
     CONSOLEDEBUG(ga, HEX);
     CONSOLEDEBUG(F(" settings=0x"));
@@ -684,18 +684,27 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
     CONSOLEDEBUGLN(F(""));
 #endif        
         
-    e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
-    if (result != KNX_DEVICE_OK) {
-        // fehler!
-        sendAck(result, comObjId);
-    } else {
+//    e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
+//    if (result != KNX_DEVICE_OK) {
+//        CONSOLEDEBUG(F("ERROR="));
+//        CONSOLEDEBUGLN(result);
+//        // fehler!
+//        sendAck(result, comObjId);
+//        return;
+//    } else {
+    
+    if (comObjId >= Knx.getNumberOfComObjects()) {
+        sendAck(KNX_DEVICE_INVALID_INDEX, comObjId);
+        return;
+    }
+    
 #if defined(WRITEMEM)            
         // write to eeprom?!
         memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+0, gaHi);
         memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+1, gaLo);
         memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+2, settings);
 #endif
-    }
+//    }
 
     sendAck(0x00, 0x00);
 }
