@@ -305,6 +305,14 @@ void KnxTools::toggleProgState() {
     setProgState(_progState); // set
 }
 
+/**
+ * Gets programming state
+ * @return true, if programming is active, false if not
+ */
+bool KnxTools::getProgState() {
+    return _progState ? true : false;
+}
+
 /*
  * Sets thep prog state to given boolean value
  * @param state new prog state

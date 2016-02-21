@@ -98,6 +98,12 @@ public:
      * @return true, if tools are initialized and active, false if not
      */
     bool isActive();
+    
+    /**
+     * Gets programming state
+     * @return true, if programming is active, false if not
+     */
+    bool getProgState();
     //
     //
 private:
