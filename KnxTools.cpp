@@ -172,7 +172,7 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
     CONSOLEDEBUGLN(Knx.getNumberOfComObjects());
 
     // calc index of parameter table in eeprom --> depends on number of com objects
-    _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 2);
+    _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
 
     _deviceFlags = EEPROM.read(EEPROM_DEVICE_FLAGS);
     
@@ -195,8 +195,9 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
         // ComObjects
         // at most 255 com objects
         for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
-            byte hi = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*2));
-            byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*2) + 1);
+            byte hi = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*3));
+            byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*3) + 1);
+            byte settings = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i*3) + 2);
             word comObjAddr = (hi << 8) + (lo << 0);
             Knx.setComObjectAddress((i+1), comObjAddr);
             CONSOLEDEBUG(F("ComObj index="));
@@ -209,6 +210,8 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
             CONSOLEDEBUG(lo,HEX );
             CONSOLEDEBUG(F(" GA: 0x"));
             CONSOLEDEBUG(comObjAddr, HEX);
+            CONSOLEDEBUG(F(" Settings: 0x"));
+            CONSOLEDEBUG(settings, HEX);
             CONSOLEDEBUGLN(F(""));
         }
 
@@ -686,13 +689,14 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
         
         
         e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
-        if (result != KNX_DEVICE_ERROR) {
+        if (result != KNX_DEVICE_OK) {
+            // fehler!
             sendAck(result, comObjId);
         } else {
 #if defined(WRITEMEM)            
             // write to eeprom?!
-            memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*2)+0, gaHi);
-            memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*2)+1, gaLo);
+            memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+0, gaHi);
+            memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+1, gaLo);
 #endif
         }
     }

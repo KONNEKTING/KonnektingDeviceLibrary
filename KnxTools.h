@@ -35,10 +35,6 @@
 #include <avr/wdt.h>
 #endif
 
-#ifdef ESP8266
-#define LED_BUILTIN 16
-#endif
-
 #define PARAM_INT8 1
 #define PARAM_UINT8 1
 #define PARAM_INT16 2
