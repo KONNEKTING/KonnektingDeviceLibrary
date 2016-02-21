@@ -663,43 +663,40 @@ void KnxTools::handleMsgReadParameter(byte msg[]) {
 
 void KnxTools::handleMsgWriteComObject(byte msg[]) {
     CONSOLEDEBUGLN(F("handleMsgWriteComObject"));
-    byte tupels = msg[2];
-
-    for (byte tupelNumber = 0; tupelNumber < tupels; tupelNumber++) {
-        
-        byte tupelOffset = 3 + (tupelNumber*3);
-        byte comObjId = msg[tupelOffset + 0];
-        byte gaHi = msg[tupelOffset + 1];
-        byte gaLo = msg[tupelOffset + 2];
-        word ga = (gaHi << 8) + (gaLo << 0);
+ 
+    byte comObjId = msg[2];
+    byte gaHi = msg[3];
+    byte gaLo = msg[4];
+    byte settings = msg[5];
+    word ga = (gaHi << 8) + (gaLo << 0);
         
 #ifdef DEBUG_PROTOCOL
-        CONSOLEDEBUG(F("tupelOffset="));
-        CONSOLEDEBUGLN(tupelOffset);
-        CONSOLEDEBUG(F("CO id="));
-        CONSOLEDEBUG(comObjId);
-        CONSOLEDEBUG(F(" hi=0x"));
-        CONSOLEDEBUG(gaHi, HEX);
-        CONSOLEDEBUG(F(" lo=0x"));
-        CONSOLEDEBUG(gaHi, HEX);
-        CONSOLEDEBUG(F(" ga=0x"));
-        CONSOLEDEBUG(ga, HEX);
-        CONSOLEDEBUGLN(F(""));
-#endif
+    CONSOLEDEBUG(F("CO id="));
+    CONSOLEDEBUG(comObjId);
+    CONSOLEDEBUG(F(" hi=0x"));
+    CONSOLEDEBUG(gaHi, HEX);
+    CONSOLEDEBUG(F(" lo=0x"));
+    CONSOLEDEBUG(gaHi, HEX);
+    CONSOLEDEBUG(F(" ga=0x"));
+    CONSOLEDEBUG(ga, HEX);
+    CONSOLEDEBUG(F(" settings=0x"));
+    CONSOLEDEBUG(settings, HEX);        
+    CONSOLEDEBUGLN(F(""));
+#endif        
         
-        
-        e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
-        if (result != KNX_DEVICE_OK) {
-            // fehler!
-            sendAck(result, comObjId);
-        } else {
+    e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
+    if (result != KNX_DEVICE_OK) {
+        // fehler!
+        sendAck(result, comObjId);
+    } else {
 #if defined(WRITEMEM)            
-            // write to eeprom?!
-            memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+0, gaHi);
-            memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+1, gaLo);
+        // write to eeprom?!
+        memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+0, gaHi);
+        memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+1, gaLo);
+        memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId*3)+2, settings);
 #endif
-        }
     }
+
     sendAck(0x00, 0x00);
 }
 
@@ -707,32 +704,26 @@ void KnxTools::handleMsgReadComObject(byte msg[]) {
 #ifdef DEBUG_PROTOCOL
     CONSOLEDEBUGLN(F("handleMsgReadComObject"));
 #endif
-    byte numberOfComObjects = msg[2];
+    
+    byte comObjId = msg[2];  
+
+        
+    word ga = Knx.getComObjectAddress(comObjId);
 
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ANSWER_COM_OBJECT;
-    response[2] = numberOfComObjects;
-    
-    for (byte i=0; i<numberOfComObjects; i++) {
-        
-        byte comObjId = msg[3+i];
-        word ga = Knx.getComObjectAddress(comObjId);
-        
-        byte tupelOffset = 3 + ((i - 1)*3);
-        response[tupelOffset+0] = comObjId;
-        response[tupelOffset+1] = (ga >> 8) & 0xff; // GA Hi
-        response[tupelOffset+2] = (ga >> 0) & 0xff; // GA Lo
-        
-    }
+    response[2] = comObjId;
+    response[3] = (ga >> 8) & 0xff; // GA Hi
+    response[4] = (ga >> 0) & 0xff; // GA Lo
+    response[5] = 0x00; // Settings
 
     // fill rest with 0x00
-    for (byte i = 0; i < 11 - (numberOfComObjects*3); i++) {
-        response[3 + (numberOfComObjects*3) + i] = 0;
+    for (byte i = 6; i < 13; i++) {
+        response[i] = 0;
     }
 
     Knx.write(0, response);
-
 }
 
 void KnxTools::memoryUpdate(int index, byte data){
