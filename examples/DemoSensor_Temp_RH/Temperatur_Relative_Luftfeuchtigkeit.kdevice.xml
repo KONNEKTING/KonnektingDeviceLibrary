@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KonnektingDevice xmlns="http://konnekting.de/xml/KonnektingDevice/v0">
+    <Device ManufacturerId="57005" DeviceId="1" Revision="0">
+        <ManufacturerName>KONNEKTING</ManufacturerName>
+        <DeviceName>Temperatur / Relative Luftfeuchtigkeit</DeviceName>
+        <Parameters>
+            <Group name="Allgemein">
+                <Parameter Id="0">
+                    <Description>Geräteanlaufzeit [0..255sek]</Description>
+                    <Value Type="uint8" Default="00" Options="" Min="00" Max="FF"/>
+                </Parameter>
+            </Group>
+            <Group name="Temperatur">
+                <Parameter Id="1">
+                    <Description>Aktualisierung senden</Description>
+                    <Value Type="uint8" Default="01" Options="00=zyklisch|01=nur bei Änderung"/>
+                </Parameter>
+                <Parameter Id="2">
+                    <Description>Zyklus [s]</Description>
+                    <Value Type="uint32" Default="0000001E" Options="" Min="00000000" Max="000FFFFF"/>
+                </Parameter>
+                <Parameter Id="3">
+                    <Description>Temperaturänderung</Description>
+                    <Value Type="uint8" Default="02" Options="01=0,1°|02=0,2°|03=0,3°|04=0,4°|05=0,5°|06=0,6°|07=0,7°|08=0,8°|09=0,1°|10=1°|15=1,5°|20=2°"/>
+                </Parameter>
+                <Parameter Id="4">
+                    <Description>Wert senden bei der Unterschreitung</Description>
+                    <Value Type="uint8" Default="FF" Options="01=ein|00=aus|FF=nicht verwenden"/>
+                </Parameter>
+                <Parameter Id="5">
+                    <Description>Untere Grenze [°]</Description>
+                    <Value Type="int16" Default="0000" Options="" Min="0000" Max="7FFF"/>
+                </Parameter>
+                <Parameter Id="6">
+                    <Description>Wert senden bei der Überschreitung</Description>
+                    <Value Type="uint8" Default="FF" Options="01=ein|00=aus|FF=nicht verwenden"/>
+                </Parameter>
+                <Parameter Id="7">
+                    <Description>Obere Grenze [°]</Description>
+                    <Value Type="int16" Default="0000" Options="" Min="0000" Max="7FFF"/>
+                </Parameter>
+            </Group>
+            <Group name="Relative Luftfeuchtigkeit">
+                <Parameter Id="8">
+                    <Description>Aktualisierung senden</Description>
+                    <Value Type="uint8" Default="01" Options="00=zyklisch|01=nur bei Änderung"/>
+                </Parameter>
+                <Parameter Id="9">
+                    <Description>Zyklus [s]</Description>
+                    <Value Type="uint32" Default="0000001E" Options="" Min="00000000" Max="000FFFFF"/>
+                </Parameter>
+                <Parameter Id="10">
+                    <Description>Luftfeuchtigkeitsänderung</Description>
+                    <Value Type="uint8" Default="10" Options="05=0,5%|10=1%|15=1,5%|20=2%|25=2,5%|30=3%|35=3,5%|40=4%"/>
+                </Parameter>
+                <Parameter Id="11">
+                    <Description>Wert senden bei der Unterschreitung</Description>
+                    <Value Type="uint8" Default="FF" Options="01=ein|00=aus|FF=nicht verwenden"/>
+                </Parameter>
+                <Parameter Id="12">
+                    <Description>Untere Grenze [%]</Description>
+                    <Value Type="int16" Default="0000" Options="" Min="0000" Max="7FFF"/>
+                </Parameter>
+                <Parameter Id="13">
+                    <Description>Wert senden bei der Überschreitung</Description>
+                    <Value Type="uint8" Default="FF" Options="01=ein|00=aus|FF=nicht verwenden"/>
+                </Parameter>
+                <Parameter Id="14">
+                    <Description>Obere Grenze [%]</Description>
+                    <Value Type="int16" Default="0000" Options="" Min="0000" Max="7FFF"/>
+                </Parameter>
+            </Group>
+        </Parameters>
+        <CommObjects>
+            <CommObject Id="0">
+                <Name>Temperatur</Name>
+                <Function>Messwert</Function>
+                <DataPointType>9.001</DataPointType>
+            </CommObject>
+            <CommObject Id="1">
+                <Name>Temperatur</Name>
+                <Function>Untere Grenze erreicht</Function>
+                <DataPointType>1.001</DataPointType>
+            </CommObject>
+            <CommObject Id="2">
+                <Name>Temperatur</Name>
+                <Function>Obere Grenze erreicht</Function>
+                <DataPointType>1.001</DataPointType>
+            </CommObject>
+            <CommObject Id="3">
+                <Name>Relative Luftfeuchtigkeit</Name>
+                <Function>Messwert</Function>
+                <DataPointType>9.007</DataPointType>
+            </CommObject>
+            <CommObject Id="4">
+                <Name>Relative Luftfeuchtigkeit</Name>
+                <Function>Untere Grenze erreicht</Function>
+                <DataPointType>1.001</DataPointType>
+            </CommObject>
+            <CommObject Id="5">
+                <Name>Relative Luftfeuchtigkeit</Name>
+                <Function>Obere Grenze erreicht</Function>
+                <DataPointType>1.001</DataPointType>
+            </CommObject>
+        </CommObjects>
+    </Device>
+</KonnektingDevice>
