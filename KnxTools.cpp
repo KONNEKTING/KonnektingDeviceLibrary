@@ -682,6 +682,14 @@ void KnxTools::handleMsgWriteComObject(byte msg[]) {
     CONSOLEDEBUG(F(" settings=0x"));
     CONSOLEDEBUG(settings, HEX);        
     CONSOLEDEBUGLN(F(""));
+    
+    bool foundWrongUndefined = false;
+    for (int i=6;i<13;i++) {
+        if (msg[i]!=0x00) foundWrongUndefined = true;
+    }
+    if (foundWrongUndefined) {
+        CONSOLEDEBUGLN("!!!!!!!!!!! WARNING: Suite is sending wrong data. Ensure Suite version matches the Device Lib !!!!!");        
+    }
 #endif        
         
 //    e_KnxDeviceStatus result = Knx.setComObjectAddress(comObjId, ga);
