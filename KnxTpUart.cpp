@@ -27,7 +27,10 @@
 // Module dependencies : HardwareSerial, KnxTelegram, KnxComObject
 
 #include "KnxTpUart.h"
+
+#ifndef ESP8266 
 #include <avr/pgmspace.h>
+#endif
 
 /*
  * !!!!! IMPORTANT !!!!!
