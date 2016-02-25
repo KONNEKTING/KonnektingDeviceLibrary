@@ -125,6 +125,8 @@ private:
 
     void setProgState(bool state);
     bool isFactorySetting();
+    
+    bool isMatchingIA(byte hi, byte lo);
 
     void reboot();
 
