@@ -94,6 +94,7 @@ public:
      * @return true, if tools are initialized and active, false if not
      */
     bool isActive();
+    bool isFactorySetting();
     
     /**
      * Gets programming state
@@ -124,7 +125,7 @@ private:
     int calcParamSkipBytes(byte index);
 
     void setProgState(bool state);
-    bool isFactorySetting();
+    
     
     bool isMatchingIA(byte hi, byte lo);
 

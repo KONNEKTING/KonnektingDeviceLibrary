@@ -532,6 +532,7 @@ void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
         CONSOLEDEBUGLN(F("matching IA"));
 #endif
         setProgState(msg[4] == 0x01);
+        sendAck(0x00, 0x00);
 #ifdef ESP8266
         if (msg[4] == 0x00) {
             CONSOLEDEBUGLN("ESP8266: EEPROM.commit()");
@@ -542,7 +543,6 @@ void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
     } else {
         CONSOLEDEBUGLN(F("no matching IA"));
     }
-    sendAck(0x00, 0x00);
 }
 
 void KnxTools::handleMsgReadProgrammingMode(byte msg[]) {
