@@ -1,5 +1,5 @@
 // comment following line to disable DEBUG mode
-//#define DEBUG debugSerial
+#define DEBUG debugSerial
 
 // no need to comment, you can leave it as it is as long you do not change the "#define DEBUG debugSerial" line
 #ifdef DEBUG
@@ -121,22 +121,21 @@ void setup() {
 #ifdef DEBUG
     DEBUG.begin(9600);
 #endif
+    // Initialize KNX enabled Arduino Board
+    Tools.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
 
     int startDelay = (int) Tools.getUINT8Param(0);
     if (startDelay > 0) {
 #ifdef DEBUG  
-        DEBUG.print("start delay for ");
+        DEBUG.print("delay for ");
         DEBUG.print(startDelay);
-        DEBUG.println(" s");
+        DEBUG.println("s");
 #endif
-        //  delay(startDelay*1000);
+        delay(startDelay*1000);
 #ifdef DEBUG  
         DEBUG.println("ready!");
 #endif
     }
-
-    // Initialize KNX enabled Arduino Board
-    Tools.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
 
     htu.begin();
 
@@ -221,11 +220,3 @@ void loop() {
         }
     }
 }
-
-
-
-
-
-
-
-
