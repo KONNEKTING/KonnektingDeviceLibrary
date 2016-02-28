@@ -14,14 +14,14 @@ SoftwareSerial debugSerial(10, 11); // RX, TX
 
 
 // defaults to on-board LED for AVR Arduinos
-#define PROG_LED_PIN LED_BUILTIN  
+#define PROG_LED_PIN 8
 
 // define programming-button PIN
 #define PROG_BUTTON_PIN 3
 
 // Define KONNEKTING Device related IDs
 #define MANUFACTURER_ID 57005
-#define DEVICE_ID 1
+#define DEVICE_ID 2
 #define REVISION 0
 
 // define KNX Transceiver serial port
@@ -37,12 +37,12 @@ KnxComObject KnxDevice::_comObjectsList[] = {
                             
     // Currently, Sketch Index and Suite Index differ for ComObjects :-(
                             
-    /* Sketch-Index 1, Suite-Index 0 : */ KnxComObject(G_ADDR(0, 0, 1), KNX_DPT_9_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 2, Suite-Index 1 : */ KnxComObject(G_ADDR(0, 0, 2), KNX_DPT_1_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 3, Suite-Index 2 : */ KnxComObject(G_ADDR(0, 0, 3), KNX_DPT_1_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 4, Suite-Index 3 : */ KnxComObject(G_ADDR(0, 0, 4), KNX_DPT_9_007, COM_OBJ_SENSOR),
-    /* Sketch-Index 5, Suite-Index 4 : */ KnxComObject(G_ADDR(0, 0, 5), KNX_DPT_1_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 6, Suite-Index 5 : */ KnxComObject(G_ADDR(0, 0, 6), KNX_DPT_1_001, COM_OBJ_SENSOR),
+    /* Sketch-Index 1, Suite-Index 0 : */ KnxComObject(KNX_DPT_9_001, COM_OBJ_SENSOR),
+    /* Sketch-Index 2, Suite-Index 1 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
+    /* Sketch-Index 3, Suite-Index 2 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
+    /* Sketch-Index 4, Suite-Index 3 : */ KnxComObject(KNX_DPT_9_007, COM_OBJ_SENSOR),
+    /* Sketch-Index 5, Suite-Index 4 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
+    /* Sketch-Index 6, Suite-Index 5 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
 };
 const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
 
@@ -131,7 +131,7 @@ void setup() {
         DEBUG.print(startDelay);
         DEBUG.println("s");
 #endif
-        delay(startDelay*1000);
+        //delay(startDelay*1000);
 #ifdef DEBUG  
         DEBUG.println("ready!");
 #endif
@@ -170,10 +170,14 @@ void loop() {
         // Get temperature
         if ((currentTime - previousTimeTemp) >= intervalTempUser) {
             
+            long start = micros();
             currentTemp = htu.readTemperature();
+            long end = micros();
 #ifdef DEBUG  
             DEBUG.print("currentTemp: ");
             DEBUG.println(currentTemp);
+            DEBUG.print("time: ");
+            DEBUG.println((end-start));
 #endif
             if (currentTemp < 900) {
                 switch (typeTemp) {
@@ -195,10 +199,15 @@ void loop() {
         }
         // Get humidity
         if ((currentTime - previousTimeHumd) >= intervalHumdUser) {
+            long start = micros();
             currentHumd = htu.readHumidity();
+            long end = micros();
+            
 #ifdef DEBUG 
             DEBUG.print("currentHumd: ");
             DEBUG.println(currentHumd);
+            DEBUG.print("time: ");
+            DEBUG.println((end-start));
 #endif
             if (currentHumd < 900) {
                 

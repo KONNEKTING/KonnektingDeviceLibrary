@@ -199,7 +199,9 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
             byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
             byte settings = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
             word comObjAddr = (hi << 8) + (lo << 0);
-            Knx.setComObjectAddress((i + 1), comObjAddr);
+            bool active = (settings & 0x80 == 0x80);
+            Knx.setComObjectAddress((i + 1), comObjAddr, active);
+            
             CONSOLEDEBUG(F("ComObj index="));
             CONSOLEDEBUG((i + 1));
             CONSOLEDEBUG(F(" Suite-ID="));
@@ -341,7 +343,10 @@ bool KnxTools::isMatchingIA(byte hi, byte lo) {
 
 KnxComObject KnxTools::createProgComObject() {
     CONSOLEDEBUGLN(F("createProgComObject"));
-    return /* Index 0 */ KnxComObject(G_ADDR(15, 7, 255), KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
+    KnxComObject p = KnxComObject(KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
+    p.SetAddr(G_ADDR(15, 7, 255));
+    p.setActive(true);
+    return /* Index 0 */ p;
 }
 
 /**

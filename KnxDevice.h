@@ -232,7 +232,7 @@ class KnxDevice {
      * Overwriting is allowed only when the KnxDevice is in INIT state
      * Typically usage is end-user application stored Group Address in EEPROM
      */
-    e_KnxDeviceStatus setComObjectAddress(byte index, word addr);
+    e_KnxDeviceStatus setComObjectAddress(byte index, word addr, bool active);
     
     /*
      *  Gets the address of an commobjects

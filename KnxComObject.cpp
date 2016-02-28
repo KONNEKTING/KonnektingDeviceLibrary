@@ -39,10 +39,11 @@ byte lengthCalculation(e_KnxDPT_ID dptId) {
 KnxComObject::KnxComObject(word addr, e_KnxDPT_ID dptId, e_KnxPriority prio, byte indicator )
 : _addr(addr), _dptId(dptId), _indicator(indicator), _length(lengthCalculation(dptId)), _prio(prio)
 #else
-KnxComObject::KnxComObject(word addr, e_KnxDPT_ID dptId, byte indicator )
-: _addr(addr), _dptId(dptId), _indicator(indicator), _length(lengthCalculation(dptId))
+KnxComObject::KnxComObject(e_KnxDPT_ID dptId, byte indicator )
+: _dptId(dptId), _indicator(indicator), _length(lengthCalculation(dptId))
 #endif
 {
+    _active = false;
 	if (_length <= 2) _longValue = NULL; // short value case
 	else { // long value case
 		_longValue = (byte *) malloc(_length-1);
@@ -56,6 +57,13 @@ KnxComObject::KnxComObject(word addr, e_KnxDPT_ID dptId, byte indicator )
 // Destructor
 KnxComObject::~KnxComObject() { if (_length > 2) free(_longValue); }
 
+bool KnxComObject::isActive() {
+    return _active;
+}
+
+void KnxComObject::setActive(bool flag) {
+    _active = flag;
+}
 
 
 // Get the com obj value (short and long value cases)

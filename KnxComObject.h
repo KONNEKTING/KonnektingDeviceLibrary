@@ -67,7 +67,12 @@
 #define KNX_COM_OBJECT_ERROR    255
 
 class KnxComObject {
-    word _addr; // Group Address value
+    
+    // true: CO can be used, false: CO is "offline"
+    bool _active;
+    
+    // Group Address value
+    word _addr; 
 
     const byte _dptId; // Datapoint type
 
@@ -103,10 +108,13 @@ public:
 #ifdef KNX_COM_OBJ_SUPPORT_ALL_PRIORITIES	
     KnxComObject(word addr, e_KnxDPT_ID dptId, e_KnxPriority prio, byte indicator);
 #else
-    KnxComObject(word addr, e_KnxDPT_ID dptId, byte indicator);
+    KnxComObject(e_KnxDPT_ID dptId, byte indicator);
 #endif
     // Destructor
     ~KnxComObject();
+    
+    bool isActive(void);
+    void setActive(bool flag);
 
     // INLINED functions (see definitions later in this file)
     word GetAddr(void) const;

@@ -345,10 +345,11 @@ boolean KnxDevice::isActive(void) const {
 // Overwrite the address of an attache Com Object
 // Overwriting is allowed only when the KnxDevice is in INIT state
 // Typically usage is end-user application stored Group Address in EEPROM
-e_KnxDeviceStatus KnxDevice::setComObjectAddress(byte index, word addr) {
+e_KnxDeviceStatus KnxDevice::setComObjectAddress(byte index, word addr, bool active) {
     if (_state != INIT) return KNX_DEVICE_INIT_ERROR;
     if (index >= _numberOfComObjects) return KNX_DEVICE_INVALID_INDEX;
     _comObjectsList[index].SetAddr(addr);
+    _comObjectsList[index].setActive(active);
     return KNX_DEVICE_OK;
 }
 

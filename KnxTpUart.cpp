@@ -526,7 +526,13 @@ boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
     if (i > searchIndexStop) return false; // Address is NOT part of the assigned addresses
     // Address is part of the assigned addresses
     index = _orderedIndexTable[i];
-    return true;
+    if (_comObjectsList[index].isActive()) {
+        // CO is found AND is active
+        return true;
+    } else {
+        // CO is found but is NOT active
+        return false;
+    }
 }
 
 
