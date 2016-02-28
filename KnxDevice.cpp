@@ -263,6 +263,10 @@ e_KnxDeviceStatus KnxDevice::read(byte objectIndex, byte returnedValue[]) {
 template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T value) {
     type_tx_action action;
     byte *destValue;
+    
+    if (!_comObjectsList[objectIndex].isActive()) {
+        return KNX_DEVICE_COMOBJ_INACTIVE;
+    }
     byte length = _comObjectsList[objectIndex].GetLength();
 
     if (length <= 2) action.byteValue = (byte) value; // short object case
