@@ -101,8 +101,9 @@ public:
      * @return true, if programming is active, false if not
      */
     bool getProgState();
-    //
-    //
+
+    int getFreeEepromOffset();
+    
 private:
 
     bool _initialized = false;

@@ -888,3 +888,12 @@ int32_t KnxTools::getINT32Param(byte index) {
 
     return val;
 }
+
+int KnxTools::getFreeEepromOffset(){
+
+    int offset = _paramTableStartindex;
+    for(int i = 0; i <_numberOfParams; i++){
+        offset += _paramSizeList[i];
+    }
+    return offset;
+}
