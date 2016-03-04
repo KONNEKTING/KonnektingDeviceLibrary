@@ -106,6 +106,7 @@ public:
     
 private:
 
+    bool _rebootRequired = false;
     bool _initialized = false;
 
     word _individualAddress;

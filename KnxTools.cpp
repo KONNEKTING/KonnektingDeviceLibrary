@@ -194,12 +194,13 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
 
         // ComObjects
         // at most 255 com objects
-        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
+        for (byte i = 0; i < Knx.getNumberOfComObjects()-1; i++) {
             byte hi = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3));
             byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
             byte settings = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
             word comObjAddr = (hi << 8) + (lo << 0);
-            bool active = (settings & 0x80 == 0x80);
+            
+            bool active = ((settings & 0x80) == 0x80);
             Knx.setComObjectAddress((i + 1), comObjAddr, active);
             
             CONSOLEDEBUG(F("ComObj index="));
@@ -214,6 +215,8 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
             CONSOLEDEBUG(comObjAddr, HEX);
             CONSOLEDEBUG(F(" Settings: 0x"));
             CONSOLEDEBUG(settings, HEX);
+            CONSOLEDEBUG(F(" Active: "));
+            CONSOLEDEBUG(active, DEC);
             CONSOLEDEBUGLN(F(""));
         }
 
@@ -303,11 +306,15 @@ void KnxToolsProgButtonPressed() {
 }
 
 /*
- * toggle the actually ProgState
+ * User-toggle the actually ProgState
  */
 void KnxTools::toggleProgState() {
     _progState = !_progState; // toggle
     setProgState(_progState); // set
+    if (_rebootRequired) {
+        CONSOLEDEBUGLN(F("EEPROM changed, triggering reboot"));
+        reboot();
+    }
 }
 
 /**
@@ -775,11 +782,12 @@ void KnxTools::memoryUpdate(int index, byte data) {
     }
 #else
     EEPROM.update(index, data);
-    delay(10); // really required?
+//    delay(10); // really required?
 #endif   
-    if (isFactorySetting()) {
-
-    }
+    
+    // EEPROM has been changed, reboot will be required
+    _rebootRequired = true;
+    
 }
 
 /*
