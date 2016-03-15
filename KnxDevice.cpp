@@ -236,12 +236,12 @@ template <typename T> e_KnxDeviceStatus KnxDevice::read(byte objectIndex, T& ret
 }
 
 template e_KnxDeviceStatus KnxDevice::read <bool>(byte objectIndex, bool& returnedValue);
-template e_KnxDeviceStatus KnxDevice::read <char>(byte objectIndex, char& returnedValue);
-template e_KnxDeviceStatus KnxDevice::read <unsigned char>(byte objectIndex, unsigned char& returnedValue);
-template e_KnxDeviceStatus KnxDevice::read <unsigned int>(byte objectIndex, unsigned int& returnedValue);
+template e_KnxDeviceStatus KnxDevice::read <short>(byte objectIndex, short& returnedValue);
+template e_KnxDeviceStatus KnxDevice::read <unsigned short>(byte objectIndex, unsigned short& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <int>(byte objectIndex, int& returnedValue);
-template e_KnxDeviceStatus KnxDevice::read <unsigned long>(byte objectIndex, unsigned long& returnedValue);
+template e_KnxDeviceStatus KnxDevice::read <unsigned int>(byte objectIndex, unsigned int& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <long>(byte objectIndex, long& returnedValue);
+template e_KnxDeviceStatus KnxDevice::read <unsigned long>(byte objectIndex, unsigned long& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <float>(byte objectIndex, float& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <double>(byte objectIndex, double& returnedValue);
 
@@ -287,12 +287,12 @@ template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T val
 }
 
 template e_KnxDeviceStatus KnxDevice::write <bool>(byte objectIndex, bool value);
-template e_KnxDeviceStatus KnxDevice::write <unsigned char>(byte objectIndex, unsigned char value);
-template e_KnxDeviceStatus KnxDevice::write <char>(byte objectIndex, char value);
-template e_KnxDeviceStatus KnxDevice::write <unsigned int>(byte objectIndex, unsigned int value);
+template e_KnxDeviceStatus KnxDevice::write <short>(byte objectIndex, short value);
+template e_KnxDeviceStatus KnxDevice::write <unsigned short>(byte objectIndex, unsigned short value);
 template e_KnxDeviceStatus KnxDevice::write <int>(byte objectIndex, int value);
-template e_KnxDeviceStatus KnxDevice::write <unsigned long>(byte objectIndex, unsigned long value);
+template e_KnxDeviceStatus KnxDevice::write <unsigned int>(byte objectIndex, unsigned int value);
 template e_KnxDeviceStatus KnxDevice::write <long>(byte objectIndex, long value);
+template e_KnxDeviceStatus KnxDevice::write <unsigned long>(byte objectIndex, unsigned long value);
 template e_KnxDeviceStatus KnxDevice::write <float>(byte objectIndex, float value);
 template e_KnxDeviceStatus KnxDevice::write <double>(byte objectIndex, double value);
 
