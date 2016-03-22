@@ -194,15 +194,15 @@ void KnxTools::init(HardwareSerial& serial, int progButtonPin, int progLedPin, w
 
         // ComObjects
         // at most 255 com objects
-        for (byte i = 0; i < Knx.getNumberOfComObjects()-1; i++) {
+        for (byte i = 0; i < Knx.getNumberOfComObjects() - 1; i++) {
             byte hi = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3));
             byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
             byte settings = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
             word comObjAddr = (hi << 8) + (lo << 0);
-            
+
             bool active = ((settings & 0x80) == 0x80);
             Knx.setComObjectAddress((i + 1), comObjAddr, active);
-            
+
             CONSOLEDEBUG(F("ComObj index="));
             CONSOLEDEBUG((i + 1));
             CONSOLEDEBUG(F(" Suite-ID="));
@@ -538,7 +538,7 @@ void KnxTools::handleMsgWriteProgrammingMode(byte msg[]) {
     CONSOLEDEBUGLN(F("handleMsgWriteProgrammingMode"));
     //word addr = (msg[2] << 8) + (msg[3] << 0);
 
-    
+
     if (isMatchingIA(msg[2], msg[3])) {
 #ifdef DEBUG_PROTOCOL
         CONSOLEDEBUGLN(F("matching IA"));
@@ -782,12 +782,12 @@ void KnxTools::memoryUpdate(int index, byte data) {
     }
 #else
     EEPROM.update(index, data);
-//    delay(10); // really required?
+    //    delay(10); // really required?
 #endif   
-    
+
     // EEPROM has been changed, reboot will be required
     _rebootRequired = true;
-    
+
 }
 
 /*
@@ -897,10 +897,10 @@ int32_t KnxTools::getINT32Param(byte index) {
     return val;
 }
 
-int KnxTools::getFreeEepromOffset(){
+int KnxTools::getFreeEepromOffset() {
 
     int offset = _paramTableStartindex;
-    for(int i = 0; i <_numberOfParams; i++){
+    for (int i = 0; i < _numberOfParams; i++) {
         offset += _paramSizeList[i];
     }
     return offset;
