@@ -41,6 +41,17 @@
 #define PARAM_UINT16 2
 #define PARAM_INT32 4
 #define PARAM_UINT32 4
+#define PARAM_RAW1 1
+#define PARAM_RAW2 2
+#define PARAM_RAW3 3
+#define PARAM_RAW4 4
+#define PARAM_RAW5 5
+#define PARAM_RAW6 6
+#define PARAM_RAW7 7
+#define PARAM_RAW8 8
+#define PARAM_RAW9 9
+#define PARAM_RAW10 10
+#define PARAM_RAW11 11
 
 
 // process intercepted knxEvents-calls with this method
