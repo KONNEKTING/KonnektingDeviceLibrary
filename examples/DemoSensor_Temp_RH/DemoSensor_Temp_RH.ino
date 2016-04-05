@@ -21,7 +21,7 @@ SoftwareSerial debugSerial(10, 11); // RX, TX
 
 // Define KONNEKTING Device related IDs
 #define MANUFACTURER_ID 57005
-#define DEVICE_ID 2
+#define DEVICE_ID 1
 #define REVISION 0
 
 // define KNX Transceiver serial port
