@@ -24,10 +24,10 @@ SoftwareSerial debugSerial(10, 11); // RX, TX for all others
 //define hardcoded address 1.1.199 
 byte hiAddr = 0x11;
 byte loAddr = 0xc7;
-//define hardcoded listen GA 0/0/1 
+//define hardcoded listen GA 0/0/1 for LED toggle
 byte hiGA1 = 0x00;
 byte loGA1 = 0x01;
-//define hardcoded LED toggle GA 0/0/2
+//define hardcoded GA 0/0/2 for sending true/false with delay
 byte hiGA2 = 0x00;
 byte loGA2 = 0x02;
 
