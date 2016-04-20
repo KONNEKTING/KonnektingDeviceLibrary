@@ -145,8 +145,8 @@ void loop() {
     Knx.task();
     unsigned long currentTime = millis();
     
-    // only do measurements and other sketch related stuff if not in programming mode
-    if (!Tools.getProgState()) {
+    // only do measurements and other sketch related stuff if not in programming mode & not with factory settings
+    if (!Tools.getProgState() && !Tools.isFactorySetting()) {
         
         // Get temperature
         if ((currentTime - previousTimeTemp) >= intervalTempUser) {
