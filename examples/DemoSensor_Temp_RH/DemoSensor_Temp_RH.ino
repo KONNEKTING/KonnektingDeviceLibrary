@@ -4,7 +4,7 @@
 // no need to comment, you can leave it as it is as long you do not change the "#define DEBUG debugSerial" line
 #ifdef DEBUG
 #include <SoftwareSerial.h>
-SoftwareSerial debugSerial(10, 11); // RX, TX
+SoftwareSerial debugSerial(11, 10); // RX, TX
 #endif
 
 // include KnxDevice library
@@ -123,17 +123,17 @@ void setup() {
 #endif
     // Initialize KNX enabled Arduino Board
     Tools.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
-
-    int startDelay = (int) Tools.getUINT8Param(0);
-    if (startDelay > 0) {
+    if (!Tools.isFactorySetting()){
+        int startDelay = (int) Tools.getUINT8Param(0);
+        if (startDelay > 0) {
 #ifdef DEBUG  
-        DEBUG.print("delay for ");
-        DEBUG.print(startDelay);
-        DEBUG.println("s");
+            DEBUG.print("delay for ");
+            DEBUG.print(startDelay);
+            DEBUG.println("s");
 #endif
-        //delay(startDelay*1000);
+            delay(startDelay*1000);
 #ifdef DEBUG  
-        DEBUG.println("ready!");
+            DEBUG.println("ready!");
 #endif
     }
 
@@ -158,6 +158,7 @@ void setup() {
     limitHumdMin = Tools.getINT16Param(12);
     valueHumdMax = Tools.getUINT8Param(13);
     limitHumdMax = Tools.getINT16Param(14);
+    }
 }
 
 void loop() {
@@ -165,7 +166,7 @@ void loop() {
     unsigned long currentTime = millis();
     
     // only do measurements and other sketch related stuff if not in programming mode
-    if (!Tools.getProgState()) {
+    if (!Tools.getProgState() && !Tools.isFactorySetting()) {
         
         // Get temperature
         if ((currentTime - previousTimeTemp) >= intervalTempUser) {

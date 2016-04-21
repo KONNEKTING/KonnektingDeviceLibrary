@@ -4,7 +4,7 @@
 // no need to comment, you can leave it as it is as long you do not change the "#define DEBUG debugSerial" line
 #ifdef DEBUG
 #include <SoftwareSerial.h>
-SoftwareSerial debugSerial(10, 11); // RX, TX
+SoftwareSerial debugSerial(11, 10); // RX, TX
 #endif
 
 // include KnxDevice library

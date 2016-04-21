@@ -4,8 +4,7 @@
 // no need to comment, you can leave it as it is as long you do not change the "#define DEBUG debugSerial" line
 #ifdef DEBUG
 #include <SoftwareSerial.h>
-//SoftwareSerial debugSerial(10, 16); // RX, TX for ProMiciro, pls. change PINs in KnxTools.cpp Line 47 
-SoftwareSerial debugSerial(10, 11); // RX, TX for all others
+SoftwareSerial debugSerial(11, 10); // RX, TX
 #endif
 
 // include KnxDevice library
