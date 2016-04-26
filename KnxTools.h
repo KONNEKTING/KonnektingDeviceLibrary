@@ -60,6 +60,8 @@ extern void knxToolsEvents(byte index);
 class KnxTools {
     static byte _paramSizeList[];
     static const byte _numberOfParams;                // Nb of attached Parameters
+    
+    static Print& _debugSerial;
 
     // Constructor, Destructor
     KnxTools(); // private constructor (singleton design pattern)
@@ -157,7 +159,7 @@ private:
     void handleMsgWriteComObject(byte* msg);
     void handleMsgReadComObject(byte* msg);
     
-    void memoryUpdate(int index, byte date);
+    void memoryUpdate(int index, byte date);        
 
 };
 
@@ -168,3 +170,4 @@ void KnxToolsProgButtonPressed();
 extern KnxTools& Tools;
 
 #endif // KNXTOOLS_h
+
