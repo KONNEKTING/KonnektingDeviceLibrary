@@ -65,8 +65,6 @@ void setup() {
 
     DebugInit();
 
-    
-
     // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL, 
                     PROG_BUTTON_PIN, 
