@@ -23,7 +23,7 @@
  * @since 2015-11-06
  * @license GPLv3
  */
-
+#include "KonnektingDebug.h"
 #include "KonnektingDevice.h"
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
@@ -295,8 +295,17 @@ void KonnektingDevice::toggleProgState() {
  * Gets programming state
  * @return true, if programming is active, false if not
  */
-bool KonnektingDevice::getProgState() {
+bool KonnektingDevice::isProgState() {
     return _progState ? true : false;
+}
+
+/**
+ * Check whether Konnekting is ready for application logic. 
+ * (Means: no busy with programming-mode and not running with factory settings)
+ * @return true if it's safe to run application logic
+ */
+bool KonnektingDevice::isReadyForApplication() {
+    return !isProgState() && !isFactorySetting();
 }
 
 /*
@@ -307,11 +316,11 @@ void KonnektingDevice::setProgState(bool state) {
     if (state == true) {
         _progState = true;
         digitalWrite(_progLED, HIGH);
-        CONSOLEDEBUGLN(F("PROGBUTTON 1"));
+        CONSOLEDEBUGLN(F("PrgBtn 1"));
     } else if (state == false) {
         _progState = false;
         digitalWrite(_progLED, LOW);
-        CONSOLEDEBUGLN(F("PROGBUTTON 0"));
+        CONSOLEDEBUGLN(F("PrgBtn 0"));
     }
 }
 

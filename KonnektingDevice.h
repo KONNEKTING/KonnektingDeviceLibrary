@@ -27,6 +27,7 @@
 #ifndef KONNEKTING_h
 #define KONNEKTING_h
 
+#include <KonnektingDebug.h>
 #include <Arduino.h> 
 #include <KnxDevice.h>
 #include <EEPROM.h>
@@ -89,8 +90,6 @@ class KonnektingDevice {
     static byte _paramSizeList[];
     static const byte _numberOfParams;                // Nb of attached Parameters
     
-    static Print& _debugSerial;
-
     // Constructor, Destructor
     KonnektingDevice(); // private constructor (singleton design pattern)
 
@@ -112,7 +111,7 @@ public:
      * @return if provided comobject index is an internal comobject (true) or not (false)
      */
     bool internalComObject(byte index);
-
+    
     // must be public to be accessible from KonnektingProgButtonPressed())
     void toggleProgState();
 
@@ -141,7 +140,14 @@ public:
      * Gets programming state
      * @return true, if programming is active, false if not
      */
-    bool getProgState();
+    bool isProgState();
+    
+    /**
+     * Check whether Konnekting is ready for application logic. 
+     * (Means: no busy with programming-mode and not running with factory settings)
+     * @return true if it's safe to run application logic
+     */
+    bool isReadyForApplication();
 
     int getFreeEepromOffset();
     
