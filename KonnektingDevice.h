@@ -24,8 +24,8 @@
  * @license GPLv3
  */
 
-#ifndef KNXTOOLS_h
-#define KNXTOOLS_h
+#ifndef KONNEKTING_h
+#define KONNEKTING_h
 
 #include <Arduino.h> 
 #include <KnxDevice.h>
@@ -34,6 +34,34 @@
 #ifndef ESP8266 
 #include <avr/wdt.h>
 #endif
+
+#define EEPROM_DEVICE_FLAGS          0
+#define EEPROM_INDIVIDUALADDRESS_HI  1
+#define EEPROM_INDIVIDUALADDRESS_LO  2
+#define EEPROM_COMOBJECTTABLE_START 10
+
+#define PROTOCOLVERSION 0
+
+#define MSGTYPE_ACK                         0 // 0x00
+#define MSGTYPE_READ_DEVICE_INFO            1 // 0x01
+#define MSGTYPE_ANSWER_DEVICE_INFO          2 // 0x02
+#define MSGTYPE_RESTART                     9 // 0x09
+
+#define MSGTYPE_WRITE_PROGRAMMING_MODE      10 // 0x0A
+#define MSGTYPE_READ_PROGRAMMING_MODE       11 // 0x0B
+#define MSGTYPE_ANSWER_PROGRAMMING_MODE     12 // 0x0C
+
+#define MSGTYPE_WRITE_INDIVIDUAL_ADDRESS    20 // 0x14
+#define MSGTYPE_READ_INDIVIDUAL_ADDRESS     21 // 0x15
+#define MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS   22 // 0x16
+
+#define MSGTYPE_WRITE_PARAMETER             30 // 0x1E
+#define MSGTYPE_READ_PARAMETER              31 // 0x1F
+#define MSGTYPE_ANSWER_PARAMETER            32 // 0x20
+
+#define MSGTYPE_WRITE_COM_OBJECT            40 // 0x28
+#define MSGTYPE_READ_COM_OBJECT             41 // 0x29
+#define MSGTYPE_ANSWER_COM_OBJECT           42 // 0x2A
 
 #define PARAM_INT8 1
 #define PARAM_UINT8 1
@@ -55,29 +83,29 @@
 
 
 // process intercepted knxEvents-calls with this method
-extern void knxToolsEvents(byte index);
+extern void konnektingKnxEvents(byte index);
 
-class KnxTools {
+class KonnektingDevice {
     static byte _paramSizeList[];
     static const byte _numberOfParams;                // Nb of attached Parameters
     
     static Print& _debugSerial;
 
     // Constructor, Destructor
-    KnxTools(); // private constructor (singleton design pattern)
+    KonnektingDevice(); // private constructor (singleton design pattern)
 
-    ~KnxTools() {
+    ~KonnektingDevice() {
     } // private destructor (singleton design pattern)
-    KnxTools(const KnxTools&); // private copy constructor (singleton design pattern) 
+    KonnektingDevice(const KonnektingDevice&); // private copy constructor (singleton design pattern) 
 
 public:
-    static KnxTools Tools;
+    static KonnektingDevice Konnekting;
                                                     // The value shall be provided by the end-user
 
     void init(HardwareSerial& serial, int progButtonPin, int progLedPin, word manufacturerID, byte deviceID, byte revisionID);
 
     /**
-     * needs to be called in "void knxToolsEvents(byte index)" to check if ComObject is
+     * needs to be called in "void konnektingKnxEvents(byte index)" to check if ComObject is
      * an internal ComObject which is not needed to be handled by developer
      * f.i. ComObject 0 --> for programming purpose
      * @param index index of KnxComObject
@@ -85,7 +113,7 @@ public:
      */
     bool internalComObject(byte index);
 
-    // must be public to be accessible from KnxToolsProgButtonPressed())
+    // must be public to be accessible from KonnektingProgButtonPressed())
     void toggleProgState();
 
     KnxComObject createProgComObject();
@@ -103,7 +131,7 @@ public:
     int32_t getINT32Param(byte index);
 
     /**
-     * Check whether the Knx Tools is initialized (Tools.init(...)) and therefore active or not
+     * Check whether the Knx KonnektingDevice is initialized (Konnekting.init(...)) and therefore active or not
      * @return true, if tools are initialized and active, false if not
      */
     bool isActive();
@@ -163,11 +191,11 @@ private:
 
 };
 
-// not part of KnxTools class
-void KnxToolsProgButtonPressed();
+// not part of Konnekting class
+void KonnektingProgButtonPressed();
 
 // Reference to the KnxDevice unique instance
-extern KnxTools& Tools;
+extern KonnektingDevice& Konnekting;
 
-#endif // KNXTOOLS_h
+#endif // KONNEKTING_h
 

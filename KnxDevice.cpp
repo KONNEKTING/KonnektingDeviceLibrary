@@ -26,7 +26,7 @@
 // Module dependencies : HardwareSerial, KnxTelegram, KnxComObject, KnxTpUart, RingBuffer
 
 #include "KnxDevice.h"
-#include "KnxTools.h"
+#include "KonnektingDevice.h"
 
 static inline word TimeDeltaWord(word now, word before) {
     return (word) (now - before);
@@ -404,9 +404,9 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                 if ((_comObjectsList[targetedComObjIndex].GetIndicator()) & KNX_COM_OBJ_W_INDICATOR) {
                     _comObjectsList[targetedComObjIndex].UpdateValue(*(Knx._rxTelegram));
                     //We notify the upper layer of the update
-                    if (Tools.isActive()) {
+                    if (Konnekting.isActive()) {
 //                        Serial.println("Routing event to tools");
-                        knxToolsEvents(targetedComObjIndex);
+                        konnektingKnxEvents(targetedComObjIndex);
                     } else {
 //                        Serial.println("No event routing");
                         knxEvents(targetedComObjIndex);

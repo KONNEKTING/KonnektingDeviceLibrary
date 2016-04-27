@@ -33,7 +33,7 @@ SoftwareSerial debugSerial(11, 10); // RX, TX
 
 // Definition of the Communication Objects attached to the device
 KnxComObject KnxDevice::_comObjectsList[] = {
-    /* don't change this */ Tools.createProgComObject(),
+    /* don't change this */ Konnekting.createProgComObject(),
                             
     // Currently, Sketch Index and Suite Index differ for ComObjects :-(
                             
@@ -43,13 +43,13 @@ KnxComObject KnxDevice::_comObjectsList[] = {
 const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
 
 // Definition of parameter size
-byte KnxTools::_paramSizeList[] = {
+byte KonnektingDevice::_paramSizeList[] = {
     
     // For params, the index in Sketch and Suite is equal
     
     /* Param Index 0 */ PARAM_UINT16
 };
-const byte KnxTools::_numberOfParams = sizeof (_paramSizeList); // do no change this code
+const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
 unsigned long diffmillis = 0;
 unsigned long lastmillis = millis(); 
@@ -89,9 +89,9 @@ void setup() {
     DEBUG.begin(9600);
 #endif
     // Initialize KNX enabled Arduino Board
-    Tools.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
+    Konnekting.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
 
-diffmillis = (int) Tools.getUINT16Param(0); //blink every xxxx ms
+diffmillis = (int) Konnekting.getUINT16Param(0); //blink every xxxx ms
 
 #ifdef DEBUG 
         DEBUG.print("Toggle every ");
@@ -106,7 +106,7 @@ void loop() {
     Knx.task();
     unsigned long currentmillis = millis();    
     // only do measurements and other sketch related stuff if not in programming mode
-    if (!Tools.getProgState()) {
+    if (!Konnekting.getProgState()) {
         if (currentmillis - lastmillis >= diffmillis){
 #ifdef DEBUG  
         DEBUG.print("Actual state: ");

@@ -33,7 +33,7 @@
 #include "KnxComObject.h"
 #include "ActionRingBuffer.h"
 #include "KnxTpUart.h"
-#include "KnxTools.h"
+#include "KonnektingDevice.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 // DEBUG :
