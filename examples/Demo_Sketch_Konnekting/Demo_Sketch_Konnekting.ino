@@ -1,10 +1,10 @@
-#include <KonnektingDebug.h>
 #include <KnxDevice.h>
 
 // ################################################
 // ### DEBUG CONFIGURATION
 // ################################################
 #define DEBUG
+#include <KonnektingDebug.h>
 // -> Hardware Debug Serial: For Leonardo/Micro/...
 //#define DEBUGCONFIG_DEVICE serial
 // -> Software Debug Serial
@@ -63,7 +63,11 @@ int laststate = false;
 // ################################################
 void setup() {
 
-    DebugInit();
+    //DebugInit();
+    __DEBUG_SERIAL = Serial;
+    
+    __DEBUG_SERIAL.println("huhu");
+    DEBUG_PRINTLN("HUHU");
 
     // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL, 

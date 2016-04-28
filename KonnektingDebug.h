@@ -27,44 +27,20 @@
 #ifndef KONNEKTINGDEBUG_H
 #define KONNEKTINGDEBUG_H
 
+#include <Arduino.h>
+
     #ifdef DEBUG
-            #include <Arduino.h>
-            #ifndef DEBUGCONFIG_DEVICE
-                    #ifdef DEBUGCONFIG_SOFWARESERIAL
-                            #ifndef DEBUGCONFIG_RX_PIN
-                                    #define DEBUGCONFIG_RX_PIN 11
-                            #endif
-                            #ifndef DEBUGCONFIG_TX_PIN
-                                    #define DEBUGCONFIG_TX_PIN 10
-                            #endif
-                            #ifndef SoftwareSerial_h
-                                    #error "You need to include SoftwareSerial in your project in order to use it: #include <SoftwareSerial.h>"
-                            #endif
-                            #include <SoftwareSerial.h>
-                            SoftwareSerial DebugSoftwareSerial(DEBUGCONFIG_RX_PIN, DEBUGCONFIG_TX_PIN); // RX, TX
-                            #define DEBUGCONFIG_DEVICE DebugSoftwareSerial
-                    #else
-                            #define DEBUGCONFIG_DEVICE Serial
-                    #endif
-            #endif
-            #ifndef DEBUGCONFIG_BAUDS
-                    #define DEBUGCONFIG_BAUDS 9600
-            #endif
-            void DebugInitFunction() {
-                    DEBUGCONFIG_DEVICE.begin(DEBUGCONFIG_BAUDS);
-            }
-            #define DebugInit() DebugInitFunction()
-            #define DEBUG_PRINT(A) DEBUGCONFIG_DEVICE.print(A)
-            #define DEBUG_PRINTLN(A) DEBUGCONFIG_DEVICE.println(A)
-            #define DEBUG_PRINT2(A, B) DEBUGCONFIG_DEVICE.print(A, B)
-            #define DEBUG_PRINTLN2(A, B) DEBUGCONFIG_DEVICE.println(A, B)
+            
+            #define DEBUG_PRINT(A) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.print(A);}
+            #define DEBUG_PRINTLN(A) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.println(A);}
+            #define DEBUG_PRINT2(A, B) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.print(A, B);}
+            #define DEBUG_PRINTLN2(A, B) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.println(A, B);}
     #else
-            #define DebugInit()
             #define DEBUG_PRINT(A)
             #define DEBUG_PRINTLN(A)
             #define DEBUG_PRINT2(A, B)
             #define DEBUG_PRINTLN2(A, B)
     #endif
-
+    static Serial_ __DEBUG_SERIAL;
 
 #endif // KONNEKTINGDEBUG_H
