@@ -23,29 +23,28 @@
  * @since 2015-11-06
  * @license GPLv3
  */
-#define DEBUG
 
-#include "KonnektingDebug.h"
-#include "KonnektingDevice.h"
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#endif
 
 /*
  * !!!!! IMPORTANT !!!!!
  * if "#define DEBUG" is set, you must run your KONNEKTING Suite with "-Dde.root1.slicknx.konnekting.debug=true" 
  * A release-version of your development MUST NOT contain "#define DEBUG" ...
  */
+#define DEBUG
+#include "KonnektingDebug.h"
+
+#include "KonnektingDevice.h"
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#endif
+
 
 
 // DEBUG PROTOCOL HANDLING
 #define DEBUG_PROTOCOL
 
-// comment just for debugging purpose to disable memory write
-#define WRITEMEM 1
-
-
-
+// remove/disable just for debugging purpose to disable memory write
+#define WRITEMEM
 
 
 // KonnektingDevice unique instance creation
@@ -58,10 +57,8 @@ KonnektingDevice& Konnekting = KonnektingDevice::Konnekting;
  */
 void konnektingKnxEvents(byte index) {
 
-    DEBUG_PRINTLN("HUHU");
     DEBUG_PRINT(F("\n\nkonnektingKnxEvents index="));
-    DEBUG_PRINT(index);
-    DEBUG_PRINTLN(F(" "));
+    DEBUG_PRINTLN(index);
 
     // if it's not a internal com object, route back to knxEvents()
     if (!Konnekting.internalComObject(index)) {
@@ -79,7 +76,7 @@ KonnektingDevice::KonnektingDevice() {
 #ifdef ESP8266
     DEBUG_PRINT("Setup ESP8266 ... ");
 
-    // disable WIFI
+    // disable WIFI per default
     WiFi.mode(WIFI_OFF);
     WiFi.forceSleepBegin();
     delay(100);
@@ -96,15 +93,16 @@ KonnektingDevice::KonnektingDevice() {
  * Starts KNX KonnektingDevice, as well as KNX Device
  * 
  * @param serial serial port reference, f.i. "Serial" or "Serial1"
- * @param progButtonPin pin which drives LED when in programming mode, default should be D3
- * @param progLedPin pin which toggles programming mode, needs an interrupt enabled pin!, default should be D8
+ * @param progButtonPin pin which drives LED when in programming mode
+ * @param progLedPin pin which toggles programming mode, needs an interrupt capable pin!
  * @param manufacturerID
  * @param deviceID
  * @param revisionID
  * 
  */
 void KonnektingDevice::init(HardwareSerial& serial, int progButtonPin, int progLedPin, word manufacturerID, byte deviceID, byte revisionID) {
-    //    Serial.println("Hello Computer2");
+    
+    DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
     _initialized = true;
 
     _manufacturerID = manufacturerID;
@@ -149,7 +147,7 @@ void KonnektingDevice::init(HardwareSerial& serial, int progButtonPin, int progL
 
     _individualAddress = P_ADDR(1, 1, 254);
     if (!isFactorySetting()) {
-        DEBUG_PRINTLN(F("Using EEPROM"));
+        DEBUG_PRINTLN(F("->EEPROM"));
         /*
          * Read eeprom stuff
          */
@@ -183,23 +181,21 @@ void KonnektingDevice::init(HardwareSerial& serial, int progButtonPin, int progL
             DEBUG_PRINT(F(" Settings: 0x"));
             DEBUG_PRINT2(settings, HEX);
             DEBUG_PRINT(F(" Active: "));
-            DEBUG_PRINT2(active, DEC);
-            DEBUG_PRINTLN(F(""));
+            DEBUG_PRINTLN2(active, DEC);
         }
 
     } else {
-        DEBUG_PRINTLN(F("Using FACTORY"));
+        DEBUG_PRINTLN(F("->FACTORY"));
     }
     DEBUG_PRINT(F("IA: 0x"));
     DEBUG_PRINTLN2(_individualAddress, HEX);
     e_KnxDeviceStatus status;
     status = Knx.begin(serial, _individualAddress);
     DEBUG_PRINT(F("KnxDevice startup status: 0x"));
-    DEBUG_PRINT2(status, HEX);
-    DEBUG_PRINTLN(F(""));
+    DEBUG_PRINTLN2(status, HEX);
 
     if (status != KNX_DEVICE_OK) {
-        DEBUG_PRINTLN(F("Knx init ERROR. retry after reboot!!"));
+        DEBUG_PRINTLN(F("Knx init ERROR. Retry after reboot!!"));
         delay(500);
         reboot();
     }
@@ -213,8 +209,11 @@ bool KonnektingDevice::isFactorySetting() {
     return _deviceFlags == 0xff;
 }
 
-// bytes to skip when reading/writing in param-table
-
+/*
+ * Bytes to skip when reading/writing in param-table
+ * @param parameter-id to calc skipbytes for
+ * @return bytes to skip
+ */
 int KonnektingDevice::calcParamSkipBytes(byte index) {
     // calc bytes to skip
     int skipBytes = 0;
@@ -246,8 +245,7 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
     DEBUG_PRINT(F(" skipBytes="));
     DEBUG_PRINT(skipBytes);
     DEBUG_PRINT(F(" paramLen="));
-    DEBUG_PRINT(paramLen);
-    DEBUG_PRINTLN(F(""));
+    DEBUG_PRINTLN(paramLen);
 
     // read byte by byte
     for (byte i = 0; i < paramLen; i++) {
@@ -259,20 +257,21 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
         DEBUG_PRINT(i);
         DEBUG_PRINT(F("]@"));
         DEBUG_PRINT(addr);
-        DEBUG_PRINT(F(" --> 0x"));
+        DEBUG_PRINT(F(" -> 0x"));
         DEBUG_PRINT2(value[i], HEX);
         DEBUG_PRINTLN(F(""));
     }
 }
 
-// local helper method got the prog-button-interrupt
-
+/**
+ * prog-button-interrupt ISR
+ */
 void KonnektingProgButtonPressed() {
-    DEBUG_PRINTLN(F("PROGBUTTON toggle"));
+    DEBUG_PRINTLN(F("PrgBtn toggle"));
     Konnekting.toggleProgState();
 }
 
-/*
+/**
  * User-toggle the actually ProgState
  */
 void KonnektingDevice::toggleProgState() {
@@ -301,7 +300,7 @@ bool KonnektingDevice::isReadyForApplication() {
     return !isProgState() && !isFactorySetting();
 }
 
-/*
+/**
  * Sets thep prog state to given boolean value
  * @param state new prog state
  */
@@ -317,6 +316,10 @@ void KonnektingDevice::setProgState(bool state) {
     }
 }
 
+/**
+ * Check if given 2byte ID is matching the current set IA
+ * @return true if match, false if not
+ */
 bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
     byte iaHi = (_individualAddress >> 8) & 0xff;
     byte iaLo = (_individualAddress >> 0) & 0xff;
@@ -324,6 +327,10 @@ bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
     return (hi == iaHi && lo == iaLo);
 }
 
+/**
+ * Creates inter prog-com-object
+ * @return prog com object
+ */
 KnxComObject KonnektingDevice::createProgComObject() {
     DEBUG_PRINTLN(F("createProgComObject"));
     KnxComObject p = KnxComObject(KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
@@ -333,7 +340,7 @@ KnxComObject KonnektingDevice::createProgComObject() {
 }
 
 /**
- * Reboot device via WatchDogTimer within 1s
+ * Reboot device 
  */
 void KonnektingDevice::reboot() {
     Knx.end();
@@ -358,6 +365,11 @@ void KonnektingDevice::reboot() {
 
 }
 
+/**
+ * Check if given index is an internal comobject
+ * @param index
+ * @return true, if index was internal comobject and has been handled, false if not
+ */
 bool KonnektingDevice::internalComObject(byte index) {
 
     DEBUG_PRINT(F("internalComObject index="));
@@ -366,11 +378,8 @@ bool KonnektingDevice::internalComObject(byte index) {
     switch (index) {
         case 0: // object index 0 has been updated
 
-
-            //            DEBUG_PRINTLN("About to read 14 bytes");
             byte buffer[14];
             Knx.read(0, buffer);
-            //            DEBUG_PRINTLN("done reading 14 bytes");
 #ifdef DEBUG_PROTOCOL
             for (int i = 0; i < 14; i++) {
                 DEBUG_PRINT(F("buffer["));
