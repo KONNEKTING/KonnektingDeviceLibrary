@@ -47,6 +47,19 @@ byte KonnektingDevice::_paramSizeList[] = {
 const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
 
+
+// create com objects
+KnxComObject _comObjectsList[] = {
+    /* Index 0 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
+    /* Index 1 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
+};
+
+// create parameter size definition
+byte _paramSizeList[] = {
+    /* Param Index 0 */ PARAM_UINT16
+};
+
+
 // ################################################
 // ### Sketch Configuration & Variables
 // ################################################
@@ -75,7 +88,9 @@ void setup() {
                     PROG_LED_PIN, 
                     MANUFACTURER_ID, 
                     DEVICE_ID, 
-                    REVISION);
+                    REVISION,
+                    _comObjectsList, 
+                    _paramSizeList);
 
     diffmillis = (int) Konnekting.getUINT16Param(0); //blink every xxxx ms
 

@@ -101,7 +101,14 @@ public:
     static KonnektingDevice Konnekting;
                                                     // The value shall be provided by the end-user
 
-    void init(HardwareSerial& serial, int progButtonPin, int progLedPin, word manufacturerID, byte deviceID, byte revisionID);
+    void init(HardwareSerial& serial, 
+                int progButtonPin, 
+                int progLedPin, 
+                word manufacturerID, 
+                byte deviceID, 
+                byte revisionID,
+                KnxComObject comObjectsList[], 
+                byte paramSizeList[]);
 
     /**
      * needs to be called in "void konnektingKnxEvents(byte index)" to check if ComObject is
