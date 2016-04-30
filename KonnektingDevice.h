@@ -95,7 +95,7 @@ class KonnektingDevice {
 
     ~KonnektingDevice() {
     } // private destructor (singleton design pattern)
-    KonnektingDevice(const KonnektingDevice&); // private copy constructor (singleton design pattern) 
+    KonnektingDevice(KonnektingDevice&); // private copy constructor (singleton design pattern) 
 
 public:
     static KonnektingDevice Konnekting;
@@ -106,9 +106,8 @@ public:
                 int progLedPin, 
                 word manufacturerID, 
                 byte deviceID, 
-                byte revisionID,
-                KnxComObject comObjectsList[], 
-                byte paramSizeList[]);
+                byte revisionID
+                );
 
     /**
      * needs to be called in "void konnektingKnxEvents(byte index)" to check if ComObject is

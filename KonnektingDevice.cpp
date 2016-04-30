@@ -34,6 +34,7 @@
 #include "KonnektingDebug.h"
 #include "KnxDevice.h"
 #include "KnxComObject.h"
+#include "KnxDPT.h"
 #include "KonnektingDevice.h"
 
 #ifdef ESP8266
@@ -99,48 +100,30 @@ void KonnektingDevice::init(HardwareSerial& serial,
                             int progLedPin,
                             word manufacturerID, 
                             byte deviceID, 
-                            byte revisionID,
-                            KnxComObject comObjectList[],
-                            byte* paramSizeList) {
+                            byte revisionID
+                            ) {
 
-//    KnxComObject newComObjectsList[] = {
-//        /* don't change this */ Konnekting.createProgComObject(),
-//        /* Sketch-Index 1, Suite-Index 0 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
-//        /* Sketch-Index 2, Suite-Index 1 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
-//    };
-    //const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
-    
-    int elementSize = sizeof(KnxComObject);
-    int currentBufferSize = sizeof(comObjectList);
-    int newBufferSize = currentBufferSize+elementSize;
-    int numOfComObj = currentBufferSize / elementSize;
-    
-    
-    //KnxDevice::_comObjectsList[] = new KnxComObject[10];
-    
-//    KnxComObject* newComObjectsList[numOfComObj+1];
-    KnxDevice::_comObjectsList = (KnxComObject*) malloc(newBufferSize);
-    
-//    KnxComObject p = new KnxComObject(KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
+//    int elementSize = sizeof(KnxComObject);
+//    int currentBufferSize = sizeof(comObjectList);
+//    int numOfComObj = currentBufferSize / elementSize;
+//    
+//    KnxComObject* extendedComObjectsList = (KnxComObject*) malloc(elementSize * (numOfComObj+1));
+//    
+//    KnxComObject p = KnxComObject(KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
 //    p.SetAddr(G_ADDR(15, 7, 255));
 //    p.setActive(true);
 //    
-//    newComObjectsList[0] = p;
-    
-//    KnxDevice::_comObjectsList[0] = createProgComObject();
+//    
+//    extendedComObjectsList[0] =  p;
+//    
 //    for(int i=1;i<numOfComObj;i++) {
-//        newComObjectsList[i] = comObjectList[i-1];
+//        extendedComObjectsList[i] = comObjectList[i-1];
 //    }
-    
-    
-    
+//    
     // -------------------------
     
-    
-//    byte KonnektingDevice::_paramSizeList[] = {
-//        /* Param Index 0 */ PARAM_UINT16
-//    };
-//    const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
+//    _paramSizeList = paramSizeList;
+//    _numberOfParams = sizeof (_paramSizeList); 
     
     DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
     _initialized = true;

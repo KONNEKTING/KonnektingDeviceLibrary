@@ -107,7 +107,13 @@ template <typename T> e_KnxDeviceStatus ConvertToDpt(T value, byte dpt[], byte d
 
 class KnxDevice {
         
-          
+    // List of Com Objects attached to the KNX Device
+    // The definition shall be provided by the end-user
+    static KnxComObject _comObjectsList[];          
+    
+    // Nb of attached Com Objects
+    // The value shall be provided by the end-user
+    static const byte _numberOfComObjects;    
     
     // Current KnxDevice state
     e_KnxDeviceState _state;  
@@ -156,13 +162,7 @@ class KnxDevice {
     
   public:
       
-    // List of Com Objects attached to the KNX Device
-    // The definition shall be provided by the end-user
-    static KnxComObject _comObjectsList[];          
     
-    // Nb of attached Com Objects
-    // The value shall be provided by the end-user
-    static const byte _numberOfComObjects;            
       
     // unique KnxDevice instance (singleton design pattern)      
     static KnxDevice Knx; 

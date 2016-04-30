@@ -32,9 +32,6 @@ static inline word TimeDeltaWord(word now, word before) {
     return (word) (now - before);
 }
 
-#ifdef KNXDEVICE_DEBUG_INFO
-const char KnxDevice::_debugInfoText[] = "KNXDEVICE INFO: ";
-#endif
 
 // KnxDevice unique instance creation
 KnxDevice KnxDevice::Knx;
@@ -50,10 +47,6 @@ KnxDevice::KnxDevice() {
     _initCompleted = false;
     _initIndex = 0;
     _rxTelegram = NULL;
-#if defined(KNXDEVICE_DEBUG_INFO)
-    _nbOfInits = 0;
-    _debugStrPtr = NULL;
-#endif
 }
 
 int KnxDevice::getNumberOfComObjects() {
@@ -66,10 +59,14 @@ int KnxDevice::getNumberOfComObjects() {
 // else return KNX_DEVICE_OK
 
 e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
+    
     _tpuart = new KnxTpUart(serial, physicalAddr, NORMAL);
     _rxTelegram = &_tpuart->GetReceivedTelegram();
-    //delay(10000); // Workaround for init issue with bus-powered arduino
+    
+    // Workaround for init issue with bus-powered arduino
     // the issue is reproduced on one (faulty?) TPUART device only, so remove it for the moment.
+    //delay(10000); 
+    
     if (_tpuart->Reset() != KNX_TPUART_OK) {
         delete(_tpuart);
         _tpuart = NULL;
@@ -85,9 +82,6 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     DebugInfo("Init successful\n");
     _lastInitTimeMillis = millis();
     _lastTXTimeMicros = _lastTXTimeMicros = micros();
-#if defined(KNXDEVICE_DEBUG_INFO)
-    _nbOfInits = 0;
-#endif
     return KNX_DEVICE_OK;
 }
 
@@ -125,9 +119,6 @@ void KnxDevice::task(void) {
                 //  DebugInfo(String("KNXDevice INFO: Com Object init completed, ")+ String( _nbOfInits) + String("objs initialized.\n"));
             } else { // Com Object to be initialised has been found
                 // Add a READ request in the TX action list
-#if defined(KNXDEVICE_DEBUG_INFO) || defined(KNXDEVICE_DEBUG_INFO_VERBOSE)
-                _nbOfInits++;
-#endif
                 action.command = KNX_READ_REQUEST;
                 action.index = _initIndex;
                 _txActionList.Append(action);
