@@ -68,9 +68,6 @@ void setup() {
 
     //DebugInit();
     __DEBUG_SERIAL = Serial;
-    
-    __DEBUG_SERIAL.println("huhu");
-    DEBUG_PRINTLN("HUHU");
 
     // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL, 
