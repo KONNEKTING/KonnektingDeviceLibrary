@@ -35,20 +35,13 @@
 // ### KONNEKTING ComObjects and Parameters
 // ################################################
 KnxComObject KnxDevice::_comObjectsList[] = {
-    /* don't change this */ Konnekting.createProgComObject(),
-                            
-    // Currently, Sketch Index and Suite Index differ for ComObjects :-(
-                            
-    /* Sketch-Index 1, Suite-Index 0 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
-    /* Sketch-Index 2, Suite-Index 1 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
+    /* Suite-Index 0 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
+    /* Suite-Index 1 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
 };
 const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
 
 // Definition of parameter size
 byte KonnektingDevice::_paramSizeList[] = {
-    
-    // For params, the index in Sketch and Suite is equal
-    
     /* Param Index 0 */ PARAM_UINT16
 };
 const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code

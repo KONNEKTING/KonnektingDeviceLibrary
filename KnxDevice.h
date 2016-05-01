@@ -113,7 +113,9 @@ class KnxDevice {
     
     // Nb of attached Com Objects
     // The value shall be provided by the end-user
-    static const byte _numberOfComObjects;    
+    static const byte _numberOfComObjects;
+
+    KnxComObject _progComObj = KnxComObject(KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR);    
     
     // Current KnxDevice state
     e_KnxDeviceState _state;  
@@ -144,13 +146,7 @@ class KnxDevice {
     
     // Reference to the telegram received by the TPUART
     KnxTelegram *_rxTelegram;                       
-    
-#if defined(KNXDEVICE_DEBUG_INFO)
-    byte _nbOfInits;                                // Nb of Initialized Com Objects
-    String *_debugStrPtr;
-    static const char _debugInfoText[];
-#endif
-    
+       
     // Constructor, Destructor
     // private constructor (singleton design pattern)
     KnxDevice();  
@@ -162,12 +158,11 @@ class KnxDevice {
     
   public:
       
-    
-      
     // unique KnxDevice instance (singleton design pattern)      
     static KnxDevice Knx; 
     
     int getNumberOfComObjects();
+    
     
     /*
      * Start the KNX Device

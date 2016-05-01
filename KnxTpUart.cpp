@@ -497,7 +497,13 @@ boolean KnxTpUart::GetMonitoringData(type_MonitorData& data) {
 boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
     byte divisionCounter = 0;
     byte i, searchIndexStart, searchIndexStop, searchIndexRange;
-
+    
+    // check for prog-com-obj
+    if (addr == 0x7fff /* = 15/7/255 */) {
+        index = 255;
+        return true;
+    }
+    
     if (!_assignedComObjectsNb) return false; // in case of empty list, we return immediately
 
     // Define how many divisions by 2 shall be done in order to reduce the search list by 8 Addr max

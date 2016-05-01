@@ -45,7 +45,6 @@
 // #define KNXTPUART_DEBUG_INFO   // Uncomment to activate info traces
 // #define KNXTPUART_DEBUG_ERROR  // Uncomment to activate error traces
 
-
 // Values returned by the KnxTpUart member functions :
 #define KNX_TPUART_OK                            0
 #define KNX_TPUART_ERROR                       255
