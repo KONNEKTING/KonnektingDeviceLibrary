@@ -32,35 +32,10 @@
 #include <avr/pgmspace.h>
 #endif
 
-/*
- * !!!!! IMPORTANT !!!!!
- * if "#define DEBUG" is set, you must run your KONNEKTING Suite with "-Dde.root1.slicknx.konnekting.debug=true" 
- * A release-version of your development MUST NOT contain "#define DEBUG" ...
- */
-//#define DEBUG
-
-#ifdef DEBUG
-#include <SoftwareSerial.h>
-SoftwareSerial knxTpuartDebugSerial(10, 11); // RX, TX
-#define CONSOLEDEBUG(...)  knxTpuartDebugSerial.print(__VA_ARGS__);
-#define CONSOLEDEBUGLN(...)  knxTpuartDebugSerial.println(__VA_ARGS__);
-#else
-#define CONSOLEDEBUG(...) 
-#define CONSOLEDEBUGLN(...)
-#endif
 
 static inline word TimeDeltaWord(word now, word before) {
     return (word) (now - before);
 }
-
-#ifdef KNXTPUART_DEBUG_INFO
-const char KnxTpUart::_debugInfoText[] = "KNXTPUART INFO: ";
-#endif
-
-#ifdef KNXTPUART_DEBUG_ERROR
-const char KnxTpUart::_debugErrorText[] = "KNXTPUART ERROR: ";
-#endif
-
 
 // Constructor
 
@@ -68,9 +43,6 @@ const char KnxTpUart::_debugErrorText[] = "KNXTPUART ERROR: ";
 //: _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
 KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMode mode)
 : _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
-#ifdef DEBUG
-    knxTpuartDebugSerial.begin(9600);
-#endif       
     _rx.state = RX_RESET;
     _rx.addressedComObjectIndex = 0;
     _tx.state = TX_RESET;
@@ -84,9 +56,6 @@ KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMo
     _assignedComObjectsNb = 0;
     _orderedIndexTable = NULL;
     _stateIndication = 0;
-#if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
-    _debugStrPtr = NULL;
-#endif
 }
 
 
@@ -97,8 +66,8 @@ KnxTpUart::~KnxTpUart() {
     // close the serial communication if opened
     if ((_rx.state > RX_RESET) || (_tx.state > TX_RESET)) {
         _serial.end();
-        DebugInfo("Destructor: connection closed, byebye\n");
-    } else DebugInfo("Desctructor: byebye\n");
+        //DebugInfo("Destructor: connection closed, byebye\n");
+    } //else //DebugInfo("Desctructor: byebye\n");
 }
 
 
@@ -128,14 +97,14 @@ byte KnxTpUart::Reset(void) {
                 if (_serial.read() == TPUART_RESET_INDICATION) {
                     _rx.state = RX_INIT;
                     _tx.state = TX_INIT;
-                    DebugInfo("Reset successful\n");
+                    //DebugInfo("Reset successful\n");
                     return KNX_TPUART_OK;
                 }
             }
         } // 1 sec ellapsed
     } // while(attempts--)
     _serial.end();
-    DebugError("Reset failed, no answer from TPUART device\n");
+    //DebugError("Reset failed, no answer from TPUART device\n");
     return KNX_TPUART_ERROR;
 }
 
@@ -159,13 +128,13 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
         _assignedComObjectsNb = 0;
     }
     if ((!comObjectsList) || (!listSize)) {
-        DebugInfo("AttachComObjectsList : warning : empty object list!\n");
+        //DebugInfo("AttachComObjectsList : warning : empty object list!\n");
         return KNX_TPUART_OK;
     }
     // Count all the com objects with communication indicator
     for (byte i = 0; i < listSize; i++) if (IS_COM(i)) _assignedComObjectsNb++;
     if (!_assignedComObjectsNb) {
-        DebugInfo("AttachComObjectsList : warning : no object with com attribute in the list!\n");
+        //DebugInfo("AttachComObjectsList : warning : no object with com attribute in the list!\n");
         return KNX_TPUART_OK;
     }
     // Deduct the duplicate addresses
@@ -176,7 +145,7 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
                 if (j < i) break; // duplicate address already treated
                 else {
                     _assignedComObjectsNb--;
-                    DebugInfo("AttachComObjectsList : warning : duplicate address found!\n");
+                    //DebugInfo("AttachComObjectsList : warning : duplicate address found!\n");
                 }
             }
         }
@@ -196,7 +165,7 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
         minMin = foundMin + 1;
         foundMin = 0xFFFF;
     }
-    DebugInfo("AttachComObjectsList successful\n");
+    //DebugInfo("AttachComObjectsList successful\n");
     return KNX_TPUART_OK;
 }
 
@@ -213,10 +182,10 @@ byte KnxTpUart::Init(void) {
     // BUS MONITORING MODE in case it is selected
     if (_mode == BUS_MONITOR) {
         _serial.write(TPUART_ACTIVATEBUSMON_REQ); // Send bus monitoring activation request
-        DebugInfo("Init : Monitoring mode started\n");
+        //DebugInfo("Init : Monitoring mode started\n");
     } else // NORMAL mode by default
     {
-        if (_comObjectsList == NULL) DebugInfo("Init : warning : empty object list!\n");
+        if (_comObjectsList == NULL) //DebugInfo("Init : warning : empty object list!\n");
         if (_evtCallbackFct == NULL) return KNX_TPUART_ERROR_NULL_EVT_CALLBACK_FCT;
         if (_tx.ackFctPtr == NULL) return KNX_TPUART_ERROR_NULL_ACK_CALLBACK_FCT;
 
@@ -231,7 +200,7 @@ byte KnxTpUart::Init(void) {
 
         _rx.state = RX_IDLE_WAITING_FOR_CTRL_FIELD;
         _tx.state = TX_IDLE;
-        DebugInfo("Init : Normal mode started\n");
+        //DebugInfo("Init : Normal mode started\n");
     }
     return KNX_TPUART_OK;
 }
@@ -320,7 +289,7 @@ void KnxTpUart::RXTask(void) {
                     if (_tx.state == TX_WAITING_ACK) {
                         _tx.ackFctPtr(ACK_RESPONSE);
                         _tx.state = TX_IDLE;
-                    } else DebugError("Rx: unexpected TPUART_DATA_CONFIRM_SUCCESS received!\n");
+                    } //else //DebugError("Rx: unexpected TPUART_DATA_CONFIRM_SUCCESS received!\n");
                 }                    // CASE OF TPUART_RESET NOTIFICATION
                 else if (incomingByte == TPUART_RESET_INDICATION) {
 
@@ -335,17 +304,17 @@ void KnxTpUart::RXTask(void) {
                 else if ((incomingByte & TPUART_STATE_INDICATION_MASK) == TPUART_STATE_INDICATION) {
                     _evtCallbackFct(TPUART_EVENT_STATE_INDICATION); // Notify STATE INDICATION
                     _stateIndication = incomingByte;
-                    DebugInfo("Rx: State Indication Received\n");
+                    //DebugInfo("Rx: State Indication Received\n");
                 }                    // CASE OF TPUART_DATA_CONFIRM_FAILED NOTIFICATION
                 else if (incomingByte == TPUART_DATA_CONFIRM_FAILED) {
                     // NACK following Telegram transmission
                     if (_tx.state == TX_WAITING_ACK) {
                         _tx.ackFctPtr(NACK_RESPONSE);
                         _tx.state = TX_IDLE;
-                    } else DebugError("Rx: unexpected TPUART_DATA_CONFIRM_FAILED received!\n");
+                    } //else //DebugError("Rx: unexpected TPUART_DATA_CONFIRM_FAILED received!\n");
                 }                    // UNKNOWN CONTROL FIELD RECEIVED
                 else if (incomingByte)
-                    DebugError("Rx: Unknown Control Field received\n");
+                    //DebugError("Rx: Unknown Control Field received\n");
                 // else ignore "0" value sent on Reset by TPUART prior to TPUART_RESET_INDICATION
                 break;
 
@@ -543,13 +512,13 @@ boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
 
 
 // DEBUG purpose functions
-
-void KnxTpUart::DEBUG_SendResetCommand() {
-    _serial.write(TPUART_RESET_REQ);
-}
-
-void KnxTpUart::DEBUG_SendStateReqCommand() {
-    _serial.write(TPUART_STATE_REQ);
-}
+//
+//void KnxTpUart::DEBUG_SendResetCommand() {
+//    _serial.write(TPUART_RESET_REQ);
+//}
+//
+//void KnxTpUart::DEBUG_SendStateReqCommand() {
+//    _serial.write(TPUART_STATE_REQ);
+//}
 
 //EOF

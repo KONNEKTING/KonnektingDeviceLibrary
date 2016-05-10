@@ -33,11 +33,8 @@
 #include "KnxComObject.h"
 #include "ActionRingBuffer.h"
 #include "KnxTpUart.h"
-#include "KonnektingDevice.h"
+//#include "KonnektingDevice.h"
 
-// !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
-// DEBUG :
-//#define KNXDEVICE_DEBUG_INFO   // Uncomment to activate info traces
 
 // Values returned by the KnxDevice member functions :
 enum e_KnxDeviceStatus {
@@ -237,11 +234,7 @@ class KnxDevice {
      */
     word getComObjectAddress(byte index);
     
-    // Inline Debug function (definition later in this file)
-    // Set the string used for debug traces
-#if defined(KNXDEVICE_DEBUG_INFO)
-    void SetDebugString(String *strPtr);
-#endif
+
 
   private:
     /*
@@ -253,26 +246,12 @@ class KnxDevice {
      * Static TxTelegramAck() function called by the KnxTpUart layer (callback)
      */
     static void TxTelegramAck(e_TpUartTxAck);
-
-    /* 
-     * Inline Debug function (definition later in this file)
-     */
-    void DebugInfo(const char[]) const;
     
 };
 
-#if defined(KNXDEVICE_DEBUG_INFO)
-// Set the string used for debug traces
-inline void KnxDevice::SetDebugString(String *strPtr) {_debugStrPtr = strPtr;}
-#endif
 
 
-inline void KnxDevice::DebugInfo(const char comment[]) const
-{
-#if defined(KNXDEVICE_DEBUG_INFO)
-	if (_debugStrPtr != NULL) *_debugStrPtr += String(_debugInfoText) + String(comment);
-#endif
-}
+
 
 // Reference to the KnxDevice unique instance
 extern KnxDevice& Knx;

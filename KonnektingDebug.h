@@ -27,27 +27,27 @@
 #ifndef KONNEKTINGDEBUG_H
 #define KONNEKTINGDEBUG_H
 
-#include <Arduino.h>
-
-#ifdef DEBUG
-
-        #define DEBUG_PRINT(A) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.print(A);}
-        #define DEBUG_PRINTLN(A) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.println(A);}
-        #define DEBUG_PRINT2(A, B) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.print(A, B);}
-        #define DEBUG_PRINTLN2(A, B) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.println(A, B);}
-#else
+//#include <Arduino.h>
+//
+//#ifdef DEBUG
+//
+//        #define DEBUG_PRINT(A) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.print(A);}
+//        #define DEBUG_PRINTLN(A) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.println(A);}
+//        #define DEBUG_PRINT2(A, B) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.print(A, B);}
+//        #define DEBUG_PRINTLN2(A, B) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.println(A, B);}
+//#else
         #define DEBUG_PRINT(A)
         #define DEBUG_PRINTLN(A)
         #define DEBUG_PRINT2(A, B)
         #define DEBUG_PRINTLN2(A, B)
-#endif
-static Serial_ __DEBUG_SERIAL;
-
-
-// DEBUG PROTOCOL HANDLING
-#define DEBUG_PROTOCOL
-
-// remove/disable just for debugging purpose to disable memory write
-#define WRITEMEM
+//#endif
+//static Serial_ __DEBUG_SERIAL;
+//
+//
+//// DEBUG PROTOCOL HANDLING
+//#define DEBUG_PROTOCOL
+//
+//// remove/disable just for debugging purpose to disable memory write
+//#define WRITEMEM
 
 #endif // KONNEKTINGDEBUG_H

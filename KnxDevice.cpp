@@ -25,7 +25,7 @@
 // Module dependencies : HardwareSerial, KnxTelegram, KnxComObject, KnxTpUart, RingBuffer
 
 #include "KnxDevice.h"
-#include "KonnektingDevice.h"
+//#include "KonnektingDevice.h"
 
 static inline word TimeDeltaWord(word now, word before) {
     return (word) (now - before);
@@ -45,7 +45,7 @@ KnxDevice::KnxDevice() {
     _initCompleted = false;
     _initIndex = 0;
     _rxTelegram = NULL;
-
+//AC
     _progComObj.SetAddr(G_ADDR(15, 7, 255));
     _progComObj.setActive(true);
 }
@@ -75,7 +75,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
         delete(_tpuart);
         _tpuart = NULL;
         _rxTelegram = NULL;
-        DebugInfo("Init Error!\n");
+//        DebugInfo("Init Error!\n");
         return KNX_DEVICE_INIT_ERROR;
     }
     _tpuart->AttachComObjectsList(_comObjectsList, _numberOfComObjects);
@@ -83,7 +83,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     _tpuart->SetAckCallback(&KnxDevice::TxTelegramAck);
     _tpuart->Init();
     _state = IDLE;
-    DebugInfo("Init successful\n");
+//    DebugInfo("Init successful\n");
     _lastInitTimeMillis = millis();
     _lastTXTimeMicros = _lastTXTimeMicros = micros();
     return KNX_DEVICE_OK;
@@ -157,6 +157,7 @@ void KnxDevice::task(void) {
 
             // id255 = progcomobj, otherwise use comobj from array
             KnxComObject comObj = (action.index == 255 ? _progComObj : _comObjectsList[action.index]);
+//            KnxComObject comObj = _comObjectsList[action.index];
 
             switch (action.command) {
 
@@ -228,6 +229,7 @@ void KnxDevice::task(void) {
  */
 byte KnxDevice::read(byte objectIndex) {
     return (objectIndex == 255 ? _progComObj.GetValue() : _comObjectsList[objectIndex].GetValue());
+//    return _comObjectsList[objectIndex].GetValue();
 }
 
 /**
@@ -240,6 +242,8 @@ byte KnxDevice::read(byte objectIndex) {
 template <typename T> e_KnxDeviceStatus KnxDevice::read(byte objectIndex, T& returnedValue) {
 
     KnxComObject comObj = (objectIndex == 255 ? _progComObj : _comObjectsList[objectIndex]);
+//    KnxComObject comObj =  _comObjectsList[objectIndex];
+    
 
     // Short com object case
     if (comObj.GetLength() <= 2) {
@@ -274,6 +278,7 @@ template e_KnxDeviceStatus KnxDevice::read <double>(byte objectIndex, double& re
  */
 e_KnxDeviceStatus KnxDevice::read(byte objectIndex, byte returnedValue[]) {
     KnxComObject comObj = (objectIndex == 255 ? _progComObj : _comObjectsList[objectIndex]);
+//    KnxComObject comObj = _comObjectsList[objectIndex];
     comObj.GetValue(returnedValue);
     return KNX_DEVICE_OK;
 }
@@ -292,6 +297,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T val
     byte *destValue;
     
     KnxComObject comObj = (objectIndex == 255 ? _progComObj : _comObjectsList[objectIndex]);
+//    KnxComObject comObj = _comObjectsList[objectIndex];
 
     if (!comObj.isActive()) {
         return KNX_DEVICE_COMOBJ_INACTIVE;
@@ -338,6 +344,7 @@ e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     byte *dptValue;
     
     KnxComObject comObj = (objectIndex == 255 ? _progComObj : _comObjectsList[objectIndex]);
+//    KnxComObject comObj = _comObjectsList[objectIndex];
     
     byte length = comObj.GetLength();
     if (length > 2) // check we are in long object case
@@ -413,11 +420,12 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
         Knx._state = IDLE;
         targetedComObjIndex = Knx._tpuart->GetTargetedComObjectIndex();
         KnxComObject comObj = (targetedComObjIndex == 255 ? Knx._progComObj : _comObjectsList[targetedComObjIndex]);
+//        KnxComObject comObj =  _comObjectsList[targetedComObjIndex];
         
 
         switch (Knx._rxTelegram->GetCommand()) {
             case KNX_COMMAND_VALUE_READ:
-                Knx.DebugInfo("READ req.\n");
+//                Knx.DebugInfo("READ req.\n");
                 // READ command coming from the bus
                 // if the Com Object has read attribute, then add RESPONSE action in the TX action list
                 if ((comObj.GetIndicator()) & KNX_COM_OBJ_R_INDICATOR) { // The targeted Com Object can indeed be read
@@ -428,7 +436,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                 break;
 
             case KNX_COMMAND_VALUE_RESPONSE:
-                Knx.DebugInfo("RESP req.\n");
+//                Knx.DebugInfo("RESP req.\n");
                 // RESPONSE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has UPDATE attribute
                 if ((comObj.GetIndicator()) & KNX_COM_OBJ_U_INDICATOR) {
@@ -440,19 +448,19 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
 
             case KNX_COMMAND_VALUE_WRITE:
-                Knx.DebugInfo("WRITE req.\n");
+                //Knx.DebugInfo("WRITE req.\n");
                 // WRITE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has WRITE attribute
                 if ((comObj.GetIndicator()) & KNX_COM_OBJ_W_INDICATOR) {
                     comObj.UpdateValue(*(Knx._rxTelegram));
                     //We notify the upper layer of the update
-                    if (Konnekting.isActive()) {
-                        //                        Serial.println("Routing event to tools");
-                        konnektingKnxEvents(targetedComObjIndex);
-                    } else {
-                        //                        Serial.println("No event routing");
+//                    if (Konnekting.isActive()) {
+//                        //                        Serial.println("Routing event to tools");
+//                        konnektingKnxEvents(targetedComObjIndex);
+//                    } else {
+//                        //                        Serial.println("No event routing");
                         knxEvents(targetedComObjIndex);
-                    }
+//                    }
                 }
                 break;
 
@@ -480,13 +488,14 @@ void KnxDevice::TxTelegramAck(e_TpUartTxAck value) {
 #ifdef KNXDevice_DEBUG
     if (value != ACK_RESPONSE) {
         switch (value) {
-            case NACK_RESPONSE: DebugInfo("NACK RESPONSE!!\n");
+            case NACK_RESPONSE: 
+                //DebugInfo("NACK RESPONSE!!\n");
                 break;
-            case NO_ANSWER_TIMEOUT: DebugInfo("NO ANSWER TIMEOUT RESPONSE!!\n");
-                ;
+            case NO_ANSWER_TIMEOUT: 
+                //DebugInfo("NO ANSWER TIMEOUT RESPONSE!!\n");
                 break;
-            case TPUART_RESET_RESPONSE: DebugInfo("RESET RESPONSE!!\n");
-                ;
+            case TPUART_RESET_RESPONSE: 
+                //DebugInfo("RESET RESPONSE!!\n");
                 break;
         }
     }

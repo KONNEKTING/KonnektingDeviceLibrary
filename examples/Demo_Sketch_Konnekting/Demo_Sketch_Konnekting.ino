@@ -4,24 +4,19 @@
 // ### DEBUG CONFIGURATION
 // ################################################
 #define DEBUG
-#include <KonnektingDebug.h>
-// -> Hardware Debug Serial: For Leonardo/Micro/...
-//#define DEBUGCONFIG_DEVICE serial
-// -> Software Debug Serial
-#define DEBUGCONFIG_SOFTWARESERIAL
-#define DEBUGCONFIG_RX_PIN 11
-#define DEBUGCONFIG_TX_PIN 10
-#define DEBUGCONFIG_BAUDS 9600
-
+//#include <KonnektingDebug.h>
+//#include <SoftwareSerial.h>
+//
+//SoftwareSerial mySerial(11, 10); // RX, TX
 
 
 // ################################################
 // ### KONNEKTING Configuration
 // ################################################
 #ifdef __AVR_ATmega328P__
-    #define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
+#define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
 #else
-    #define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
+#define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
 #endif
 #define MANUFACTURER_ID 57005
 #define DEVICE_ID 255
@@ -64,30 +59,59 @@ int laststate = false;
 // ################################################
 // ### SETUP
 // ################################################
+
 void setup() {
 
-    //DebugInit();
-    __DEBUG_SERIAL = Serial;
 
-    // Initialize KNX enabled Arduino Board
-    Konnekting.init(KNX_SERIAL, 
-                    PROG_BUTTON_PIN, 
-                    PROG_LED_PIN, 
-                    MANUFACTURER_ID, 
-                    DEVICE_ID, 
-                    REVISION);
+    for (int i = 0; i < 20;i++) {
+        analogWrite(13, 32);
+        delay(200);
+        analogWrite(13, 255);
+        delay(380);
+    }
 
-    diffmillis = (int) Konnekting.getUINT16Param(0); //blink every xxxx ms
 
-    DEBUG_PRINT("Toggle every ");
-    DEBUG_PRINT(diffmillis);
-    DEBUG_PRINTLN(" ms");
-    DEBUG_PRINTLN("Setup is ready. go to loop...");
+//    // On Leonardo/Micro:
+//    // Serial = Debug RS232 Port
+//    // Serial1 = KNX BTI
+//    Serial.begin(9600);
+//
+//    // wait for serial port to connect. Needed for Leonardo/Micro only
+//    while (!Serial) {
+//        analogWrite(13, 128);
+//        delay(100);
+//        analogWrite(13, 255);
+//        delay(200);
+//    }
+//    analogWrite(13, 0); // disable onboard test led  
+//    Serial.println("6Ch KNX Controller Startup...");
+
+//    __DEBUG_SERIAL = Serial;
+//
+//    Serial.println("Demo Sketch Konnekting");
+//
+//    DEBUG_PRINTLN("Demo Sketch Konnekting");
+//
+//    // Initialize KNX enabled Arduino Board
+//    Konnekting.init(KNX_SERIAL,
+//            PROG_BUTTON_PIN,
+//            PROG_LED_PIN,
+//            MANUFACTURER_ID,
+//            DEVICE_ID,
+//            REVISION);
+//
+//    diffmillis = (int) Konnekting.getUINT16Param(0); //blink every xxxx ms
+//
+//    DEBUG_PRINT("Toggle every ");
+//    DEBUG_PRINT(diffmillis);
+//    DEBUG_PRINTLN(" ms");
+//    DEBUG_PRINTLN("Setup is ready. go to loop...");
 }
 
 // ################################################
 // ### LOOP
 // ################################################
+
 void loop() {
     Knx.task();
     unsigned long currentmillis = millis();
@@ -106,10 +130,11 @@ void loop() {
 // ################################################
 // ### KNX EVENT CALLBACK
 // ################################################
+
 void knxEvents(byte index) {
     // nothing to do in this sketch
     switch (index) {
-        
+
         case 1: // object index 1 has been updated
             if (Knx.read(1)) {
                 digitalWrite(TEST_LED, HIGH);

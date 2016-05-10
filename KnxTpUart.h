@@ -219,7 +219,7 @@ static const char _debugErrorText[];
     boolean IsActive(void) const;
 
     // Set the string used for debug traces
-    void SetDebugString(String *strPtr);
+    //void SetDebugString(String *strPtr);
 
   // Functions NOT INLINED
     // Reset the Arduino UART port and the TPUART device
@@ -266,17 +266,11 @@ static const char _debugErrorText[];
     // Typical calling period is 400 usec.
     boolean GetMonitoringData(type_MonitorData&);
 
-    // DEBUG purpose functions
-    void DEBUG_SendResetCommand(void);
-    void DEBUG_SendStateReqCommand(void);
+//    // DEBUG purpose functions
+//    void DEBUG_SendResetCommand(void);
+//    void DEBUG_SendStateReqCommand(void);
 
   private:
-
-  // Private INLINED functions (see definitions later in this file)
-    void DebugInfo(const char[]) const;
-
-    void DebugError(const char[]) const;
-
   // Private NOT INLINED functions 
     // Check if the target address points to an assigned com object (i.e. the target address equals a com object address)
     // if yes, then update index parameter with the index (in the list) of the targeted com object and return true
@@ -318,31 +312,6 @@ inline boolean KnxTpUart::IsActive(void) const
   if ( _rx.state > RX_IDLE_WAITING_FOR_CTRL_FIELD) return true; // Rx activity
   if ( _tx.state > TX_IDLE) return true; // Tx activity
   return false;
-}
-
-
-
-inline void KnxTpUart::SetDebugString(String *strPtr)
-{
-#if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
-   _debugStrPtr = strPtr;
-#endif
-}
-
-
-inline void KnxTpUart::DebugInfo(const char comment[]) const
-{
-#if defined(KNXTPUART_DEBUG_INFO)
-  if (_debugStrPtr != NULL) *_debugStrPtr += String(_debugInfoText) + String(comment);
-#endif
-}
-
-
-inline void KnxTpUart::DebugError(const char comment[]) const
-{
-#if defined(KNXTPUART_DEBUG_ERROR)
-  if (_debugStrPtr != NULL) *_debugStrPtr += String(_debugErrorText) + String(comment);
-#endif
 }
 
 #endif // KNXTPUART_H
