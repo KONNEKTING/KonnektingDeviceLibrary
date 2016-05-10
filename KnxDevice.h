@@ -33,7 +33,7 @@
 #include "KnxComObject.h"
 #include "ActionRingBuffer.h"
 #include "KnxTpUart.h"
-//#include "KonnektingDevice.h"
+#include "KonnektingDevice.h"
 
 
 // Values returned by the KnxDevice member functions :

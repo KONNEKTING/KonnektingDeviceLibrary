@@ -27,8 +27,7 @@
 #ifndef KONNEKTINGDEBUG_H
 #define KONNEKTINGDEBUG_H
 
-//#include <Arduino.h>
-//
+
 //#ifdef DEBUG
 //
 //        #define DEBUG_PRINT(A) if (__DEBUG_SERIAL!=NULL) { __DEBUG_SERIAL.print(A);}
@@ -41,13 +40,23 @@
         #define DEBUG_PRINT2(A, B)
         #define DEBUG_PRINTLN2(A, B)
 //#endif
-//static Serial_ __DEBUG_SERIAL;
-//
-//
-//// DEBUG PROTOCOL HANDLING
-//#define DEBUG_PROTOCOL
-//
-//// remove/disable just for debugging purpose to disable memory write
-//#define WRITEMEM
+
+#include <Arduino.h>
+
+
+//#define debug(...) if (myprint!=NULL) {myprint->print(__VA_ARGS__);}
+//#define debugln(...) if (myprint!=NULL) {myprint->println(__VA_ARGS__);}
+
+class KonnektingDebug {
+    
+private:
+    
+public:
+    static Stream* _debugstream;
+    static void setDebugStream(Stream* s);
+    
+};
+
+
 
 #endif // KONNEKTINGDEBUG_H

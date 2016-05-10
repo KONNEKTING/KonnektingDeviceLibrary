@@ -103,25 +103,6 @@ void KonnektingDevice::init(HardwareSerial& serial,
                             byte revisionID
                             ) {
 
-//    int elementSize = sizeof(KnxComObject);
-//    int currentBufferSize = sizeof(comObjectList);
-//    int numOfComObj = currentBufferSize / elementSize;
-//    
-//    KnxComObject* extendedComObjectsList = (KnxComObject*) malloc(elementSize * (numOfComObj+1));
-//    
-//    KnxComObject p = KnxComObject(KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
-//    p.SetAddr(G_ADDR(15, 7, 255));
-//    p.setActive(true);
-//    
-//    
-//    extendedComObjectsList[0] =  p;
-//    
-//    for(int i=1;i<numOfComObj;i++) {
-//        extendedComObjectsList[i] = comObjectList[i-1];
-//    }
-//    
-    // -------------------------
-    
 //    _paramSizeList = paramSizeList;
 //    _numberOfParams = sizeof (_paramSizeList); 
     

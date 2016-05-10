@@ -4,10 +4,10 @@
 // ### DEBUG CONFIGURATION
 // ################################################
 #define DEBUG
-//#include <KonnektingDebug.h>
-//#include <SoftwareSerial.h>
-//
-//SoftwareSerial mySerial(11, 10); // RX, TX
+#include <KonnektingDebug.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial mySerial(11, 10); // RX, TX
 
 
 // ################################################
@@ -63,28 +63,31 @@ int laststate = false;
 void setup() {
 
 
-    for (int i = 0; i < 20;i++) {
-        analogWrite(13, 32);
-        delay(200);
-        analogWrite(13, 255);
-        delay(380);
-    }
+//    for (int i = 0; i < 10;i++) {
+//        analogWrite(13, 32);
+//        delay(200);
+//        analogWrite(13, 255);
+//        delay(380);
+//    }
 
 
 //    // On Leonardo/Micro:
 //    // Serial = Debug RS232 Port
 //    // Serial1 = KNX BTI
-//    Serial.begin(9600);
+    Serial.begin(9600);
 //
 //    // wait for serial port to connect. Needed for Leonardo/Micro only
-//    while (!Serial) {
-//        analogWrite(13, 128);
+    while (!Serial) {
+//        analogWrite(13, 64);
 //        delay(100);
-//        analogWrite(13, 255);
+//        analogWrite(13, 128);
 //        delay(200);
-//    }
-//    analogWrite(13, 0); // disable onboard test led  
-//    Serial.println("6Ch KNX Controller Startup...");
+    }
+    analogWrite(13, 0); // disable onboard test led  
+    Serial.println("6Ch KNX Controller Startup...");
+//    myprint = &Serial;
+    KonnektingDebug::setDebugStream(&Serial);
+//    debugln("Hello World");
 
 //    __DEBUG_SERIAL = Serial;
 //
