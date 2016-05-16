@@ -30,7 +30,11 @@
  * if "#define DEBUG" is set, you must run your KONNEKTING Suite with "-Dde.root1.slicknx.konnekting.debug=true" 
  * A release-version of your development MUST NOT contain "#define DEBUG" ...
  */
-#define DEBUG
+
+#define DEBUG_PROTOCOL
+
+#define WRITEMEM
+#include "Arduino.h"
 #include "DebugUtil.h"
 #include "KnxDevice.h"
 #include "KnxComObject.h"
@@ -52,8 +56,7 @@ KonnektingDevice& Konnekting = KonnektingDevice::Konnekting;
  */
 void konnektingKnxEvents(byte index) {
 
-    DEBUG_PRINT(F("\n\nkonnektingKnxEvents index="));
-    DEBUG_PRINTLN(index);
+    DEBUG_PRINTLN(F("\n\nkonnektingKnxEvents index=%d"), index);
 
     // if it's not a internal com object, route back to knxEvents()
     if (!Konnekting.internalComObject(index)) {
@@ -69,7 +72,7 @@ KonnektingDevice::KonnektingDevice() {
     DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
 
 #ifdef ESP8266
-    DEBUG_PRINT("Setup ESP8266 ... ");
+    DEBUG_PRINT(F("Setup ESP8266 ... "));
 
     // disable WIFI per default
     WiFi.mode(WIFI_OFF);
@@ -79,7 +82,7 @@ KonnektingDevice::KonnektingDevice() {
     // enable 1k EEPROM on ESP8266 platform
     EEPROM.begin(1024);
 
-    DEBUG_PRINTLN("*DONE*");
+    DEBUG_PRINTLN(F("*DONE*"));
 #endif    
 
 }
@@ -125,30 +128,21 @@ void KonnektingDevice::init(HardwareSerial& serial,
     attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
 
     // hardcoded stuff
-    DEBUG_PRINT(F("Manufacturer: "));
-    DEBUG_PRINT2(_manufacturerID, HEX);
-    DEBUG_PRINTLN(F("hex"));
+    DEBUG_PRINTLN(F("Manufacturer: 0x%02x"), _manufacturerID);
 
-    DEBUG_PRINT("Device: ");
-    DEBUG_PRINT2(_deviceID, HEX);
-    DEBUG_PRINTLN(F("hex"));
+    DEBUG_PRINTLN(F("Device: 0x%02x"), _deviceID);
 
-    DEBUG_PRINT(F("Revision: "));
-    DEBUG_PRINT2(_revisionID, HEX);
-    DEBUG_PRINTLN(F("hex"));
+    DEBUG_PRINTLN(F("Revision: 0x%02x"), _revisionID);
 
-    DEBUG_PRINT(F("numberOfCommObjects: "));
-    DEBUG_PRINTLN(Knx.getNumberOfComObjects());
+    DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
 
     // calc index of parameter table in eeprom --> depends on number of com objects
     _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
 
     _deviceFlags = EEPROM.read(EEPROM_DEVICE_FLAGS);
 
-    DEBUG_PRINT(F("_deviceFlags: "));
-    DEBUG_PRINT2(_deviceFlags, BIN);
-    DEBUG_PRINTLN(F("bin"));
-
+    DEBUG_PRINTLN(F("_deviceFlags: "BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+    
     _individualAddress = P_ADDR(1, 1, 254);
     if (!isFactorySetting()) {
         DEBUG_PRINTLN(F("->EEPROM"));
@@ -172,31 +166,16 @@ void KonnektingDevice::init(HardwareSerial& serial,
             bool active = ((settings & 0x80) == 0x80);
             Knx.setComObjectAddress((i + 1), comObjAddr, active);
 
-            DEBUG_PRINT(F("ComObj index="));
-            DEBUG_PRINT((i + 1));
-            DEBUG_PRINT(F(" Suite-ID="));
-            DEBUG_PRINT(i);
-            DEBUG_PRINT(F(" HI: 0x"));
-            DEBUG_PRINT2(hi, HEX);
-            DEBUG_PRINT(F(" LO: 0x"));
-            DEBUG_PRINT2(lo, HEX);
-            DEBUG_PRINT(F(" GA: 0x"));
-            DEBUG_PRINT2(comObjAddr, HEX);
-            DEBUG_PRINT(F(" Settings: 0x"));
-            DEBUG_PRINT2(settings, HEX);
-            DEBUG_PRINT(F(" Active: "));
-            DEBUG_PRINTLN2(active, DEC);
+            DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x setting=0x%02x active=%d"), i, hi, lo, comObjAddr, settings, active);
         }
 
     } else {
         DEBUG_PRINTLN(F("->FACTORY"));
     }
-    DEBUG_PRINT(F("IA: 0x"));
-    DEBUG_PRINTLN2(_individualAddress, HEX);
+    DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
     e_KnxDeviceStatus status;
     status = Knx.begin(serial, _individualAddress);
-    DEBUG_PRINT(F("KnxDevice startup status: 0x"));
-    DEBUG_PRINTLN2(status, HEX);
+    DEBUG_PRINTLN(F("KnxDevice startup status: 0x%02x"), status);
 
     if (status != KNX_DEVICE_OK) {
         DEBUG_PRINTLN(F("Knx init ERROR. Retry after reboot!!"));
@@ -242,14 +221,7 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
 
-    DEBUG_PRINT(F("getParamValue: index="));
-    DEBUG_PRINT(index);
-    DEBUG_PRINT(F(" _paramTableStartindex="));
-    DEBUG_PRINT(_paramTableStartindex);
-    DEBUG_PRINT(F(" skipBytes="));
-    DEBUG_PRINT(skipBytes);
-    DEBUG_PRINT(F(" paramLen="));
-    DEBUG_PRINTLN(paramLen);
+    DEBUG_PRINTLN(F("getParamValue: index=%d _paramTableStartindex=%d skipbytes=%d paremLen=%d"), index, _paramTableStartindex, skipBytes, paramLen);
 
     // read byte by byte
     for (byte i = 0; i < paramLen; i++) {
@@ -257,13 +229,7 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
         int addr = _paramTableStartindex + skipBytes + i;
 
         value[i] = EEPROM.read(addr);
-        DEBUG_PRINT(F(" val["));
-        DEBUG_PRINT(i);
-        DEBUG_PRINT(F("]@"));
-        DEBUG_PRINT(addr);
-        DEBUG_PRINT(F(" -> 0x"));
-        DEBUG_PRINT2(value[i], HEX);
-        DEBUG_PRINTLN(F(""));
+        DEBUG_PRINTLN(F(" val[%d]@%d -> 0x%02x"), i, addr, value[i]);
     }
 }
 
@@ -350,16 +316,16 @@ void KonnektingDevice::reboot() {
     Knx.end();
 
 #ifdef ESP8266 
-    DEBUG_PRINTLN("ESP8266 restart");
+    DEBUG_PRINTLN("ESP8266 restart"));
     ESP.restart();
 #endif
 
 #ifdef __AVR_ATmega328P__
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
-    DEBUG_PRINTLN(F("software reset NOW"));
+    DEBUG_PRINTLN((F("software reset NOW"));
     delay(500);
-    asm volatile ("  jmp 0");
+    asm volatile ("  jmp 0"));
 #else     
     DEBUG_PRINTLN(F("WDT reset NOW"));
     wdt_enable(WDTO_500MS);
@@ -376,8 +342,7 @@ void KonnektingDevice::reboot() {
  */
 bool KonnektingDevice::internalComObject(byte index) {
 
-    DEBUG_PRINT(F("internalComObject index="));
-    DEBUG_PRINTLN(index);
+    DEBUG_PRINTLN(F("internalComObject index=%d"), index);
     bool consumed = false;
     switch (index) {
         case 0: // object index 0 has been updated
@@ -386,30 +351,19 @@ bool KonnektingDevice::internalComObject(byte index) {
             Knx.read(0, buffer);
 #ifdef DEBUG_PROTOCOL
             for (int i = 0; i < 14; i++) {
-                DEBUG_PRINT(F("buffer["));
-                DEBUG_PRINT(i);
-                DEBUG_PRINT(F("]\thex=0x"));
-                DEBUG_PRINT2(buffer[i], HEX);
-                DEBUG_PRINT(F("  \tbin="));
-                DEBUG_PRINTLN2(buffer[i], BIN);
+                DEBUG_PRINTLN(F("buffer[%d]\thex=0x%02x bin="BYTETOBINARYPATTERN), i, buffer[i], BYTETOBINARY(buffer[i]));
             }
 #endif
 
             byte protocolversion = buffer[0];
             byte msgType = buffer[1];
 
-            DEBUG_PRINT(F("protocolversion=0x"));
-            DEBUG_PRINTLN2(protocolversion, HEX);
+            DEBUG_PRINTLN(F("protocolversion=0x%02x"), protocolversion);
 
-            DEBUG_PRINT(F("msgType=0x"));
-            DEBUG_PRINTLN2(msgType, HEX);
+            DEBUG_PRINTLN(F("msgType=0x%02x"), msgType);
 
             if (protocolversion != PROTOCOLVERSION) {
-                DEBUG_PRINT(F("Unsupported protocol version. Using "));
-                DEBUG_PRINT(PROTOCOLVERSION);
-                DEBUG_PRINT(F(" Got: "));
-                DEBUG_PRINT(protocolversion);
-                DEBUG_PRINTLN(F("!"));
+                DEBUG_PRINTLN(F("Unsupported protocol version. Using: %d Got: %d !"), PROTOCOLVERSION, protocolversion);
             } else {
 
                 switch (msgType) {
@@ -447,8 +401,7 @@ bool KonnektingDevice::internalComObject(byte index) {
                         handleMsgReadComObject(buffer);
                         break;
                     default:
-                        DEBUG_PRINT(F("Unsupported msgtype: 0x"));
-                        DEBUG_PRINT2(msgType, HEX);
+                        DEBUG_PRINTLN(F("Unsupported msgtype: 0x%02x"), msgType);
                         DEBUG_PRINTLN(F(" !!! Skipping message."));
                         break;
                 }
@@ -463,10 +416,7 @@ bool KonnektingDevice::internalComObject(byte index) {
 }
 
 void KonnektingDevice::sendAck(byte errorcode, byte indexinformation) {
-    DEBUG_PRINT(F("sendAck errorcode=0x"));
-    DEBUG_PRINT2(errorcode, HEX);
-    DEBUG_PRINT(F(" indexinformation=0x"));
-    DEBUG_PRINTLN2(indexinformation, HEX);
+    DEBUG_PRINTLN(F("sendAck errorcode=0x%02x indexInformation=0x%02x"), errorcode, indexinformation);
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ACK;
@@ -536,7 +486,7 @@ void KonnektingDevice::handleMsgWriteProgrammingMode(byte msg[]) {
         sendAck(0x00, 0x00);
 #ifdef ESP8266
         if (msg[4] == 0x00) {
-            DEBUG_PRINTLN("ESP8266: EEPROM.commit()");
+            DEBUG_PRINTLN("ESP8266: EEPROM.commit()"));
             EEPROM.commit();
         }
 #endif                
@@ -577,8 +527,7 @@ void KonnektingDevice::handleMsgWriteIndividualAddress(byte msg[]) {
     // see: http://stackoverflow.com/questions/3920307/how-can-i-remove-a-flag-in-c
     _deviceFlags &= ~0x80; // remove factory setting bit (left most bit))
 #ifdef DEBUG_PROTOCOL
-    DEBUG_PRINT(F("DeviceFlags after =0x"));
-    DEBUG_PRINTLN2(_deviceFlags, HEX);
+    DEBUG_PRINTLN(F("DeviceFlags after =0x%02x"), _deviceFlags);
 #endif
 
     memoryUpdate(EEPROM_DEVICE_FLAGS, _deviceFlags);
@@ -621,19 +570,14 @@ void KonnektingDevice::handleMsgWriteParameter(byte msg[]) {
     int paramLen = getParamSize(index);
 
 #ifdef DEBUG_PROTOCOL
-    DEBUG_PRINT(F("id="));
-    DEBUG_PRINT(index);
-    DEBUG_PRINTLN(F(""))
+    DEBUG_PRINTLN(F("id=%d"), index);
 #endif
 
 #if defined(WRITEMEM)    
             // write byte by byte
     for (byte i = 0; i < paramLen; i++) {
 #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINT(F(" data["));
-        DEBUG_PRINT(i);
-        DEBUG_PRINT(F("]=0x"));
-        DEBUG_PRINTLN2(msg[3 + i], HEX);
+        DEBUG_PRINTLN(F(" data[%d]=0x%02x"), i, msg[3+i]);
 #endif
         //EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
         memoryUpdate(_paramTableStartindex + skipBytes + i, msg[3 + i]);
@@ -680,23 +624,14 @@ void KonnektingDevice::handleMsgWriteComObject(byte msg[]) {
     word ga = (gaHi << 8) + (gaLo << 0);
 
 #ifdef DEBUG_PROTOCOL
-    DEBUG_PRINT(F("CO id="));
-    DEBUG_PRINT(comObjId);
-    DEBUG_PRINT(F(" hi=0x"));
-    DEBUG_PRINT2(gaHi, HEX);
-    DEBUG_PRINT(F(" lo=0x"));
-    DEBUG_PRINT2(gaLo, HEX);
-    DEBUG_PRINT(F(" ga=0x"));
-    DEBUG_PRINT2(ga, HEX);
-    DEBUG_PRINT(F(" settings=0x"));
-    DEBUG_PRINTLN2(settings, HEX);
+    DEBUG_PRINTLN(F("CO id=%d hi=0x%02x lo=0x%02x GA=0x%04x settings=0x%02x"), comObjId, gaHi, gaLo, ga, settings);
 
     bool foundWrongUndefined = false;
     for (int i = 6; i < 13; i++) {
         if (msg[i] != 0x00) foundWrongUndefined = true;
     }
     if (foundWrongUndefined) {
-        DEBUG_PRINTLN("!!!!!!!!!!! WARNING: Suite is sending wrong data. Ensure Suite version matches the Device Lib !!!!!");
+        DEBUG_PRINTLN(F("!!!!!!!!!!! WARNING: Suite is sending wrong data. Ensure Suite version matches the Device Lib !!!!!"));
     }
 #endif        
 
@@ -744,11 +679,7 @@ void KonnektingDevice::handleMsgReadComObject(byte msg[]) {
 
 void KonnektingDevice::memoryUpdate(int index, byte data) {
 
-
-    DEBUG_PRINT(F("memUpdate: index="));
-    DEBUG_PRINT(index);
-    DEBUG_PRINT(F(" data=0x"));
-    DEBUG_PRINTLN2(data, HEX);
+    DEBUG_PRINTLN(F("memUpdate: index=%2 data=0x%02x"), index, data);
 
 #ifdef ESP8266    
     DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
@@ -768,9 +699,7 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
 
 uint8_t KonnektingDevice::getUINT8Param(byte index) {
     if (getParamSize(index) != PARAM_UINT8) {
-        DEBUG_PRINT(F("Requested UINT8 param for index "));
-        DEBUG_PRINT(index);
-        DEBUG_PRINTLN(F(" but param has different length! Will Return 0."));
+        DEBUG_PRINTLN(F("Requested UINT8 param for index %d but param has different length! Will Return 0."), index);
         return 0;
     }
 
@@ -782,9 +711,7 @@ uint8_t KonnektingDevice::getUINT8Param(byte index) {
 
 int8_t KonnektingDevice::getINT8Param(byte index) {
     if (getParamSize(index) != PARAM_INT8) {
-        DEBUG_PRINT(F("Requested INT8 param for index "));
-        DEBUG_PRINT(index);
-        DEBUG_PRINTLN(F(" but param has different length! Will Return 0."));
+        DEBUG_PRINTLN(F("Requested INT8 param for index %d but param has different length! Will Return 0."), index);
         return 0;
     }
 
@@ -796,9 +723,7 @@ int8_t KonnektingDevice::getINT8Param(byte index) {
 
 uint16_t KonnektingDevice::getUINT16Param(byte index) {
     if (getParamSize(index) != PARAM_UINT16) {
-        DEBUG_PRINT(F("Requested UINT16 param for index "));
-        DEBUG_PRINT(index);
-        DEBUG_PRINTLN(F(" but param has different length! Will Return 0."));
+        DEBUG_PRINTLN(F("Requested UINT16 param for index %d but param has different length! Will Return 0."), index);
         return 0;
     }
 
@@ -812,18 +737,16 @@ uint16_t KonnektingDevice::getUINT16Param(byte index) {
 
 int16_t KonnektingDevice::getINT16Param(byte index) {
     if (getParamSize(index) != PARAM_INT16) {
-        DEBUG_PRINT(F("Requested INT16 param for index "));
-        DEBUG_PRINT(index);
-        DEBUG_PRINTLN(F(" but param has different length! Will Return 0."));
+        DEBUG_PRINTLN(F("Requested INT16 param for index %d but param has different length! Will Return 0."), index);
         return 0;
     }
 
     byte paramValue[2];
     getParamValue(index, paramValue);
 
-    //    DEBUG_PRINT(F(" int16: [1]=0x"));
+    //    DEBUG_PRINT((F(" int16: [1]=0x"));
     //    DEBUG_PRINT2(paramValue[0], HEX);
-    //    DEBUG_PRINT(F(" [0]=0x"));
+    //    DEBUG_PRINT((F(" [0]=0x"));
     //    DEBUG_PRINTLN2(paramValue[1], HEX);
 
     int16_t val = (paramValue[0] << 8) + (paramValue[1] << 0);
@@ -833,9 +756,7 @@ int16_t KonnektingDevice::getINT16Param(byte index) {
 
 uint32_t KonnektingDevice::getUINT32Param(byte index) {
     if (getParamSize(index) != PARAM_UINT32) {
-        DEBUG_PRINT(F("Requested UINT32 param for index "));
-        DEBUG_PRINT(index);
-        DEBUG_PRINTLN(F(" but param has different length! Will Return 0."));
+        DEBUG_PRINTLN(F("Requested UINT32 param for index %d but param has different length! Will Return 0."), index);
         return 0;
     }
 
@@ -849,9 +770,7 @@ uint32_t KonnektingDevice::getUINT32Param(byte index) {
 
 int32_t KonnektingDevice::getINT32Param(byte index) {
     if (getParamSize(index) != PARAM_INT32) {
-        DEBUG_PRINT(F("Requested UINT32 param for index "));
-        DEBUG_PRINT(index);
-        DEBUG_PRINTLN(F(" but param has different length! Will Return 0."));
+        DEBUG_PRINTLN(F("Requested INT32 param for index %d but param has different length! Will Return 0."), index);
         return 0;
     }
 

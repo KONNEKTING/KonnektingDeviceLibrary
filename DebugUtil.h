@@ -29,14 +29,28 @@
 
 
 #include <Arduino.h>
-#define DEBUG_PRINTLN(...)
-#define DEBUG_PRINTLN2(...)
-#define DEBUG_PRINT(...)
-#define DEBUG_PRINT2(...)
 
+#define DEBUG
 
-//#define debug(...) if (myprint!=NULL) {myprint->print(__VA_ARGS__);}
-//#define debugln(...) if (myprint!=NULL) {myprint->println(__VA_ARGS__);}
+#ifdef DEBUG
+    #define DEBUG_PRINT(...) Debug.print(__VA_ARGS__);
+    #define DEBUG_PRINTLN(...) Debug.println(__VA_ARGS__);
+#else
+    #define DEBUG_PRINT(...)
+    #define DEBUG_PRINTLN(...)
+#endif
+
+#define BYTETOBINARYPATTERN "%d%d%d%d%d%d%d%d"
+#define BYTETOBINARY(byte)  \
+  (byte & 0x80 ? 1 : 0), \
+  (byte & 0x40 ? 1 : 0), \
+  (byte & 0x20 ? 1 : 0), \
+  (byte & 0x10 ? 1 : 0), \
+  (byte & 0x08 ? 1 : 0), \
+  (byte & 0x04 ? 1 : 0), \
+  (byte & 0x02 ? 1 : 0), \
+  (byte & 0x01 ? 1 : 0) 
+
 
 class DebugUtil {
     
