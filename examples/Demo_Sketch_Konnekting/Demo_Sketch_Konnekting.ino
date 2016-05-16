@@ -108,17 +108,17 @@ void setup() {
 // ################################################
 
 void loop() {
-//    Knx.task();
-//    unsigned long currentmillis = millis();
-//    // only do measurements and other sketch related stuff if not in programming mode
-//    if (Konnekting.isReadyForApplication()) {
-//        if (currentmillis - lastmillis >= diffmillis) {
-//            Debug.println(F("Actual state: %d"), laststate);
-//            Knx.write(2, laststate);
-//            laststate = !laststate;
-//            lastmillis = currentmillis;
-//        }
-//    }
+    Knx.task();
+    unsigned long currentmillis = millis();
+    // only do measurements and other sketch related stuff if not in programming mode
+    if (Konnekting.isReadyForApplication()) {
+        if (currentmillis - lastmillis >= diffmillis) {
+            Debug.println(F("Actual state: %d"), laststate);
+            Knx.write(2, laststate);
+            laststate = !laststate;
+            lastmillis = currentmillis;
+        }
+    }
 }
 
 // ################################################

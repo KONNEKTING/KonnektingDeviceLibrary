@@ -185,7 +185,7 @@ void KnxDevice::task(void) {
 
                 case KNX_WRITE_REQUEST: // a write operation of a Com Object on the KNX network is required
                     // update the com obj value
-                    //                    Serial.println("KNX_WRITE_REQUEST");
+                    DEBUG_PRINTLN(F("KnxDevice: KNX_WRITE_REQUEST on ComObj #%d"), action.index);
                     if ((comObj.GetLength()) <= 2)
                         comObj.UpdateValue(action.byteValue);
                     else {
@@ -415,6 +415,8 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
     type_tx_action action;
     byte targetedComObjIndex; // index of the Com Object targeted by the event
 
+    DEBUG_PRINTLN(F("KnxDevice: GetTpUartEvents: %d"), event);
+    
     // Manage RECEIVED MESSAGES
     if (event == TPUART_EVENT_RECEIVED_KNX_TELEGRAM) {
         Knx._state = IDLE;
@@ -422,10 +424,11 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
         KnxComObject comObj = (targetedComObjIndex == 255 ? Knx._progComObj : _comObjectsList[targetedComObjIndex]);
 //        KnxComObject comObj =  _comObjectsList[targetedComObjIndex];
         
+        DEBUG_PRINTLN(F("KnxDevice: event command: %d"), Knx._rxTelegram->GetCommand());
 
         switch (Knx._rxTelegram->GetCommand()) {
             case KNX_COMMAND_VALUE_READ:
-//                Knx.DebugInfo("READ req.\n");
+                DEBUG_PRINTLN(F("READ req.\n"));
                 // READ command coming from the bus
                 // if the Com Object has read attribute, then add RESPONSE action in the TX action list
                 if ((comObj.GetIndicator()) & KNX_COM_OBJ_R_INDICATOR) { // The targeted Com Object can indeed be read
@@ -436,7 +439,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                 break;
 
             case KNX_COMMAND_VALUE_RESPONSE:
-//                Knx.DebugInfo("RESP req.\n");
+                DEBUG_PRINTLN(F("RESP req.\n"));
                 // RESPONSE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has UPDATE attribute
                 if ((comObj.GetIndicator()) & KNX_COM_OBJ_U_INDICATOR) {
@@ -448,17 +451,17 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
 
             case KNX_COMMAND_VALUE_WRITE:
-                //Knx.DebugInfo("WRITE req.\n");
+                DEBUG_PRINTLN(F("WRITE req."));
                 // WRITE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has WRITE attribute
                 if ((comObj.GetIndicator()) & KNX_COM_OBJ_W_INDICATOR) {
                     comObj.UpdateValue(*(Knx._rxTelegram));
                     //We notify the upper layer of the update
                     if (Konnekting.isActive()) {
-                        DEBUG_PRINTLN(F("Routing event to tools"));
+                        DEBUG_PRINTLN(F("Routing event to tools: %d"), targetedComObjIndex);
                         konnektingKnxEvents(targetedComObjIndex);
                     } else {
-                        DEBUG_PRINTLN(F("No event routing"));
+                        DEBUG_PRINTLN(F("No event routing: %d"), targetedComObjIndex);
                         knxEvents(targetedComObjIndex);
                     }
                 }

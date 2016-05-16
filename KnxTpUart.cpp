@@ -27,7 +27,7 @@
 // Module dependencies : HardwareSerial, KnxTelegram, KnxComObject
 
 #include "KnxTpUart.h"
-
+#include "DebugUtil.h"
 #ifndef ESP8266 
 #include <avr/pgmspace.h>
 #endif
@@ -246,18 +246,22 @@ void KnxTpUart::RXTask(void) {
         nowTime = (word) micros(); // word cast because a 65ms looping counter is long enough
         if (TimeDeltaWord(nowTime, lastByteRxTimeMicrosec) > 2000 /* 2 ms */) { // EOP detected, the telegram reception is completed
 
+            DEBUG_PRINTLN(F("RXState: %d"), _rx.state);
             switch (_rx.state) {
                 case RX_KNX_TELEGRAM_RECEPTION_STARTED: // we are not supposed to get EOP now, the telegram is incomplete
                 case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID:
+                    DEBUG_PRINTLN(F("length invalid"), _rx.state);
                     _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
                     break;
 
                 case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
                     if (telegram.IsChecksumCorrect()) { // checksum correct, let's update the _rx struct with the received telegram and correct index
+                        DEBUG_PRINTLN(F("checksum correct"));
                         telegram.Copy(_rx.receivedTelegram);
                         _rx.addressedComObjectIndex = addressedComObjectIndex;
                         _evtCallbackFct(TPUART_EVENT_RECEIVED_KNX_TELEGRAM); // Notify the new received telegram
                     } else { // checksum incorrect, notify error
+                        DEBUG_PRINTLN(F("checksum incorrect, notify error"));
                         _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
                     }
                     break;
@@ -330,6 +334,7 @@ void KnxTpUart::RXTask(void) {
                 } else if (readBytesNb == 6) // We have just read the routing field containing the address type and the payload length
                 { // We check if the message is addressed to us in order to send the appropriate acknowledge
                     if (IsAddressAssigned(telegram.GetTargetAddress(), addressedComObjectIndex)) { // Message addressed to us
+                        DEBUG_PRINTLN(F("KnxTpUart: message adressed to us: ComObjIndex=%d"), addressedComObjectIndex);
                         _rx.state = RX_KNX_TELEGRAM_RECEPTION_ADDRESSED;
                         //sent the correct ACK service now
                         // the ACK info must be sent latest 1,7 ms after receiving the address type octet of an addressed frame
@@ -353,6 +358,7 @@ void KnxTpUart::RXTask(void) {
                 if (readBytesNb == KNX_TELEGRAM_MAX_SIZE) _rx.state = RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID;
                 else {
                     telegram.WriteRawByte(incomingByte, readBytesNb);
+                    DEBUG_PRINTLN(F("Reading byte #%d: 0x%02x"), readBytesNb, incomingByte);
                     readBytesNb++;
                 }
                 break;
@@ -467,9 +473,12 @@ boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
     byte divisionCounter = 0;
     byte i, searchIndexStart, searchIndexStop, searchIndexRange;
     
+    DEBUG_PRINTLN(F("isAddressAssigned: %04x"), addr);
+    
     // check for prog-com-obj
-    if (addr == 0x7fff /* = 15/7/255 */) {
+    if (addr == 0xfe7f /* 0x7ffe = 15/7/255 */) {
         index = 255;
+        DEBUG_PRINTLN(F("isProgComObj!"));    
         return true;
     }
     
