@@ -27,8 +27,8 @@
 #ifndef KONNEKTING_h
 #define KONNEKTING_h
 
-#include <KonnektingDebug.h>
 #include <Arduino.h> 
+#include <DebugUtil.h>
 #include <KnxDevice.h>
 #include <EEPROM.h>
 

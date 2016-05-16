@@ -31,7 +31,7 @@
  * A release-version of your development MUST NOT contain "#define DEBUG" ...
  */
 #define DEBUG
-#include "KonnektingDebug.h"
+#include "DebugUtil.h"
 #include "KnxDevice.h"
 #include "KnxComObject.h"
 #include "KnxDPT.h"

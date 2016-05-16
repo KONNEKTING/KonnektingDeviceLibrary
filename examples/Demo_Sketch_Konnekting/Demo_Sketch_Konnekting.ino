@@ -1,13 +1,25 @@
+#include <avr/pgmspace.h>
 #include <KnxDevice.h>
 
 // ################################################
 // ### DEBUG CONFIGURATION
 // ################################################
 #define DEBUG
-#include <KonnektingDebug.h>
+#include <DebugUtil.h>
+// Get right serial port for debugging
+#ifdef __AVR_ATmega32U4__
+// Leonardo/Micro/ProMicro use the USB serial port
+#define DEBUGSERIAL Serial
+#elif ESP8266
+// ESP8266 use the 2nd serial port with TX only
+#define DEBUGSERIAL Serial1
+#else
+// All other, (ATmega328P f.i.) use software serial
 #include <SoftwareSerial.h>
+SoftwareSerial softserial(11, 10); // RX, TX
+#define DEBUGSERIAL softserial
+#endif
 
-SoftwareSerial mySerial(11, 10); // RX, TX
 
 
 // ################################################
@@ -15,9 +27,12 @@ SoftwareSerial mySerial(11, 10); // RX, TX
 // ################################################
 #ifdef __AVR_ATmega328P__
 #define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
-#else
+#elif __AVR_ATmega32U4__
 #define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
+#elif ESP8266
+#define KNX_SERIAL Serial // ESP8266 use Serial
 #endif
+
 #define MANUFACTURER_ID 57005
 #define DEVICE_ID 255
 #define REVISION 0
@@ -30,14 +45,14 @@ SoftwareSerial mySerial(11, 10); // RX, TX
 // ### KONNEKTING ComObjects and Parameters
 // ################################################
 KnxComObject KnxDevice::_comObjectsList[] = {
-    /* Suite-Index 0 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
-    /* Suite-Index 1 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
+    /* Index 0 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
+    /* Index 1 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
 };
 const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
 
 // Definition of parameter size
 byte KonnektingDevice::_paramSizeList[] = {
-    /* Param Index 0 */ PARAM_UINT16
+    /* Index 0 */ PARAM_UINT16
 };
 const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
@@ -59,56 +74,35 @@ int laststate = false;
 // ################################################
 // ### SETUP
 // ################################################
+#define SETOUT(stream) Debug.setPrint(stream);
 
 void setup() {
 
+    // Start debug serial with 9600 bauds
+    DEBUGSERIAL.begin(9600);
 
-//    for (int i = 0; i < 10;i++) {
-//        analogWrite(13, 32);
-//        delay(200);
-//        analogWrite(13, 255);
-//        delay(380);
-//    }
+    // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
+#if defined(__AVR_ATmega32U4__)
+    while (!DEBUGSERIAL)
+#endif
 
+    // make debug serial port known to debug class
+    Debug.setPrintStream(&DEBUGSERIAL);
 
-//    // On Leonardo/Micro:
-//    // Serial = Debug RS232 Port
-//    // Serial1 = KNX BTI
-    Serial.begin(9600);
-//
-//    // wait for serial port to connect. Needed for Leonardo/Micro only
-    while (!Serial) {
-//        analogWrite(13, 64);
-//        delay(100);
-//        analogWrite(13, 128);
-//        delay(200);
-    }
-    analogWrite(13, 0); // disable onboard test led  
-    Serial.println("6Ch KNX Controller Startup...");
-//    myprint = &Serial;
-    KonnektingDebug::setDebugStream(&Serial);
-//    debugln("Hello World");
+    Debug.println(F("Demo Sketch Konnekting"));
 
-//    __DEBUG_SERIAL = Serial;
-//
-//    Serial.println("Demo Sketch Konnekting");
-//
-//    DEBUG_PRINTLN("Demo Sketch Konnekting");
-//
-//    // Initialize KNX enabled Arduino Board
-//    Konnekting.init(KNX_SERIAL,
-//            PROG_BUTTON_PIN,
-//            PROG_LED_PIN,
-//            MANUFACTURER_ID,
-//            DEVICE_ID,
-//            REVISION);
-//
-//    diffmillis = (int) Konnekting.getUINT16Param(0); //blink every xxxx ms
-//
-//    DEBUG_PRINT("Toggle every ");
-//    DEBUG_PRINT(diffmillis);
-//    DEBUG_PRINTLN(" ms");
-//    DEBUG_PRINTLN("Setup is ready. go to loop...");
+    // Initialize KNX enabled Arduino Board
+    Konnekting.init(KNX_SERIAL,
+            PROG_BUTTON_PIN,
+            PROG_LED_PIN,
+            MANUFACTURER_ID,
+            DEVICE_ID,
+            REVISION);
+
+    diffmillis = (int) Konnekting.getUINT16Param(0); //blink every xxxx ms
+
+    Debug.println(F("Toggle every %d ms."), diffmillis);
+    Debug.println(F("Setup is ready. go to loop..."));
 }
 
 // ################################################
@@ -121,8 +115,7 @@ void loop() {
     // only do measurements and other sketch related stuff if not in programming mode
     if (Konnekting.isReadyForApplication()) {
         if (currentmillis - lastmillis >= diffmillis) {
-            DEBUG_PRINT("Actual state: ");
-            DEBUG_PRINTLN(laststate);
+            Debug.println(F("Actual state: %d"), laststate);
             Knx.write(2, laststate);
             laststate = !laststate;
             lastmillis = currentmillis;
@@ -138,15 +131,15 @@ void knxEvents(byte index) {
     // nothing to do in this sketch
     switch (index) {
 
-        case 1: // object index 1 has been updated
+        case 0: // object index 1 has been updated
+
             if (Knx.read(1)) {
                 digitalWrite(TEST_LED, HIGH);
-                DEBUG_PRINTLN("Toggle LED: on");
-            }// led on,  
-            else {
+                Debug.println(F("Toggle LED: on"));
+            } else {
                 digitalWrite(TEST_LED, LOW);
-                DEBUG_PRINTLN("Toggle LED: off");
-            } // led off, 
+                Debug.println(F("Toggle LED: off"));
+            }
             break;
 
         default:
