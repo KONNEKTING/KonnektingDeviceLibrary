@@ -1,4 +1,4 @@
-#include <avr/pgmspace.h>
+//#include <avr/pgmspace.h>
 #include <KnxDevice.h>
 
 // ################################################
@@ -7,18 +7,18 @@
 #define DEBUG
 #include <DebugUtil.h>
 // Get right serial port for debugging
-#ifdef __AVR_ATmega32U4__
-// Leonardo/Micro/ProMicro use the USB serial port
+//#ifdef __AVR_ATmega32U4__
+//// Leonardo/Micro/ProMicro use the USB serial port
 #define DEBUGSERIAL Serial
-#elif ESP8266
-// ESP8266 use the 2nd serial port with TX only
-#define DEBUGSERIAL Serial1
-#else
+//#elif ESP8266
+//// ESP8266 use the 2nd serial port with TX only
+//#define DEBUGSERIAL Serial1
+//#else
 // All other, (ATmega328P f.i.) use software serial
-#include <SoftwareSerial.h>
-SoftwareSerial softserial(11, 10); // RX, TX
-#define DEBUGSERIAL softserial
-#endif
+//#include <SoftwareSerial.h>
+//SoftwareSerial softserial(11, 10); // RX, TX
+//#define DEBUGSERIAL softserial
+//#endif
 
 
 
@@ -36,7 +36,7 @@ SoftwareSerial softserial(11, 10); // RX, TX
 #define MANUFACTURER_ID 57005
 #define DEVICE_ID 255
 #define REVISION 0
-#define PROG_LED_PIN 9
+#define PROG_LED_PIN LED_BUILTIN
 #define PROG_BUTTON_PIN 2
 
 
@@ -63,7 +63,7 @@ const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no
 // ################################################
 // ### Sketch Configuration & Variables
 // ################################################
-#define TEST_LED PROG_LED_PIN //or change it to another pin
+#define TEST_LED LED_BUILTIN //or change it to another pin
 
 unsigned long diffmillis = 0;
 unsigned long lastmillis = millis();
@@ -74,8 +74,6 @@ int laststate = false;
 // ################################################
 // ### SETUP
 // ################################################
-#define SETOUT(stream) Debug.setPrint(stream);
-
 void setup() {
 
     // Start debug serial with 9600 bauds
@@ -89,9 +87,9 @@ void setup() {
     // make debug serial port known to debug class
     Debug.setPrintStream(&DEBUGSERIAL);
 
-    Debug.println(F("Demo Sketch Konnekting"));
+    Debug.print(F("Demo Sketch Konnekting\n"));
 
-    // Initialize KNX enabled Arduino Board
+//    // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL,
             PROG_BUTTON_PIN,
             PROG_LED_PIN,
@@ -110,17 +108,17 @@ void setup() {
 // ################################################
 
 void loop() {
-    Knx.task();
-    unsigned long currentmillis = millis();
-    // only do measurements and other sketch related stuff if not in programming mode
-    if (Konnekting.isReadyForApplication()) {
-        if (currentmillis - lastmillis >= diffmillis) {
-            Debug.println(F("Actual state: %d"), laststate);
-            Knx.write(2, laststate);
-            laststate = !laststate;
-            lastmillis = currentmillis;
-        }
-    }
+//    Knx.task();
+//    unsigned long currentmillis = millis();
+//    // only do measurements and other sketch related stuff if not in programming mode
+//    if (Konnekting.isReadyForApplication()) {
+//        if (currentmillis - lastmillis >= diffmillis) {
+//            Debug.println(F("Actual state: %d"), laststate);
+//            Knx.write(2, laststate);
+//            laststate = !laststate;
+//            lastmillis = currentmillis;
+//        }
+//    }
 }
 
 // ################################################
@@ -128,22 +126,22 @@ void loop() {
 // ################################################
 
 void knxEvents(byte index) {
-    // nothing to do in this sketch
-    switch (index) {
-
-        case 0: // object index 1 has been updated
-
-            if (Knx.read(1)) {
-                digitalWrite(TEST_LED, HIGH);
-                Debug.println(F("Toggle LED: on"));
-            } else {
-                digitalWrite(TEST_LED, LOW);
-                Debug.println(F("Toggle LED: off"));
-            }
-            break;
-
-        default:
-            break;
-    }
+//    // nothing to do in this sketch
+//    switch (index) {
+//
+//        case 0: // object index 1 has been updated
+//
+//            if (Knx.read(1)) {
+//                digitalWrite(TEST_LED, HIGH);
+//                Debug.println(F("Toggle LED: on"));
+//            } else {
+//                digitalWrite(TEST_LED, LOW);
+//                Debug.println(F("Toggle LED: off"));
+//            }
+//            break;
+//
+//        default:
+//            break;
+//    }
 };
 

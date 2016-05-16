@@ -9,7 +9,7 @@ DebugUtil::DebugUtil() {
 
 void DebugUtil::setPrintStream(Stream* printstream) {
     _printstream = printstream;
-    println(F("DEBUG IS ACTIVE"));
+    print(F("DEBUG! free ram: %d\n"), freeRam());
 }
 
 int DebugUtil::freeRam() {

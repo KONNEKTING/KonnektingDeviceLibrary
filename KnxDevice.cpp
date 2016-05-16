@@ -75,7 +75,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
         delete(_tpuart);
         _tpuart = NULL;
         _rxTelegram = NULL;
-//        DebugInfo("Init Error!\n");
+        DEBUG_PRINTLN(F("Init Error!\n"));
         return KNX_DEVICE_INIT_ERROR;
     }
     _tpuart->AttachComObjectsList(_comObjectsList, _numberOfComObjects);
@@ -83,7 +83,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     _tpuart->SetAckCallback(&KnxDevice::TxTelegramAck);
     _tpuart->Init();
     _state = IDLE;
-//    DebugInfo("Init successful\n");
+    DEBUG_PRINTLN(F("Init successful\n"));
     _lastInitTimeMillis = millis();
     _lastTXTimeMicros = _lastTXTimeMicros = micros();
     return KNX_DEVICE_OK;
@@ -454,13 +454,13 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                 if ((comObj.GetIndicator()) & KNX_COM_OBJ_W_INDICATOR) {
                     comObj.UpdateValue(*(Knx._rxTelegram));
                     //We notify the upper layer of the update
-//                    if (Konnekting.isActive()) {
-//                        //                        Serial.println("Routing event to tools");
-//                        konnektingKnxEvents(targetedComObjIndex);
-//                    } else {
-//                        //                        Serial.println("No event routing");
+                    if (Konnekting.isActive()) {
+                        DEBUG_PRINTLN(F("Routing event to tools"));
+                        konnektingKnxEvents(targetedComObjIndex);
+                    } else {
+                        DEBUG_PRINTLN(F("No event routing"));
                         knxEvents(targetedComObjIndex);
-//                    }
+                    }
                 }
                 break;
 
