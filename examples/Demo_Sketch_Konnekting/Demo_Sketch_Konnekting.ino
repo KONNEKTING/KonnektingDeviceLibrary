@@ -45,6 +45,7 @@
 // ### KONNEKTING ComObjects and Parameters
 // ################################################
 KnxComObject KnxDevice::_comObjectsList[] = {
+    Konnekting.createProgComObject(),
     /* Index 0 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
     /* Index 1 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
 };

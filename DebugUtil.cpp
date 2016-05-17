@@ -40,7 +40,7 @@ void DebugUtil::print(const __FlashStringHelper *format, ...) {
 #ifdef __AVR__    
         vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
 #else
-        vsnprintf(buf, sizeof (buf), (const char *) format, args); // fpr rest of the world
+        vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
 #endif    
         va_end(args);
         //Serial.print(buf);)    
@@ -71,7 +71,7 @@ void DebugUtil::println(const __FlashStringHelper *format, ...) {
 #ifdef __AVR__    
         vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
 #else
-        vsnprintf(buf, sizeof (buf), (const char *) format, args); // fpr rest of the world
+        vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
 #endif    
 
         va_end(args);

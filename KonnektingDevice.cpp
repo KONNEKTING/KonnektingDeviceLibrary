@@ -107,6 +107,9 @@ void KonnektingDevice::init(HardwareSerial& serial,
                             ) {
 
     DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
+    
+    DEBUG_PRINTLN("15/7/255 = 0x%04x", G_ADDR(15, 7, 255));
+    
     _initialized = true;
 
     _manufacturerID = manufacturerID;
