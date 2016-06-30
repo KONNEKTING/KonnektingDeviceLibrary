@@ -6,19 +6,22 @@
 // ################################################
 #define DEBUG
 #include <DebugUtil.h>
+
 // Get right serial port for debugging
-//#ifdef __AVR_ATmega32U4__
-//// Leonardo/Micro/ProMicro use the USB serial port
-#define DEBUGSERIAL Serial
-//#elif ESP8266
-//// ESP8266 use the 2nd serial port with TX only
-//#define DEBUGSERIAL Serial1
-//#else
-// All other, (ATmega328P f.i.) use software serial
-//#include <SoftwareSerial.h>
-//SoftwareSerial softserial(11, 10); // RX, TX
-//#define DEBUGSERIAL softserial
-//#endif
+#ifdef __AVR_ATmega32U4__
+    // Leonardo/Micro/ProMicro use the USB serial port
+    #define DEBUGSERIAL Serial
+#elif ESP8266
+    // ESP8266 use the 2nd serial port with TX only
+    #define DEBUGSERIAL Serial1
+#else
+    // All other, (ATmega328P f.i.) use software serial
+    #include <SoftwareSerial.h>
+    SoftwareSerial softserial(10, 11); // RX, TX
+    #define DEBUGSERIAL softserial
+#endif
+
+
 
 
 
@@ -36,8 +39,8 @@
 #define MANUFACTURER_ID 57005
 #define DEVICE_ID 255
 #define REVISION 0
-#define PROG_LED_PIN LED_BUILTIN
-#define PROG_BUTTON_PIN 2
+#define PROG_LED_PIN 8
+#define PROG_BUTTON_PIN 3
 
 
 
@@ -64,7 +67,7 @@ const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no
 // ################################################
 // ### Sketch Configuration & Variables
 // ################################################
-#define TEST_LED LED_BUILTIN //or change it to another pin
+#define TEST_LED 4 //or change it to another pin
 
 unsigned long diffmillis = 0;
 unsigned long lastmillis = millis();
@@ -72,22 +75,30 @@ int laststate = false;
 
 
 
+unsigned long blink;
+bool blinkState = true;
+
 // ################################################
 // ### SETUP
 // ################################################
 void setup() {
 
+    
+    pinMode(TEST_LED, OUTPUT);  
+    pinMode(PROG_LED_PIN, OUTPUT);  
+    
     // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(9600);
+    DEBUGSERIAL.begin(19200);
 
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
 #if defined(__AVR_ATmega32U4__)
     while (!DEBUGSERIAL)
 #endif
+        
+    DEBUGSERIAL.println("STARTING\n");
 
     // make debug serial port known to debug class
     Debug.setPrintStream(&DEBUGSERIAL);
-
     Debug.print(F("Demo Sketch Konnekting\n"));
 
 //    // Initialize KNX enabled Arduino Board
@@ -102,23 +113,33 @@ void setup() {
 
     Debug.println(F("Toggle every %d ms."), diffmillis);
     Debug.println(F("Setup is ready. go to loop..."));
+    blink = millis();
 }
 
 // ################################################
 // ### LOOP
 // ################################################
-
 void loop() {
-    Knx.task();
+    //Knx.task();
     unsigned long currentmillis = millis();
     // only do measurements and other sketch related stuff if not in programming mode
-    if (Konnekting.isReadyForApplication()) {
-        if (currentmillis - lastmillis >= diffmillis) {
-            Debug.println(F("Actual state: %d"), laststate);
-            Knx.write(2, laststate);
-            laststate = !laststate;
-            lastmillis = currentmillis;
-        }
+//    if (Konnekting.isReadyForApplication()) {
+//        if (currentmillis - lastmillis >= diffmillis) {
+//            Debug.println(F("Actual state: %d"), laststate);
+//            Knx.write(2, laststate);
+//            laststate = !laststate;
+//            lastmillis = currentmillis;
+//            
+//            digitalWrite(TEST_LED, HIGH);
+//
+//        }
+//    }
+    if (currentmillis-blink > 1000) {
+        DEBUGSERIAL.print("Toggle Blink: ");
+        DEBUGSERIAL.println(blinkState);
+        digitalWrite(TEST_LED, blinkState);
+        blinkState = !blinkState;
+        blink = millis();
     }
 }
 

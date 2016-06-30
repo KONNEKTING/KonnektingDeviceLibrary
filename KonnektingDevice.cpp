@@ -50,6 +50,7 @@
 KonnektingDevice KonnektingDevice::Konnekting;
 KonnektingDevice& Konnekting = KonnektingDevice::Konnekting;
 
+
 /**
  * Intercepting knx events to process internal com objects
  * @param index
@@ -312,16 +313,16 @@ void KonnektingDevice::reboot() {
     Knx.end();
 
 #ifdef ESP8266 
-    DEBUG_PRINTLN("ESP8266 restart"));
+    DEBUG_PRINTLN(F("ESP8266 restart"));
     ESP.restart();
 #endif
 
 #ifdef __AVR_ATmega328P__
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
-    DEBUG_PRINTLN((F("software reset NOW"));
+    DEBUG_PRINTLN(F("software reset NOW"));
     delay(500);
-    asm volatile ("  jmp 0"));
+    asm volatile ("  jmp 0");
 #else     
     DEBUG_PRINTLN(F("WDT reset NOW"));
     wdt_enable(WDTO_500MS);
@@ -482,7 +483,7 @@ void KonnektingDevice::handleMsgWriteProgrammingMode(byte msg[]) {
         sendAck(0x00, 0x00);
 #ifdef ESP8266
         if (msg[4] == 0x00) {
-            DEBUG_PRINTLN("ESP8266: EEPROM.commit()"));
+            DEBUG_PRINTLN(F("ESP8266: EEPROM.commit()"));
             EEPROM.commit();
         }
 #endif                

@@ -13,9 +13,13 @@ void DebugUtil::setPrintStream(Stream* printstream) {
 }
 
 int DebugUtil::freeRam() {
+#ifdef ESP8266
+    return -1;
+#else
     extern int __heap_start, *__brkval;
     int v;
     return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+#endif
 }
 
 void DebugUtil::print(char *format, ...) {
