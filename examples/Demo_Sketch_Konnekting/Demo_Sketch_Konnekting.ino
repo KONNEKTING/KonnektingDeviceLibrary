@@ -30,10 +30,10 @@
 // ################################################
 #ifdef __AVR_ATmega328P__
 #define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
-#elif __AVR_ATmega32U4__
-#define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
-#elif ESP8266
-#define KNX_SERIAL Serial // ESP8266 use Serial
+//#elif __AVR_ATmega32U4__
+//#define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
+//#elif ESP8266
+//#define KNX_SERIAL Serial // ESP8266 use Serial
 #endif
 
 #define MANUFACTURER_ID 57005
@@ -120,7 +120,7 @@ void setup() {
 // ### LOOP
 // ################################################
 void loop() {
-    //Knx.task();
+    Knx.task();
     unsigned long currentmillis = millis();
     // only do measurements and other sketch related stuff if not in programming mode
 //    if (Konnekting.isReadyForApplication()) {

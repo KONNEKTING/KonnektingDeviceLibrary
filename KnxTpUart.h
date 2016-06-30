@@ -36,6 +36,7 @@
 #define KNXTPUART_H
 
 #include "Arduino.h"
+#include "DebugUtil.h"
 #include "HardwareSerial.h"
 #include "KnxTelegram.h"
 #include "KnxComObject.h"

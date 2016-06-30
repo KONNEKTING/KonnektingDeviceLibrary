@@ -68,9 +68,6 @@ const char KnxTpUart::_debugErrorText[] = "KNXTPUART ERROR: ";
 //: _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
 KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMode mode)
 : _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
-#ifdef DEBUG
-    knxTpuartDebugSerial.begin(9600);
-#endif       
     _rx.state = RX_RESET;
     _rx.addressedComObjectIndex = 0;
     _tx.state = TX_RESET;
@@ -108,9 +105,12 @@ KnxTpUart::~KnxTpUart() {
 byte KnxTpUart::Reset(void) {
     word startTime, nowTime;
     byte attempts = 10;
+    
+    DEBUG_PRINTLN(F("Reset triggered!"));
 
     // HOT RESET case
     if ((_rx.state > RX_RESET) || (_tx.state > TX_RESET)) { 
+        DEBUG_PRINTLN(F("HOT RESET case"));
         // stop the serial communication before restarting it
         _serial.end(); 
         _rx.state = RX_RESET;
@@ -120,22 +120,29 @@ byte KnxTpUart::Reset(void) {
     _serial.begin(19200, SERIAL_8E1);
     
     while (attempts--) { // we send a RESET REQUEST and wait for the reset indication answer
+        
+        DEBUG_PRINTLN(F("Reset attempts: %d"), attempts);
+        
         // the sequence is repeated every sec as long as we do not get the reset indication 
         _serial.write(TPUART_RESET_REQ); // send RESET REQUEST
         
         for (nowTime = startTime = (word) millis(); TimeDeltaWord(nowTime, startTime) < 1000 /* 1 sec */; nowTime = (word) millis()) {
             if (_serial.available() > 0) {
-                if (_serial.read() == TPUART_RESET_INDICATION) {
+                DEBUG_PRINTLN("Data available: %d",_serial.available());
+                byte data = _serial.read();
+                if (data == TPUART_RESET_INDICATION) {
                     _rx.state = RX_INIT;
                     _tx.state = TX_INIT;
-                    DebugInfo("Reset successful\n");
+                    DEBUG_PRINTLN(F("Reset successful"));
                     return KNX_TPUART_OK;
+                } else {
+                    DEBUG_PRINTLN("data not useable: 0x%02x. Expected: 0x%02x", data, TPUART_RESET_INDICATION);
                 }
-            }
+            } 
         } // 1 sec ellapsed
     } // while(attempts--)
     _serial.end();
-    DebugError("Reset failed, no answer from TPUART device\n");
+    DEBUG_PRINTLN(F("Reset failed, no answer from TPUART device"));
     return KNX_TPUART_ERROR;
 }
 

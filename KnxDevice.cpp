@@ -77,7 +77,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
         delete(_tpuart);
         _tpuart = NULL;
         _rxTelegram = NULL;
-        DebugInfo("Init Error!\n");
+        DEBUG_PRINTLN(F("Init Error!"));
         return KNX_DEVICE_INIT_ERROR;
     }
     _tpuart->AttachComObjectsList(_comObjectsList, _numberOfComObjects);
@@ -85,7 +85,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     _tpuart->SetAckCallback(&KnxDevice::TxTelegramAck);
     _tpuart->Init();
     _state = IDLE;
-    DebugInfo("Init successful\n");
+    DEBUG_PRINTLN(F("Init successful"));
     _lastInitTimeMillis = millis();
     _lastTXTimeMicros = _lastTXTimeMicros = micros();
 #if defined(KNXDEVICE_DEBUG_INFO)
