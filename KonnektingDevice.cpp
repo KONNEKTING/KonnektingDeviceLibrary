@@ -688,7 +688,7 @@ int KonnektingDevice::memoryRead(int index) {
 void KonnektingDevice::memoryWrite(int index, byte data) {
 
     DEBUG_PRINTLN(F("memWrite: index=0x%02x data=0x%02x"), index, data);
-    if (*eepromWriteFunc != null) {
+    if (*eepromWriteFunc != NULL) {
         DEBUG_PRINTLN(F("memWrite: using fctptr"));
         eepromWriteFunc(index, data);
     } else {

@@ -39,16 +39,6 @@
  */
 //#define DEBUG
 
-#ifdef DEBUG
-#include <SoftwareSerial.h>
-SoftwareSerial knxTpuartDebugSerial(10, 11); // RX, TX
-#define CONSOLEDEBUG(...)  knxTpuartDebugSerial.print(__VA_ARGS__);
-#define CONSOLEDEBUGLN(...)  knxTpuartDebugSerial.println(__VA_ARGS__);
-#else
-#define CONSOLEDEBUG(...) 
-#define CONSOLEDEBUGLN(...)
-#endif
-
 static inline word TimeDeltaWord(word now, word before) {
     return (word) (now - before);
 }
