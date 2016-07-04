@@ -90,6 +90,10 @@ class KonnektingDevice {
     static byte _paramSizeList[];
     static const byte _numberOfParams;                // Nb of attached Parameters
     
+    int (*eepromReadFunc)(int);
+    void (*eepromWriteFunc)(int, int);
+    void (*eepromUpdateFunc)(int, int);
+    
     // Constructor, Destructor
     KonnektingDevice(); // private constructor (singleton design pattern)
 
@@ -99,7 +103,10 @@ class KonnektingDevice {
 
 public:
     static KonnektingDevice Konnekting;
-                                                    // The value shall be provided by the end-user
+    
+    void setEepromReadFunc(int (*func)(int));
+    void setEepromWriteFunc(void (*func)(int, int));
+    void setEepromUpdateFunc(void (*func)(int, int));
 
     void init(HardwareSerial& serial, 
                 int progButtonPin, 

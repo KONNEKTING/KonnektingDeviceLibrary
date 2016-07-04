@@ -78,6 +78,18 @@ int laststate = false;
 unsigned long blink;
 bool blinkState = true;
 
+int readEeprom(int index) {
+    return EEPROM.read(index);
+}
+
+void writeEeprom(int index, int val) {
+    return EEPROM.write(index, val);
+}
+
+void updateEeprom(int index, int val) {
+    return EEPROM.update(index, val);
+}
+
 // ################################################
 // ### SETUP
 // ################################################
@@ -101,6 +113,10 @@ void setup() {
     Debug.setPrintStream(&DEBUGSERIAL);
     Debug.print(F("Demo Sketch Konnekting\n"));
 
+    Konnekting.setEepromReadFunc(&readEeprom);
+    Konnekting.setEepromWriteFunc(&writeEeprom);
+    Konnekting.setEepromUpdateFunc(&updateEeprom);
+    
 //    // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL,
             PROG_BUTTON_PIN,
