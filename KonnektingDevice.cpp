@@ -136,7 +136,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
     // calc index of parameter table in eeprom --> depends on number of com objects
     _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
 
-    _deviceFlags = EEPROM.read(EEPROM_DEVICE_FLAGS);
+    _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
 
     DEBUG_PRINTLN(F("_deviceFlags: "BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
     
@@ -148,16 +148,16 @@ void KonnektingDevice::init(HardwareSerial& serial,
          */
 
         // PA
-        byte hiAddr = EEPROM.read(EEPROM_INDIVIDUALADDRESS_HI);
-        byte loAddr = EEPROM.read(EEPROM_INDIVIDUALADDRESS_LO);
+        byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
+        byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
         _individualAddress = (hiAddr << 8) + (loAddr << 0);
 
         // ComObjects
         // at most 255 com objects
         for (byte i = 0; i < Knx.getNumberOfComObjects() - 1; i++) {
-            byte hi = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3));
-            byte lo = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
-            byte settings = EEPROM.read(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
+            byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
+            byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
+            byte settings = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
             word comObjAddr = (hi << 8) + (lo << 0);
 
             bool active = ((settings & 0x80) == 0x80);
@@ -225,7 +225,7 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
 
         int addr = _paramTableStartindex + skipBytes + i;
 
-        value[i] = EEPROM.read(addr);
+        value[i] = memoryRead(addr);
         DEBUG_PRINTLN(F(" val[%d]@%d -> 0x%02x"), i, addr, value[i]);
     }
 }
@@ -576,7 +576,6 @@ void KonnektingDevice::handleMsgWriteParameter(byte msg[]) {
 #ifdef DEBUG_PROTOCOL
         DEBUG_PRINTLN(F(" data[%d]=0x%02x"), i, msg[3+i]);
 #endif
-        //EEPROM.update(_paramTableStartindex + skipBytes + i, msg[3 + i]);
         memoryUpdate(_paramTableStartindex + skipBytes + i, msg[3 + i]);
     }
 #endif
@@ -674,10 +673,47 @@ void KonnektingDevice::handleMsgReadComObject(byte msg[]) {
     Knx.write(0, response);
 }
 
+int KonnektingDevice::memoryRead(int index) {
+    DEBUG_PRINTLN(F("memRead: index=0x%02x"), index);
+    byte d = 0xFF;
+    if (*eepromReadFunc!=NULL) {
+        DEBUG_PRINTLN(F("memRead: using fctptr"));
+        d = eepromReadFunc(index);
+    } else {
+        d = EEPROM.read(index);
+    }
+    DEBUG_PRINTLN(F("memRead: data=0x%02x"), d);
+}
+
+void KonnektingDevice::memoryWrite(int index, byte data) {
+
+    DEBUG_PRINTLN(F("memWrite: index=0x%02x data=0x%02x"), index, data);
+    if (*eepromWriteFunc != null) {
+        DEBUG_PRINTLN(F("memWrite: using fctptr"));
+        eepromWriteFunc(index, data);
+    } else {
+#ifdef ESP8266    
+    DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
+    EEPROM.write(index, data);
+#else
+    EEPROM.write(index, data);
+    //    delay(10); // really required?
+#endif   
+    }
+
+    // EEPROM has been changed, reboot will be required
+    _rebootRequired = true;
+}
+
 void KonnektingDevice::memoryUpdate(int index, byte data) {
 
-    DEBUG_PRINTLN(F("memUpdate: index=%2 data=0x%02x"), index, data);
+    DEBUG_PRINTLN(F("memUpdate: index=0x%02x data=0x%02x"), index, data);
 
+    if (*eepromUpdateFunc != NULL) {
+        DEBUG_PRINTLN(F("memUpdate: using fctptr"));
+        eepromUpdateFunc(index, data);
+    } else {
+        
 #ifdef ESP8266    
     DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
     byte d = EEPROM.read(index);
@@ -688,7 +724,7 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
     EEPROM.update(index, data);
     //    delay(10); // really required?
 #endif   
-
+    }
     // EEPROM has been changed, reboot will be required
     _rebootRequired = true;
 

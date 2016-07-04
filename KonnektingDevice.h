@@ -206,6 +206,8 @@ private:
     void handleMsgWriteComObject(byte* msg);
     void handleMsgReadComObject(byte* msg);
     
+    int memoryRead(int index);
+    void memoryWrite(int index, byte date);        
     void memoryUpdate(int index, byte date);        
 
 };
