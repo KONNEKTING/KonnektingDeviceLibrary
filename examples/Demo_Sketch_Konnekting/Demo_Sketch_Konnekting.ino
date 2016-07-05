@@ -17,7 +17,7 @@
 #else
     // All other, (ATmega328P f.i.) use software serial
     #include <SoftwareSerial.h>
-    SoftwareSerial softserial(10, 11); // RX, TX
+    SoftwareSerial softserial(11, 10); // RX, TX
     #define DEBUGSERIAL softserial
 #endif
 
@@ -100,7 +100,7 @@ void setup() {
     pinMode(PROG_LED_PIN, OUTPUT);  
     
     // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(19200);
+    DEBUGSERIAL.begin(9600);
 
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
 #if defined(__AVR_ATmega32U4__)
