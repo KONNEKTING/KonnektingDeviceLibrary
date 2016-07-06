@@ -45,6 +45,8 @@
 #include <ESP8266WiFi.h>
 #endif
 
+#define PROGCOMOBJ_INDEX 255
+
 
 // KonnektingDevice unique instance creation
 KonnektingDevice KonnektingDevice::Konnekting;
@@ -347,10 +349,10 @@ bool KonnektingDevice::internalComObject(byte index) {
     DEBUG_PRINTLN(F("internalComObject index=%d"), index);
     bool consumed = false;
     switch (index) {
-        case 0: // object index 0 has been updated
+        case 255: // prog com object index 255 has been updated
 
             byte buffer[14];
-            Knx.read(0, buffer);
+            Knx.read(PROGCOMOBJ_INDEX, buffer);
 #ifdef DEBUG_PROTOCOL
             for (int i = 0; i < 14; i++) {
                 DEBUG_PRINTLN(F("buffer[%d]\thex=0x%02x bin="BYTETOBINARYPATTERN), i, buffer[i], BYTETOBINARY(buffer[i]));
@@ -428,7 +430,7 @@ void KonnektingDevice::sendAck(byte errorcode, byte indexinformation) {
     for (byte i = 5; i < 14; i++) {
         response[i] = 0x00;
     }
-    Knx.write(0, response);
+    Knx.write(PROGCOMOBJ_INDEX, response);
 }
 
 void KonnektingDevice::handleMsgReadDeviceInfo(byte msg[]) {
@@ -450,7 +452,7 @@ void KonnektingDevice::handleMsgReadDeviceInfo(byte msg[]) {
         response[11] = 0x00;
         response[12] = 0x00;
         response[13] = 0x00;
-        Knx.write(0, response);
+        Knx.write(PROGCOMOBJ_INDEX, response);
     } else {
 #ifdef DEBUG_PROTOCOL
         DEBUG_PRINTLN(F("no matching IA"));
@@ -516,7 +518,7 @@ void KonnektingDevice::handleMsgReadProgrammingMode(byte msg[]) {
         response[11] = 0x00;
         response[12] = 0x00;
         response[13] = 0x00;
-        Knx.write(0, response);
+        Knx.write(PROGCOMOBJ_INDEX, response);
     }
 }
 
@@ -555,7 +557,7 @@ void KonnektingDevice::handleMsgReadIndividualAddress(byte msg[]) {
     response[11] = 0x00;
     response[12] = 0x00;
     response[13] = 0x00;
-    Knx.write(0, response);
+    Knx.write(PROGCOMOBJ_INDEX, response);
 }
 
 void KonnektingDevice::handleMsgWriteParameter(byte msg[]) {
@@ -611,7 +613,7 @@ void KonnektingDevice::handleMsgReadParameter(byte msg[]) {
         response[3 + paramSize + i] = 0;
     }
 
-    Knx.write(0, response);
+    Knx.write(PROGCOMOBJ_INDEX, response);
 
 }
 
@@ -675,7 +677,7 @@ void KonnektingDevice::handleMsgReadComObject(byte msg[]) {
         response[i] = 0;
     }
 
-    Knx.write(0, response);
+    Knx.write(PROGCOMOBJ_INDEX, response);
 }
 
 int KonnektingDevice::memoryRead(int index) {

@@ -364,7 +364,7 @@ void KnxTpUart::RXTask(void) {
                     if (_tx.state == TX_WAITING_ACK) {
                         _tx.ackFctPtr(NACK_RESPONSE);
                         _tx.state = TX_IDLE;
-//                    } else DEBUG_PRINTLN(F("Rx: unexpected TPUART_DATA_CONFIRM_FAILED received!"));
+                    } else DEBUG_PRINTLN(F("Rx: unexpected TPUART_DATA_CONFIRM_FAILED received!"));
                 } 
                 // UNKNOWN CONTROL FIELD RECEIVED
                 else if (incomingByte) {
@@ -424,20 +424,22 @@ void KnxTpUart::RXTask(void) {
                 //  case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID : break; // if the message is too long, nothing to do except waiting for EOP
                 //  case RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED : break; // if the message is not addressed, nothing to do except waiting for EOP
 
-            default: break;
+            default: 
+                break;
         } // switch (_rx.state)
     } // if (_serial.available() > 0)
 }
 
 
-// Transmission task
-// This function shall be called periodically in order to allow a correct transmission of the KNX bus data
-// Assuming the TP-Uart speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
-// is transmitted in 0,58ms.
-// Sending one byte of a telegram consists in transmitting 2 characters (1,16ms)
-// Let's wait around 800us between each telegram piece sending so that the 64byte TX buffer remains almost empty.
-// Typical calling period is 800 usec.
-
+/**
+ * Transmission task
+ * This function shall be called periodically in order to allow a correct transmission of the KNX bus data
+ * Assuming the TP-Uart speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
+ * is transmitted in 0,58ms.
+ * Sending one byte of a telegram consists in transmitting 2 characters (1,16ms)
+ * Let's wait around 800us between each telegram piece sending so that the 64byte TX buffer remains almost empty.
+ * Typical calling period is 800 usec.
+ */
 void KnxTpUart::TXTask(void) {
     word nowTime;
     byte txByte[2];
@@ -465,22 +467,22 @@ void KnxTpUart::TXTask(void) {
             // we block the transmission (for around 3,3ms) till the ACK is sent
             // In that way, the TX buffer will remain empty and the ACK will be sent immediately
             if (_rx.state != RX_KNX_TELEGRAM_RECEPTION_STARTED) {
-                {
-                    if (_tx.nbRemainingBytes == 1) { // We are sending the last byte, i.e checksum
-                        txByte[0] = TPUART_DATA_END_REQ + _tx.txByteIndex;
-                        txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
-                        _serial.write(txByte, 2); // write the UART control field and the data byte
+                if (_tx.nbRemainingBytes == 1) { // We are sending the last byte, i.e checksum
+                    txByte[0] = TPUART_DATA_END_REQ + _tx.txByteIndex;
+                    txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
+                    DEBUG_PRINTLN(F("data1[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
+                    _serial.write(txByte, 2); // write the UART control field and the data byte
 
-                        // Message sending completed
-                        sentMessageTimeMillisec = (word) millis(); // memorize sending time in order to manage ACK timeout
-                        _tx.state = TX_WAITING_ACK;
-                    } else {
-                        txByte[0] = TPUART_DATA_START_CONTINUE_REQ + _tx.txByteIndex;
-                        txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
-                        _serial.write(txByte, 2); // write the UART control field and the data byte
-                        _tx.txByteIndex++;
-                        _tx.nbRemainingBytes--;
-                    }
+                    // Message sending completed
+                    sentMessageTimeMillisec = (word) millis(); // memorize sending time in order to manage ACK timeout
+                    _tx.state = TX_WAITING_ACK;
+                } else {
+                    txByte[0] = TPUART_DATA_START_CONTINUE_REQ + _tx.txByteIndex;
+                    txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
+                    DEBUG_PRINTLN(F("data2[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
+                    _serial.write(txByte, 2); // write the UART control field and the data byte
+                    _tx.txByteIndex++;
+                    _tx.nbRemainingBytes--;
                 }
             }
             break;
@@ -490,11 +492,11 @@ void KnxTpUart::TXTask(void) {
 }
 
 
-// Get Bus monitoring data (BUS MONITORING mode)
-// The function returns true if a new data has been retrieved (data pointer in argument), else false
-// It shall be called periodically (max period of 0,5ms) in order to allow correct data reception
-// Typical calling period is 400 usec.
-
+/** Get Bus monitoring data (BUS MONITORING mode)
+ * The function returns true if a new data has been retrieved (data pointer in argument), else false
+ * It shall be called periodically (max period of 0,5ms) in order to allow correct data reception
+ * Typical calling period is 400 usec.
+ */
 boolean KnxTpUart::GetMonitoringData(type_MonitorData& data) {
     word nowTime;
     static type_MonitorData currentData = {true, 0};

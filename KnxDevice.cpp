@@ -150,14 +150,12 @@ void KnxDevice::task(void) {
     // STEP 3 : Send KNX messages following TX actions
     if (_state == IDLE) {
         if (_txActionList.Pop(action)) { // Data to be transmitted
-            DEBUG_PRINTLN(F("Data to be transmitted. ActionIndex=%d"), action.index);
             
             KnxComObject comObj = (action.index == 255 ? _progComObj : _comObjectsList[action.index]);
             
             switch (action.command) {
                 
                 case KNX_READ_REQUEST: // a read operation of a Com Object on the KNX network is required
-                    DEBUG_PRINTLN(F("KNX_READ_REQUEST"));
                     //_objectsList[action.index].CopyToTelegram(_txTelegram, KNX_COMMAND_VALUE_READ);
                     comObj.CopyAttributes(_txTelegram);
                     _txTelegram.ClearLongPayload();
@@ -169,7 +167,6 @@ void KnxDevice::task(void) {
                     break;
 
                 case KNX_RESPONSE_REQUEST: // a response operation of a Com Object on the KNX network is required
-                    DEBUG_PRINTLN(F("KNX_RESPONSE_REQUEST"));
                     comObj.CopyAttributes(_txTelegram);
                     comObj.CopyValue(_txTelegram);
                     _txTelegram.SetCommand(KNX_COMMAND_VALUE_RESPONSE);
@@ -180,24 +177,19 @@ void KnxDevice::task(void) {
 
                 case KNX_WRITE_REQUEST: // a write operation of a Com Object on the KNX network is required
                     // update the com obj value
-                    DEBUG_PRINTLN(F("KNX_WRITE_REQUEST"));
                     if ((comObj.GetLength()) <= 2)
                         comObj.UpdateValue(action.byteValue);
                     else {
                         comObj.UpdateValue(action.valuePtr);
                         free(action.valuePtr);
-                        DEBUG_PRINTLN(F("KNX_WRITE_REQUEST2"));
                     }
                     // transmit the value through KNX network only if the Com Object has transmit attribute
                     if ((comObj.GetIndicator()) & KNX_COM_OBJ_T_INDICATOR) {
-                        DEBUG_PRINTLN(F("KNX_WRITE_REQUEST3"));
                         comObj.CopyAttributes(_txTelegram);
                         comObj.CopyValue(_txTelegram);
                         _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
                         _txTelegram.UpdateChecksum();
-                        DEBUG_PRINTLN(F("KNX_WRITE_REQUEST4"));
                         _tpuart->SendTelegram(_txTelegram);
-                        DEBUG_PRINTLN(F("KNX_WRITE_REQUEST5"));
                         _state = TX_ONGOING;
                     }
                     break;
@@ -307,10 +299,11 @@ template e_KnxDeviceStatus KnxDevice::write <float>(byte objectIndex, float valu
 template e_KnxDeviceStatus KnxDevice::write <double>(byte objectIndex, double value);
 
 
-// Update any type of com object (rough DPT value shall be provided)
-// The Com Object value is updated locally
-// And a telegram is sent on the KNX bus if the com object has communication & transmit attributes
-
+/**
+ * Update any type of com object (rough DPT value shall be provided)
+ * The Com Object value is updated locally
+ * And a telegram is sent on the KNX bus if the com object has communication & transmit attributes
+ */
 e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     type_tx_action action;
     byte *dptValue;
@@ -325,7 +318,9 @@ e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
         action.command = KNX_WRITE_REQUEST;
         action.index = objectIndex;
         dptValue = (byte *) malloc(length - 1); // allocate the memory for long value
-        for (byte i = 0; i < length - 1; i++) dptValue[i] = valuePtr[i]; // copy value
+        for (byte i = 0; i < length - 1; i++) {
+            dptValue[i] = valuePtr[i]; // copy value
+        }
 //        Serial.println("Writing to actionlist2");
         action.valuePtr = (byte *) dptValue;
         _txActionList.Append(action);
@@ -417,11 +412,11 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                     comObj.UpdateValue(*(Knx._rxTelegram));
                     //We notify the upper layer of the update
                     if (Konnekting.isActive()) {
-//                        Serial.println("Routing event to tools");
+//                        DEBUG_PRINTLN(F("Routing event to konnektingKnxEvents"));
                         konnektingKnxEvents(targetedComObjIndex);
                     } else {
-//                        Serial.println("No event routing");
-                        knxEvents(targetedComObjIndex);
+//                        DEBUG_PRINTLN(F("No event routing"));
+//                        knxEvents(targetedComObjIndex);
                     }
                 }
                 break;
@@ -431,7 +426,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
             default: break; // not supposed to happen
         }
     } else {
-        DEBUG_PRINTLN(F("GetTpUartEvents event=%d"), event);
+//        DEBUG_PRINTLN(F("GetTpUartEvents event=%d"), event);
     }
 
     // Manage RESET events
