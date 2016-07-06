@@ -153,6 +153,11 @@ void KnxDevice::task(void) {
             
             KnxComObject comObj = (action.index == 255 ? _progComObj : _comObjectsList[action.index]);
             
+            // hier bereits kaputt!
+            for (byte i = 0; i < comObj.GetLength() - 1; i++) {
+                DEBUG_PRINTLN(F("-> action.valuePtr[%d]=0x%02x"), i, action.valuePtr[i]);
+            }
+            
             switch (action.command) {
                 
                 case KNX_READ_REQUEST: // a read operation of a Com Object on the KNX network is required
@@ -177,14 +182,20 @@ void KnxDevice::task(void) {
 
                 case KNX_WRITE_REQUEST: // a write operation of a Com Object on the KNX network is required
                     // update the com obj value
-                    if ((comObj.GetLength()) <= 2)
+                    DEBUG_PRINTLN(F("KNX_WRITE_REQUEST index=%d"), action.index);
+                    
+                    
+                    if ((comObj.GetLength()) <= 2) {
+                        DEBUG_PRINTLN(F("len <= 2"));
                         comObj.UpdateValue(action.byteValue);
-                    else {
+                    } else {
+                        DEBUG_PRINTLN(F("len > 2"));
                         comObj.UpdateValue(action.valuePtr);
                         free(action.valuePtr);
                     }
                     // transmit the value through KNX network only if the Com Object has transmit attribute
                     if ((comObj.GetIndicator()) & KNX_COM_OBJ_T_INDICATOR) {
+                        DEBUG_PRINTLN(F("set tx ongoing"));
                         comObj.CopyAttributes(_txTelegram);
                         comObj.CopyValue(_txTelegram);
                         _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
@@ -307,24 +318,28 @@ template e_KnxDeviceStatus KnxDevice::write <double>(byte objectIndex, double va
 e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     type_tx_action action;
     byte *dptValue;
+    
     KnxComObject comObj = (objectIndex == 255 ? _progComObj : _comObjectsList[objectIndex]);
+    
     byte length = comObj.GetLength();
-//    Serial.println("Writing to actionlist0");
-//    Serial.print("len: ");
-//    Serial.println(length);
-    if (length > 2) // check we are in long object case
-    { // add WRITE action in the TX action queue
-//        Serial.println("Writing to actionlist1");
+    
+    if (length > 2) {// check we are in long object case
+        // add WRITE action in the TX action queue
         action.command = KNX_WRITE_REQUEST;
         action.index = objectIndex;
         dptValue = (byte *) malloc(length - 1); // allocate the memory for long value
         for (byte i = 0; i < length - 1; i++) {
             dptValue[i] = valuePtr[i]; // copy value
+//            DEBUG_PRINTLN(F("dptValue[%d]=0x%02x == valuePtr[%d]=0x%02x"), i, dptValue[i], i, valuePtr[i]);
         }
-//        Serial.println("Writing to actionlist2");
         action.valuePtr = (byte *) dptValue;
+        
+//        for (byte i = 0; i < length - 1; i++) {
+//            DEBUG_PRINTLN(F("action.valuePtr[%d]=0x%02x"), i, action.valuePtr[i]);
+//        }
+        // bis hier hin alles okay
+        
         _txActionList.Append(action);
-//        Serial.println("Writing to actionlist3");
         return KNX_DEVICE_OK;
     }
     return KNX_DEVICE_ERROR;

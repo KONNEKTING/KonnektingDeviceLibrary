@@ -29,6 +29,7 @@
 #define ACTIONRINGBUFFER_H
 
 #include "Arduino.h"
+#include "DebugUtil.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 #define ACTIONRINGBUFFER_STAT // To be uncommented when doing Statistics
@@ -84,6 +85,7 @@ class ActionRingBuffer {
     #endif
       }
       _buffer[_tail] = appendedData;
+      DEBUG_PRINTLN(F("Append at %d"), _tail);
       IncrementTail();
     }
 
@@ -93,6 +95,7 @@ class ActionRingBuffer {
     boolean Pop(T& popData)
     {
       if (!_elementsCurrentNb) return false; // no data in the buffer
+      DEBUG_PRINTLN(F("Pop at %d"), _tail);
       popData = _buffer[_head];
       IncrementHead();
       _elementsCurrentNb--;
