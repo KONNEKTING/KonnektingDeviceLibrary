@@ -186,7 +186,9 @@ bool KonnektingDevice::isActive() {
 }
 
 bool KonnektingDevice::isFactorySetting() {
-    return _deviceFlags == 0xff;
+    bool isFactory = _deviceFlags == 0xff;
+//    DEBUG_PRINTLN(F("isFactorySetting: %d"), isFactory);
+    return isFactory;
 }
 
 /*
@@ -255,7 +257,8 @@ void KonnektingDevice::toggleProgState() {
  * @return true, if programming is active, false if not
  */
 bool KonnektingDevice::isProgState() {
-    return _progState ? true : false;
+//    DEBUG_PRINTLN(F("isProgState: %d"), _progState);
+    return _progState;
 }
 
 /**
@@ -264,7 +267,9 @@ bool KonnektingDevice::isProgState() {
  * @return true if it's safe to run application logic
  */
 bool KonnektingDevice::isReadyForApplication() {
-    return !isProgState() && !isFactorySetting();
+    bool isReady = !isProgState() && !isFactorySetting();
+//    DEBUG_PRINTLN(F("isReadyForApplication: %d"), isReady);
+    return isReady;
 }
 
 /**

@@ -1,4 +1,3 @@
-//#include <avr/pgmspace.h>
 #include <KnxDevice.h>
 
 // ################################################
@@ -48,7 +47,6 @@
 // ### KONNEKTING ComObjects and Parameters
 // ################################################
 KnxComObject KnxDevice::_comObjectsList[] = {
-    Konnekting.createProgComObject(),
     /* Index 0 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_LOGIC_IN),
     /* Index 1 */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
 };
@@ -73,20 +71,21 @@ unsigned long diffmillis = 0;
 unsigned long lastmillis = millis();
 int laststate = false;
 
-
-
-unsigned long blink;
-bool blinkState = true;
-
+/*
+ * Only required when using external eeprom (or similar) storage
+ */
 int readEeprom(int index) {
+    // when using external storage, implement READ command here
     return EEPROM.read(index);
 }
 
 void writeEeprom(int index, int val) {
+    // when using external storage, implement WRITE command here
     return EEPROM.write(index, val);
 }
 
 void updateEeprom(int index, int val) {
+    // when using external storage, implement UPDATE command here
     return EEPROM.update(index, val);
 }
 
@@ -107,17 +106,20 @@ void setup() {
     while (!DEBUGSERIAL)
 #endif
         
-    DEBUGSERIAL.println("STARTING\n");
 
     // make debug serial port known to debug class
     Debug.setPrintStream(&DEBUGSERIAL);
     Debug.print(F("Demo Sketch Konnekting\n"));
 
+    /*
+     * Only required when using external eeprom (or similar) storage
+     * function pointers should match the methods you have implemented above
+     */
     Konnekting.setEepromReadFunc(&readEeprom);
     Konnekting.setEepromWriteFunc(&writeEeprom);
     Konnekting.setEepromUpdateFunc(&updateEeprom);
     
-//    // Initialize KNX enabled Arduino Board
+    // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL,
             PROG_BUTTON_PIN,
             PROG_LED_PIN,
@@ -126,10 +128,10 @@ void setup() {
             REVISION);
 
     diffmillis = (int) Konnekting.getUINT16Param(0); //blink every xxxx ms
+    lastmillis = millis();
 
     Debug.println(F("Toggle every %d ms."), diffmillis);
     Debug.println(F("Setup is ready. go to loop..."));
-    blink = millis();
 }
 
 // ################################################
@@ -137,8 +139,12 @@ void setup() {
 // ################################################
 void loop() {
     Knx.task();
-    unsigned long currentmillis = millis();
-    // only do measurements and other sketch related stuff if not in programming mode
+//    unsigned long currentmillis = millis();
+    
+    /*
+     * only do measurements and other sketch related stuff if not in programming mode
+     * means: only when konnekting is ready for appliction
+     */
 //    if (Konnekting.isReadyForApplication()) {
 //        if (currentmillis - lastmillis >= diffmillis) {
 //            Debug.println(F("Actual state: %d"), laststate);
@@ -147,16 +153,11 @@ void loop() {
 //            lastmillis = currentmillis;
 //            
 //            digitalWrite(TEST_LED, HIGH);
-//
+//            Debug.println(F("DONE"));
 //        }
 //    }
-    if (currentmillis-blink > 1000) {
-        DEBUGSERIAL.print("Toggle Blink: ");
-        DEBUGSERIAL.println(blinkState);
-        digitalWrite(TEST_LED, blinkState);
-        blinkState = !blinkState;
-        blink = millis();
-    }
+//    
+//    Debug.println(F("LOOP"));
 }
 
 // ################################################
@@ -164,22 +165,22 @@ void loop() {
 // ################################################
 
 void knxEvents(byte index) {
-//    // nothing to do in this sketch
-//    switch (index) {
-//
-//        case 0: // object index 1 has been updated
-//
-//            if (Knx.read(1)) {
-//                digitalWrite(TEST_LED, HIGH);
-//                Debug.println(F("Toggle LED: on"));
-//            } else {
-//                digitalWrite(TEST_LED, LOW);
-//                Debug.println(F("Toggle LED: off"));
-//            }
-//            break;
-//
-//        default:
-//            break;
-//    }
+    // nothing to do in this sketch
+    switch (index) {
+
+        case 0: // object index 1 has been updated
+
+            if (Knx.read(1)) {
+                digitalWrite(TEST_LED, HIGH);
+                Debug.println(F("Toggle LED: on"));
+            } else {
+                digitalWrite(TEST_LED, LOW);
+                Debug.println(F("Toggle LED: off"));
+            }
+            break;
+
+        default:
+            break;
+    }
 };
 

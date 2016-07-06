@@ -156,13 +156,13 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
         _assignedComObjectsNb = 0;
     }
     if ((!comObjectsList) || (!listSize)) {
-        DebugInfo("AttachComObjectsList : warning : empty object list!\n");
+        DEBUG_PRINTLN(F("AttachComObjectsList : warning : empty object list!\n"));
         return KNX_TPUART_OK;
     }
     // Count all the com objects with communication indicator
     for (byte i = 0; i < listSize; i++) if (IS_COM(i)) _assignedComObjectsNb++;
     if (!_assignedComObjectsNb) {
-        DebugInfo("AttachComObjectsList : warning : no object with com attribute in the list!\n");
+        DEBUG_PRINTLN(F("AttachComObjectsList : warning : no object with com attribute in the list!"));
         return KNX_TPUART_OK;
     }
     // Deduct the duplicate addresses
@@ -173,12 +173,13 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
                 if (j < i) break; // duplicate address already treated
                 else {
                     _assignedComObjectsNb--;
-                    DebugInfo("AttachComObjectsList : warning : duplicate address found!\n");
+                    DEBUG_PRINTLN(F("AttachComObjectsList : warning : duplicate address found!"));
                 }
             }
         }
     }
     _comObjectsList = comObjectsList;
+    
     // Creation of the ordered index table
     _orderedIndexTable = (byte*) malloc(_assignedComObjectsNb);
     word minMin = 0x0000; // minimum min value searched  
@@ -193,7 +194,7 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
         minMin = foundMin + 1;
         foundMin = 0xFFFF;
     }
-    DebugInfo("AttachComObjectsList successful\n");
+//    DEBUG_PRINTLN(F("AttachComObjectsList successful\n"));
     return KNX_TPUART_OK;
 }
 
@@ -210,10 +211,10 @@ byte KnxTpUart::Init(void) {
     // BUS MONITORING MODE in case it is selected
     if (_mode == BUS_MONITOR) {
         _serial.write(TPUART_ACTIVATEBUSMON_REQ); // Send bus monitoring activation request
-        DebugInfo("Init : Monitoring mode started\n");
+        DEBUG_PRINTLN(F("Init : Monitoring mode started\n"));
     } else // NORMAL mode by default
     {
-        if (_comObjectsList == NULL) DebugInfo("Init : warning : empty object list!\n");
+        if (_comObjectsList == NULL) DEBUG_PRINTLN(F("Init : warning : empty object list!\n"));
         if (_evtCallbackFct == NULL) return KNX_TPUART_ERROR_NULL_EVT_CALLBACK_FCT;
         if (_tx.ackFctPtr == NULL) return KNX_TPUART_ERROR_NULL_ACK_CALLBACK_FCT;
 
@@ -228,7 +229,7 @@ byte KnxTpUart::Init(void) {
 
         _rx.state = RX_IDLE_WAITING_FOR_CTRL_FIELD;
         _tx.state = TX_IDLE;
-        DebugInfo("Init : Normal mode started\n");
+        DEBUG_PRINTLN(F("Init : Normal mode started\n"));
     }
     return KNX_TPUART_OK;
 }
@@ -254,13 +255,18 @@ byte KnxTpUart::SendTelegram(KnxTelegram& sentTelegram) {
 }
 
 
-// Reception task
-// This function shall be called periodically in order to allow a correct reception of the KNX bus data
-// Assuming the TPUART speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
-// is transmitted in 0,58ms.
-// In order not to miss any End Of Packets (i.e. a gap from 2 to 2,5ms), the function shall be called at a max period of 0,5ms.
-// Typical calling period is 400 usec.
-
+/*
+ * Reception task
+ * 
+ * This function shall be called periodically in order to allow a correct reception of the KNX bus data
+ * Assuming the TPUART speed is configured to 19200 baud, a character (8 data + 1 start + 1 parity + 1 stop)
+ * is transmitted in 0,58ms.
+ * In order not to miss any End Of Packets (i.e. a gap from 2 to 2,5ms), the function shall be called at a 
+ * max period of 0,5ms.
+ * Typical calling period is 400 usec.
+ * 
+ * DO NOT PUT DEBUG PRINT CODE HERE! Telegram receiving will break!
+ */
 void KnxTpUart::RXTask(void) {
     byte incomingByte;
     word nowTime;
@@ -271,28 +277,36 @@ void KnxTpUart::RXTask(void) {
 
     // === STEP 1 : Check EOP in case a Telegram is being received ===
     if (_rx.state >= RX_KNX_TELEGRAM_RECEPTION_STARTED) { // a telegram reception is ongoing
+        
+//        DEBUG_PRINTLN(F("EOP REACHED"));
+        
         nowTime = (word) micros(); // word cast because a 65ms looping counter is long enough
         if (TimeDeltaWord(nowTime, lastByteRxTimeMicrosec) > 2000 /* 2 ms */) { // EOP detected, the telegram reception is completed
 
             switch (_rx.state) {
                 case RX_KNX_TELEGRAM_RECEPTION_STARTED: // we are not supposed to get EOP now, the telegram is incomplete
+//                    DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED"));
                 case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID:
+//                    DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID"));
                     _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
                     break;
 
                 case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
+//                    DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
                     if (telegram.IsChecksumCorrect()) { // checksum correct, let's update the _rx struct with the received telegram and correct index
                         telegram.Copy(_rx.receivedTelegram);
                         _rx.addressedComObjectIndex = addressedComObjectIndex;
                         _evtCallbackFct(TPUART_EVENT_RECEIVED_KNX_TELEGRAM); // Notify the new received telegram
                     } else { // checksum incorrect, notify error
+//                        DEBUG_PRINTLN(F("checksum incorrect"));
                         _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
                     }
                     break;
 
                     // case RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED : break; // nothing to do!
 
-                default: break;
+                default: 
+                    break;
             } // end of switch
 
             // we move state back to RX IDLE in any case
@@ -304,21 +318,29 @@ void KnxTpUart::RXTask(void) {
     if (_serial.available() > 0) {
         incomingByte = (byte) (_serial.read());
         lastByteRxTimeMicrosec = (word) micros();
-
+//        DEBUG_PRINTLN(F("RX:  incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
+        
         switch (_rx.state) {
+            
             case RX_IDLE_WAITING_FOR_CTRL_FIELD:
+//                DEBUG_PRINTLN(F("RX_IDLE_WAITING_FOR_CTRL_FIELD incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
+                
                 // CASE OF KNX MESSAGE
                 if ((incomingByte & KNX_CONTROL_FIELD_PATTERN_MASK) == KNX_CONTROL_FIELD_VALID_PATTERN) {
                     _rx.state = RX_KNX_TELEGRAM_RECEPTION_STARTED;
                     readBytesNb = 1;
                     telegram.WriteRawByte(incomingByte, 0);
-                }                    // CASE OF TPUART_DATA_CONFIRM_SUCCESS NOTIFICATION
+                } 
+                // CASE OF TPUART_DATA_CONFIRM_SUCCESS NOTIFICATION
                 else if (incomingByte == TPUART_DATA_CONFIRM_SUCCESS) {
                     if (_tx.state == TX_WAITING_ACK) {
                         _tx.ackFctPtr(ACK_RESPONSE);
                         _tx.state = TX_IDLE;
-                    } else DebugError("Rx: unexpected TPUART_DATA_CONFIRM_SUCCESS received!\n");
-                }                    // CASE OF TPUART_RESET NOTIFICATION
+                    } else {
+//                        DEBUG_PRINTLN(F("Rx: unexpected TPUART_DATA_CONFIRM_SUCCESS received!"));
+                    }
+                } 
+                // CASE OF TPUART_RESET NOTIFICATION
                 else if (incomingByte == TPUART_RESET_INDICATION) {
 
                     if ((_tx.state == TX_TELEGRAM_SENDING_ONGOING) || (_tx.state == TX_WAITING_ACK)) { // response to the TP UART transmission
@@ -327,37 +349,47 @@ void KnxTpUart::RXTask(void) {
                     _tx.state = TX_STOPPED;
                     _rx.state = RX_STOPPED;
                     _evtCallbackFct(TPUART_EVENT_RESET); // Notify RESET
+//                    DEBUG_PRINTLN(F("Rx: Reset Indication Received"));
                     return;
-                }                    // CASE OF STATE_INDICATION RESPONSE
+                } 
+                // CASE OF STATE_INDICATION RESPONSE
                 else if ((incomingByte & TPUART_STATE_INDICATION_MASK) == TPUART_STATE_INDICATION) {
                     _evtCallbackFct(TPUART_EVENT_STATE_INDICATION); // Notify STATE INDICATION
                     _stateIndication = incomingByte;
-                    DebugInfo("Rx: State Indication Received\n");
-                }                    // CASE OF TPUART_DATA_CONFIRM_FAILED NOTIFICATION
+//                    DEBUG_PRINTLN(F("Rx: State Indication Received"));
+                } 
+                // CASE OF TPUART_DATA_CONFIRM_FAILED NOTIFICATION
                 else if (incomingByte == TPUART_DATA_CONFIRM_FAILED) {
                     // NACK following Telegram transmission
                     if (_tx.state == TX_WAITING_ACK) {
                         _tx.ackFctPtr(NACK_RESPONSE);
                         _tx.state = TX_IDLE;
-                    } else DebugError("Rx: unexpected TPUART_DATA_CONFIRM_FAILED received!\n");
-                }                    // UNKNOWN CONTROL FIELD RECEIVED
-                else if (incomingByte)
-                    DebugError("Rx: Unknown Control Field received\n");
+//                    } else DEBUG_PRINTLN(F("Rx: unexpected TPUART_DATA_CONFIRM_FAILED received!"));
+                } 
+                // UNKNOWN CONTROL FIELD RECEIVED
+                else if (incomingByte) {
+//                    DEBUG_PRINTLN(F("Rx: Unknown Control Field received: byte=0x%02x"), incomingByte);
+                }
                 // else ignore "0" value sent on Reset by TPUART prior to TPUART_RESET_INDICATION
                 break;
 
             case RX_KNX_TELEGRAM_RECEPTION_STARTED:
+//                DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
                 telegram.WriteRawByte(incomingByte, readBytesNb);
                 readBytesNb++;
 
                 if (readBytesNb == 3) { // We have just received the source address
                     // we check whether the received KNX telegram is coming from us (i.e. telegram is sent by the TPUART itself)
                     if (telegram.GetSourceAddress() == _physicalAddr) { // the message is coming from us, we consider it as not addressed and we don't send any ACK service
+//                        DEBUG_PRINTLN(F("message from us, skip."));
                         _rx.state = RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED;
                     }
                 } else if (readBytesNb == 6) // We have just read the routing field containing the address type and the payload length
                 { // We check if the message is addressed to us in order to send the appropriate acknowledge
                     if (IsAddressAssigned(telegram.GetTargetAddress(), addressedComObjectIndex)) { // Message addressed to us
+                        
+//                        DEBUG_PRINTLN(F("assigned to us: ga=0x%04x index=%d"), telegram.GetTargetAddress(), addressedComObjectIndex);
+                        
                         _rx.state = RX_KNX_TELEGRAM_RECEPTION_ADDRESSED;
                         //sent the correct ACK service now
                         // the ACK info must be sent latest 1,7 ms after receiving the address type octet of an addressed frame
@@ -378,8 +410,12 @@ void KnxTpUart::RXTask(void) {
                 break;
 
             case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
-                if (readBytesNb == KNX_TELEGRAM_MAX_SIZE) _rx.state = RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID;
-                else {
+                
+//                DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
+                
+                if (readBytesNb == KNX_TELEGRAM_MAX_SIZE) {
+                    _rx.state = RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID;
+                } else {
                     telegram.WriteRawByte(incomingByte, readBytesNb);
                     readBytesNb++;
                 }
@@ -487,15 +523,30 @@ boolean KnxTpUart::GetMonitoringData(type_MonitorData& data) {
 }
 
 
-// Check if the target address is an assigned com object one
-// if yes, then update index parameter with the index (in the list) of the targeted com object and return true
-// else return false
-
+/**
+ * Check if the target address is an assigned com object one
+ * if yes, then update index parameter with the index (in the list) 
+ * of the targeted com object and return true else return false
+ * 
+ * WARNING: DO NOT ADD DEBUG CODE HERE, AS IT WILL BREAK TELEGRAM RECEIVIBG (Timing issues)
+ * 
+ * @param addr the GA to check for assignment
+ * @param index the index variable will be filled with the index matching this GA
+ * @return true if assigned & active, false if not
+ */
 boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
+    
+//    DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x"), addr);
     byte divisionCounter = 0;
     byte i, searchIndexStart, searchIndexStop, searchIndexRange;
 
     if (!_assignedComObjectsNb) return false; // in case of empty list, we return immediately
+    
+    if (addr == 0x7fff) {
+        index = 255;
+//        DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x == 0x7fff --> progComObj. index=%d"), addr, index);    
+        return true;
+    }
 
     // Define how many divisions by 2 shall be done in order to reduce the search list by 8 Addr max
     // if _assignedComObjectsNb >= 16 => divisionCounter = 1
@@ -520,9 +571,16 @@ boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
 
     // search the address value and index in the reduced range
     for (i = searchIndexStart; ((_comObjectsList[_orderedIndexTable[i]].GetAddr() != addr) && (i <= searchIndexStop)); i++);
-    if (i > searchIndexStop) return false; // Address is NOT part of the assigned addresses
+    
+    if (i > searchIndexStop) {
+        return false; // Address is NOT part of the assigned addresses
+    }
+
     // Address is part of the assigned addresses
     index = _orderedIndexTable[i];
+    
+//    DEBUG_PRINTLN(F("IsAddressAssigned: index=%d active=%d"), index, _comObjectsList[index].isActive()); 
+    
     if (_comObjectsList[index].isActive()) {
         // CO is found AND is active
         return true;
@@ -531,16 +589,4 @@ boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
         return false;
     }
 }
-
-
-// DEBUG purpose functions
-
-void KnxTpUart::DEBUG_SendResetCommand() {
-    _serial.write(TPUART_RESET_REQ);
-}
-
-void KnxTpUart::DEBUG_SendStateReqCommand() {
-    _serial.write(TPUART_STATE_REQ);
-}
-
 //EOF
