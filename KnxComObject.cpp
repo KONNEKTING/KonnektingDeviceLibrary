@@ -90,7 +90,7 @@ void KnxComObject::UpdateValue(const byte ori[])
         } else {
             for (byte i=0; i < _length-1 ; i++) {
                 _longValue[i] = ori[i]; // long value case
-//                DEBUG_PRINTLN(F("_longValue[%d]=0x%02x == ori[%d]=0x%02x"), i, _longValue[i], i, ori[i]);
+                DEBUG_PRINTLN(F("_longValue[%d]=0x%02x == ori[%d]=0x%02x"), i, _longValue[i], i, ori[i]);
             }
         }
 	_validity = true;  // com obj set to valid

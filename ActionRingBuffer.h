@@ -32,7 +32,7 @@
 #include "DebugUtil.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
-#define ACTIONRINGBUFFER_STAT // To be uncommented when doing Statistics
+//#define ACTIONRINGBUFFER_STAT // To be uncommented when doing Statistics
 
 
 // The type of the contained elements and the ring buffer size are defined at compile time (template)
@@ -95,7 +95,7 @@ class ActionRingBuffer {
     boolean Pop(T& popData)
     {
       if (!_elementsCurrentNb) return false; // no data in the buffer
-      DEBUG_PRINTLN(F("Pop at %d"), _tail);
+      DEBUG_PRINTLN(F("Pop at %d"), _head);
       popData = _buffer[_head];
       IncrementHead();
       _elementsCurrentNb--;

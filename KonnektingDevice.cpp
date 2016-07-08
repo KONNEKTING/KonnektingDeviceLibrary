@@ -543,8 +543,12 @@ void KonnektingDevice::handleMsgWriteIndividualAddress(byte msg[]) {
 void KonnektingDevice::handleMsgReadIndividualAddress(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgReadIndividualAddress"));
     byte response[14];
-    response[0] = PROTOCOLVERSION;
-    response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;
+//    response[0] = PROTOCOLVERSION;
+//    response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;
+    
+    response[0] = 0xCC;
+    response[1] = 0xFF;
+    
     response[2] = (_individualAddress >> 8) & 0xff;
     response[3] = (_individualAddress >> 0) & 0xff;
     response[4] = 0x00;
