@@ -156,7 +156,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
         // ComObjects
         // at most 255 com objects
-        for (byte i = 0; i < Knx.getNumberOfComObjects() - 1; i++) {
+        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
             byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
             byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
             byte settings = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
