@@ -163,7 +163,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
             word comObjAddr = (hi << 8) + (lo << 0);
 
             bool active = ((settings & 0x80) == 0x80);
-            Knx.setComObjectAddress((i + 1), comObjAddr, active);
+            Knx.setComObjectAddress(i, comObjAddr, active);
 
             DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x setting=0x%02x active=%d"), i, hi, lo, comObjAddr, settings, active);
         }
