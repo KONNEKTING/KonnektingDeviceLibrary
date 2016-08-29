@@ -155,7 +155,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
         _individualAddress = (hiAddr << 8) + (loAddr << 0);
 
         // ComObjects
-        // at most 255 com objects
+        // at most 254 com objects, 255 is progcomobj
         for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
             byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
             byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
