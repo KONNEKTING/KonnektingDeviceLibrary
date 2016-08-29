@@ -690,6 +690,7 @@ int KonnektingDevice::memoryRead(int index) {
         d = EEPROM.read(index);
     }
     DEBUG_PRINTLN(F("memRead: data=0x%02x"), d);
+    return d;
 }
 
 void KonnektingDevice::memoryWrite(int index, byte data) {
