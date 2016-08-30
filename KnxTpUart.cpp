@@ -470,7 +470,7 @@ void KnxTpUart::TXTask(void) {
                 if (_tx.nbRemainingBytes == 1) { // We are sending the last byte, i.e checksum
                     txByte[0] = TPUART_DATA_END_REQ + _tx.txByteIndex;
                     txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
-                    DEBUG_PRINTLN(F("data1[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
+                    //DEBUG_PRINTLN(F("data1[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
                     _serial.write(txByte, 2); // write the UART control field and the data byte
 
                     // Message sending completed
@@ -479,7 +479,7 @@ void KnxTpUart::TXTask(void) {
                 } else {
                     txByte[0] = TPUART_DATA_START_CONTINUE_REQ + _tx.txByteIndex;
                     txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
-                    DEBUG_PRINTLN(F("data2[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
+                    //DEBUG_PRINTLN(F("data2[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
                     _serial.write(txByte, 2); // write the UART control field and the data byte
                     _tx.txByteIndex++;
                     _tx.nbRemainingBytes--;

@@ -155,15 +155,15 @@ void KonnektingDevice::init(HardwareSerial& serial,
         _individualAddress = (hiAddr << 8) + (loAddr << 0);
 
         // ComObjects
-        // at most 255 com objects
-        for (byte i = 0; i < Knx.getNumberOfComObjects() - 1; i++) {
+        // at most 254 com objects, 255 is progcomobj
+        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
             byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
             byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
             byte settings = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
             word comObjAddr = (hi << 8) + (lo << 0);
 
             bool active = ((settings & 0x80) == 0x80);
-            Knx.setComObjectAddress((i + 1), comObjAddr, active);
+            Knx.setComObjectAddress(i, comObjAddr, active);
 
             DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x setting=0x%02x active=%d"), i, hi, lo, comObjAddr, settings, active);
         }
@@ -543,12 +543,8 @@ void KonnektingDevice::handleMsgWriteIndividualAddress(byte msg[]) {
 void KonnektingDevice::handleMsgReadIndividualAddress(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgReadIndividualAddress"));
     byte response[14];
-//    response[0] = PROTOCOLVERSION;
-//    response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;
-    
-    response[0] = 0xCC;
-    response[1] = 0xFF;
-    
+    response[0] = PROTOCOLVERSION;
+    response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;   
     response[2] = (_individualAddress >> 8) & 0xff;
     response[3] = (_individualAddress >> 0) & 0xff;
     response[4] = 0x00;
@@ -694,6 +690,7 @@ int KonnektingDevice::memoryRead(int index) {
         d = EEPROM.read(index);
     }
     DEBUG_PRINTLN(F("memRead: data=0x%02x"), d);
+    return d;
 }
 
 void KonnektingDevice::memoryWrite(int index, byte data) {
