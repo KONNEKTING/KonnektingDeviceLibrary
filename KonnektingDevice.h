@@ -81,6 +81,7 @@
 #define PARAM_RAW9 9
 #define PARAM_RAW10 10
 #define PARAM_RAW11 11
+#define PARAM_STRING11 11
 
 
 // process intercepted knxEvents-calls with this method
@@ -141,6 +142,8 @@ public:
     
     uint32_t getUINT32Param(byte index);
     int32_t getINT32Param(byte index);
+    
+    String getString11Param(byte index);
 
     /**
      * Check whether the Knx KonnektingDevice is initialized (Konnekting.init(...)) and therefore active or not
