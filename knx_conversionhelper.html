@@ -70,6 +70,40 @@ function calcFromIntIA() {
 	document.getElementById('member').value = (asInt & 0xFF);	
 }
 
+
+function conv_dec_uint8() {
+	var dec = document.getElementById('uint8_dec').value;
+	var asHex = parseInt(dec).toString(16);
+	
+	document.getElementById('uint8').value = asHex;
+}
+
+function conv_uint8_dec() {
+	var hex = document.getElementById('uint8').value;
+	var asDec = parseInt(hex, 16);
+	
+	document.getElementById('uint8_dec').value = asDec;
+}
+
+function conv_string_hex() {
+	var str = document.getElementById('string').value;
+	var hex = '';
+    for(var i=0;i<str.length;i++) {
+        hex += ''+str.charCodeAt(i).toString(16);
+    }
+    document.getElementById('string_hex').value = hex;
+}
+
+function conv_hex_string() {
+	var hex = document.getElementById('string_hex').value;;//force conversion
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2)
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    
+	document.getElementById('string').value = str;
+}
+
+
 </script>
 </head>
 <body>
@@ -129,6 +163,21 @@ function calcFromIntIA() {
 		</td>
 	</tr>
 </table>
+
+<h3>Parameter Type Converter</h3>
+
+<table>
+	<tr>       
+		<td>UINTx:&nbsp;&nbsp;&nbsp;Dec: <input style="width:140px" type="text" id="uint8_dec" name="uint8_dec" length="5" onChange="javascript:conv_dec_uint8();">&nbsp;Hex: <input style="width:140px" type="text" id="uint8" name="uint8" length="5" onChange="javascript:conv_uint8_dec();">	
+		</td>
+	</tr>		
+	<tr>       
+		<td>String:&nbsp;&nbsp;&nbsp;Readable: <input style="width:140px" type="text" id="string" name="uint8_dec" length="5" onChange="javascript:conv_string_hex();">&nbsp;Hex: <input style="width:180px" type="text" id="string_hex" name="uint8" length="5" onChange="javascript:conv_hex_string();">	
+		</td>
+	</tr>		
+
+</table>
+
 
 
 
