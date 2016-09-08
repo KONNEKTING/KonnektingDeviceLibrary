@@ -78,7 +78,9 @@ void KnxComObject::GetValue(byte dest[]) const
 	if (_length <=2) {
             dest[0] = _value; // short value case, ReadValue(void) fct should rather be used
         } else {
-            for (byte i=0; i < _length-1 ; i++) dest[i] = _longValue[i]; // long value case
+            for (byte i=0; i < _length-1 ; i++) {
+                dest[i] = _longValue[i]; // long value case
+            }
         }
 }
 
