@@ -829,10 +829,26 @@ String KonnektingDevice::getString11Param(byte index) {
 
     byte paramValue[11];
     getParamValue(index, paramValue);
-
-    String val = (char*) paramValue;
-
-    return val;
+    
+    // check if string is 0x00 terminated (means <11 chars)
+    byte indexOf = -1;
+    for(byte i=0;i<11;i++) {
+        if (paramValue[i]==0x00) {
+            indexOf = i;
+            break;
+        }
+    }
+    
+    // check if string needs to be cut before 0x00
+    if (indexOf!=-1) {
+        byte str[indexOf];
+        for(byte i=0;i<indexOf;i++) {
+            str[i] = paramValue[i];
+            return (char*) str;
+        }
+    } else {
+        return (char*) paramValue;
+    }
 }
 
 int KonnektingDevice::getFreeEepromOffset() {
