@@ -685,7 +685,9 @@ int KonnektingDevice::memoryRead(int index) {
         DEBUG_PRINTLN(F("memRead: using fctptr"));
         d = eepromReadFunc(index);
     } else {
+#ifndef __SAMD21G18A__
         d = EEPROM.read(index);
+#endif
     }
     DEBUG_PRINTLN(F("memRead: data=0x%02x"), d);
     return d;
@@ -698,13 +700,15 @@ void KonnektingDevice::memoryWrite(int index, byte data) {
         DEBUG_PRINTLN(F("memWrite: using fctptr"));
         eepromWriteFunc(index, data);
     } else {
+#ifndef __SAMD21G18A__
 #ifdef ESP8266    
     DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
     EEPROM.write(index, data);
 #else
     EEPROM.write(index, data);
     //    delay(10); // really required?
-#endif   
+#endif  
+#endif 
     }
 
     // EEPROM has been changed, reboot will be required
@@ -719,7 +723,7 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
         DEBUG_PRINTLN(F("memUpdate: using fctptr"));
         eepromUpdateFunc(index, data);
     } else {
-        
+#ifndef __SAMD21G18A__        
 #ifdef ESP8266    
     DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
     byte d = EEPROM.read(index);
@@ -729,6 +733,7 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
 #else
     EEPROM.update(index, data);
     //    delay(10); // really required?
+#endif
 #endif   
     }
     // EEPROM has been changed, reboot will be required

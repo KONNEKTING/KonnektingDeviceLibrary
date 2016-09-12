@@ -9,10 +9,6 @@
                     <Description>Delay [0..65535ms]</Description>
                     <Value Type="uint16" Default="03E8" Options="" Min="0000" Max="FFFF"/>
                 </Parameter>
-                <Parameter Id="1" IdName="testString">
-                    <Description>11 byte teststring iso88591</Description>
-                    <Value Type="string11" Default="48656c6c6f20576f726c64"/>
-                </Parameter>
             </Group>
         </Parameters>
         <CommObjects>

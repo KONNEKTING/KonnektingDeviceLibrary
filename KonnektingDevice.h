@@ -30,10 +30,13 @@
 #include <Arduino.h> 
 #include <DebugUtil.h>
 #include <KnxDevice.h>
-#include <EEPROM.h>
 
-#ifndef ESP8266 
+
+#ifndef __SAMD21G18A__
+#include <EEPROM.h>
+#ifndef ESP8266
 #include <avr/wdt.h>
+#endif
 #endif
 
 #define EEPROM_DEVICE_FLAGS          0

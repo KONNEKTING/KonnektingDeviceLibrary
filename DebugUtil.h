@@ -29,6 +29,9 @@
 
 
 #include <Arduino.h>
+#ifdef __SAMD21G18A__
+#include "stdarg.h"
+#endif
 
 #define DEBUG
 
