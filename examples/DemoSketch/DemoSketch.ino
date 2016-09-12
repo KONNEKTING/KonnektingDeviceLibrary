@@ -1,7 +1,7 @@
 #include <KonnektingDevice.h>
 
 // include device related configuration code, created by "KONNEKTING CodeGenerator"
-#include "KONNEKTING_deviceconfiguration_DemoSketch.h
+#include "KONNEKTING_deviceconfiguration_DemoSketch.h"
 
 // ################################################
 // ### DEBUG CONFIGURATION
