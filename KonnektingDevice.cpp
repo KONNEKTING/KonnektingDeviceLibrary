@@ -836,7 +836,7 @@ int32_t KonnektingDevice::getINT32Param(byte index) {
     return val;
 }
 
-String KonnektingDevice::getString11Param(byte index) {
+char* KonnektingDevice::getSTRING11Param(byte index) {
     if (getParamSize(index) != PARAM_STRING11) {
         DEBUG_PRINTLN(F("Requested STRING11 param for index %d but param has different length! Will Return \"\""), index);
         return "";

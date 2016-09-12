@@ -146,7 +146,7 @@ public:
     uint32_t getUINT32Param(byte index);
     int32_t getINT32Param(byte index);
     
-    String getString11Param(byte index);
+    char* getSTRING11Param(byte index);
 
     /**
      * Check whether the Knx KonnektingDevice is initialized (Konnekting.init(...)) and therefore active or not
