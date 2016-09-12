@@ -45,6 +45,10 @@
 #include <ESP8266WiFi.h>
 #endif
 
+#ifdef __SAMD21G18A__
+#include "SAMD21G18_Reset.h"
+#endif
+
 #define PROGCOMOBJ_INDEX 255
 
 
@@ -320,9 +324,12 @@ void KonnektingDevice::reboot() {
 #ifdef ESP8266 
     DEBUG_PRINTLN(F("ESP8266 restart"));
     ESP.restart();
-#endif
-
-#ifdef __AVR_ATmega328P__
+#elif __SAMD21G18A__
+    // do reset of arduino zero
+    setupWDT(0); // minimum period
+    while (1) {
+    }
+#elif __AVR_ATmega328P__
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
     DEBUG_PRINTLN(F("software reset NOW"));
@@ -738,7 +745,6 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
     EEPROM.update(index, data);
     //    delay(10); // really required?
 #endif
-#endif   
     }
     // EEPROM has been changed, reboot will be required
     _rebootRequired = true;

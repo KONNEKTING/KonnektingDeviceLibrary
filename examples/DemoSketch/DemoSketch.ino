@@ -64,17 +64,19 @@ int laststate = false;
 // ################################################
 int readEeprom(int index) {
     // when using external storage, implement READ command here
-    return EEPROM.read(index);
+    //return EEPROM.read(index);
+    return 0;
 }
 
 void writeEeprom(int index, int val) {
     // when using external storage, implement WRITE command here
-    return EEPROM.write(index, val);
+    //return EEPROM.write(index, val);
+    return;
 }
 
 void updateEeprom(int index, int val) {
     // when using external storage, implement UPDATE command here
-    return EEPROM.update(index, val);
+    //return EEPROM.update(index, val);
 }
 
 
@@ -108,9 +110,11 @@ void setup() {
      * function pointers should match the methods you have implemented above.
      * If no external eeprom required, please remove all three Konnekting.setEeprom* lines below
      */
+#ifdef __SAMD21G18A__    
     Konnekting.setEepromReadFunc(&readEeprom);
     Konnekting.setEepromWriteFunc(&writeEeprom);
     Konnekting.setEepromUpdateFunc(&updateEeprom);
+#endif    
     
     // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL,

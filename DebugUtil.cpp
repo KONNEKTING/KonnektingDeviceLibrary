@@ -15,10 +15,12 @@ void DebugUtil::setPrintStream(Stream* printstream) {
 int DebugUtil::freeRam() {
 #ifdef ESP8266
     return -1;
-#else
+#elif __AVR_ATmega328P__ || __AVR_ATmega32U4__
     extern int __heap_start, *__brkval;
     int v;
     return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+#else
+    return 0;
 #endif
 }
 
