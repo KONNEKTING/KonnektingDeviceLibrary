@@ -681,11 +681,14 @@ void KonnektingDevice::handleMsgReadComObject(byte msg[]) {
 int KonnektingDevice::memoryRead(int index) {
     DEBUG_PRINTLN(F("memRead: index=0x%02x"), index);
     byte d = 0xFF;
+    
     if (*eepromReadFunc!=NULL) {
         DEBUG_PRINTLN(F("memRead: using fctptr"));
         d = eepromReadFunc(index);
     } else {
-#ifndef __SAMD21G18A__
+#ifdef __SAMD21G18A__
+        DEBUG_PRINTLN(F("memRead: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+#else
         d = EEPROM.read(index);
 #endif
     }
@@ -700,14 +703,14 @@ void KonnektingDevice::memoryWrite(int index, byte data) {
         DEBUG_PRINTLN(F("memWrite: using fctptr"));
         eepromWriteFunc(index, data);
     } else {
-#ifndef __SAMD21G18A__
-#ifdef ESP8266    
+#ifdef __SAMD21G18A__
+    DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+#elif ESP8266    
     DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
     EEPROM.write(index, data);
 #else
     EEPROM.write(index, data);
     //    delay(10); // really required?
-#endif  
 #endif 
     }
 
@@ -723,8 +726,9 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
         DEBUG_PRINTLN(F("memUpdate: using fctptr"));
         eepromUpdateFunc(index, data);
     } else {
-#ifndef __SAMD21G18A__        
-#ifdef ESP8266    
+#ifdef __SAMD21G18A__   
+    DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+#elif ESP8266    
     DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
     byte d = EEPROM.read(index);
     if (d != data) {
