@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<KonnektingDevice xmlns="http://konnekting.de/xml/KonnektingDevice/v0">
+<KonnektingDevice xmlns="http://konnekting.de/xml/KonnektingDevice/v0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://konnekting.de/xml/KonnektingDevice/v0 http://konnekting.de/xml/KonnektingDevice/KonnektingDeviceV0.xsd">
     <Device ManufacturerId="57005" DeviceId="255" Revision="0">
         <ManufacturerName>KONNEKTING</ManufacturerName>
         <DeviceName>Demo Sketch</DeviceName>
@@ -14,7 +14,7 @@
         <CommObjects>
             <CommObject Id="0" IdName="commObj1">
                 <Name>CommObj1</Name>
-                <Function>LED on/of</Function>
+                <Function>LED on/off</Function>
                 <DataPointType>1.001</DataPointType>
                 <Flags>52</Flags>
             </CommObject>
