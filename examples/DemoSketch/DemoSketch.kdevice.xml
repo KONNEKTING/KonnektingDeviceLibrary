@@ -2,7 +2,7 @@
 <KonnektingDevice xmlns="http://konnekting.de/xml/KonnektingDevice/v0">
     <Device ManufacturerId="57005" DeviceId="255" Revision="0">
         <ManufacturerName>KONNEKTING</ManufacturerName>
-        <DeviceName>Test Sketch</DeviceName>
+        <DeviceName>Demo Sketch</DeviceName>
         <Parameters>
             <Group name="General">
                 <Parameter Id="0" IdName="initialDelay">
