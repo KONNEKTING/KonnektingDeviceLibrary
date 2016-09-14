@@ -115,7 +115,7 @@ class KnxDevice {
     // The value shall be provided by the end-user
     static const byte _numberOfComObjects;   
     
-    KnxComObject _progComObj = KnxComObject(KNX_DPT_60000_000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR);  
+    KnxComObject _progComObj = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR);  
     
     // Current KnxDevice state
     e_KnxDeviceState _state;  
