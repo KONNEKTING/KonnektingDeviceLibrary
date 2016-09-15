@@ -167,7 +167,7 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
     }
     
     /*
-     * Removed duplicate check: GAs are initialized as "active=false", so there are not used.
+     * Removed duplicate check: GAs are initialized as "active=false", so they are not used.
      * As soon as an address is set (only done on startup when reading user-settings from eeprom)
      * the flag is set to "active=true" and ComObj is able to communicate.
      * 
