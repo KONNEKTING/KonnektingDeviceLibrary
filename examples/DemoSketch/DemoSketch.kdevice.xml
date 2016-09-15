@@ -6,12 +6,12 @@
         <ManufacturerName>KONNEKTING</ManufacturerName>
         <DeviceName>Demo Sketch</DeviceName>
         <Parameters>
-            <Group name="General">
+            <ParameterGroup Name="General" Id="0">
                 <Parameter Id="0" IdName="initialDelay">
                     <Description>Delay [0..65535ms]</Description>
                     <Value Type="uint16" Default="03E8" Options="" Min="0000" Max="FFFF"/>
                 </Parameter>
-            </Group>
+            </ParameterGroup>
         </Parameters>
         <CommObjects>
             <CommObject Id="0" IdName="commObj1">
