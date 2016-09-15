@@ -24,7 +24,7 @@
                 <Name>CommObj2</Name>
                 <Function>Trigger with delay</Function>
                 <DataPointType>1.001</DataPointType>
-                <Flags>52</Flags>
+                <Flags>42</Flags>
             </CommObject>
         </CommObjects>
     </Device>

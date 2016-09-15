@@ -123,7 +123,10 @@ void KnxDevice::task(void) {
         nowTimeMillis = millis();
         // To avoid KNX bus overloading, we wait for 500 ms between each Init read request
         if (TimeDeltaWord(nowTimeMillis, _lastInitTimeMillis) > 500) {
-            while ((_initIndex < _numberOfComObjects) && (_comObjectsList[_initIndex].GetValidity())) _initIndex++;
+            while (
+                    (_initIndex < _numberOfComObjects) && 
+                    (_comObjectsList[_initIndex].GetValidity() || !_comObjectsList[_initIndex].isActive()) /* either not-valid (=init not yet done) or not-active required to jump to next index */
+                  ) _initIndex++;
 
             if (_initIndex == _numberOfComObjects) {
                 _initCompleted = true; // All the Com Object initialization have been performed
