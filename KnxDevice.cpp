@@ -125,7 +125,7 @@ void KnxDevice::task(void) {
         if (TimeDeltaWord(nowTimeMillis, _lastInitTimeMillis) > 500) {
             while (
                     (_initIndex < _numberOfComObjects) && 
-                    (_comObjectsList[_initIndex].GetValidity() || !_comObjectsList[_initIndex].isActive()) /* either not-valid (=init not yet done) or not-active required to jump to next index */
+                    (_comObjectsList[_initIndex].GetValidity() || !_comObjectsList[_initIndex].isActive()) /* either valid (=init done or not required) or not-active required to jump to next index */
                   ) _initIndex++;
 
             if (_initIndex == _numberOfComObjects) {
