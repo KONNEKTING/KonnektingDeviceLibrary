@@ -4,7 +4,7 @@
 
 #define COMOBJ_commObj1 0
 #define COMOBJ_commObj2 1
-#define PARAM_initialDelay 0
+#define PARAM_blinkDelay 0
         
 KnxComObject KnxDevice::_comObjectsList[] = {
     /* Index 0 - commObj1 */ KnxComObject(KNX_DPT_1_001, 0x34),

@@ -7,9 +7,9 @@
         <DeviceName>Demo Sketch</DeviceName>
         <Parameters>
             <ParameterGroup Name="General" Id="0">
-                <Parameter Id="0" IdName="initialDelay">
-                    <Description>Delay [0..65535ms]</Description>
-                    <Value Type="uint16" Default="03E8" Options="" Min="0000" Max="FFFF"/>
+                <Parameter Id="0" IdName="blinkDelay">
+                    <Description>Blink Delay [500..65535ms]</Description>
+                    <Value Type="uint16" Default="09C4" Options="" Min="01F4" Max="FFFF"/>
                 </Parameter>
             </ParameterGroup>
         </Parameters>

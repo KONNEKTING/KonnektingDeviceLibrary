@@ -52,7 +52,7 @@ SoftwareSerial softserial(11, 10); // RX, TX
 // ################################################
 // ### Global variables, sketch related
 // ################################################
-unsigned long diffmillis = 0;
+unsigned long blinkDelay = 2500; // default value
 unsigned long lastmillis = millis();
 int laststate = false;
 
@@ -151,12 +151,12 @@ void setup() {
     // If device has been parametrized with KONNEKTING Suite, read params from EEPROM
     // Otherwise continue with global default values from sketch
     if (!Konnekting.isFactorySetting()) {
-        diffmillis = (int) Konnekting.getUINT16Param(PARAM_initialDelay); //blink every xxxx ms
+        blinkDelay = (int) Konnekting.getUINT16Param(PARAM_blinkDelay); //blink every xxxx ms
     }
 
     lastmillis = millis();
 
-    Debug.println(F("Toggle every %d ms."), diffmillis);
+    Debug.println(F("Toggle LED every %d ms."), blinkDelay);
     Debug.println(F("Setup is ready. go to loop..."));
 }
 
@@ -178,7 +178,7 @@ void loop() {
      */
     if (Konnekting.isReadyForApplication()) {
 
-        if (currentmillis - lastmillis >= diffmillis) {
+        if (currentmillis - lastmillis >= blinkDelay) {
 
             Debug.println(F("Actual state: %d"), laststate);
             Knx.write(COMOBJ_commObj2, laststate);
