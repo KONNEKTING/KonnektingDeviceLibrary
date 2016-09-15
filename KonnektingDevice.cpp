@@ -268,7 +268,7 @@ bool KonnektingDevice::isProgState() {
 
 /**
  * Check whether Konnekting is ready for application logic. 
- * (Means: no busy with programming-mode and not running with factory settings)
+ * (Means: not busy with programming-mode and not running with factory settings)
  * @return true if it's safe to run application logic
  */
 bool KonnektingDevice::isReadyForApplication() {
