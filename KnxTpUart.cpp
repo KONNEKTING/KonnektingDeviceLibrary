@@ -165,19 +165,31 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
         DEBUG_PRINTLN(F("AttachComObjectsList : warning : no object with com attribute in the list!"));
         return KNX_TPUART_OK;
     }
+    
+    /*
+     * Removed duplicate check: GAs are initialized as "active=false", so there are not used.
+     * As soon as an address is set (only done on startup when reading user-settings from eeprom)
+     * the flag is set to "active=true" and ComObj is able to communicate.
+     * 
+     * If device starts with factory settings, all ComObjs have *no* GA, which leads to "duplicates"
+     * if this check is enabled.
+     * 
+     * Also it makes no sense to check for duplicates, as it is quite a use-case to have 
+     * multiple ComObjs with same GA
+     */
     // Deduct the duplicate addresses
-    for (byte i = 0; i < listSize; i++) {
-        if (!IS_COM(i)) continue;
-        for (byte j = 0; j < listSize; j++) {
-            if ((i != j) && (ADDR(j) == ADDR(i)) && (IS_COM(j))) { // duplicate address found
-                if (j < i) break; // duplicate address already treated
-                else {
-                    _assignedComObjectsNb--;
-                    DEBUG_PRINTLN(F("AttachComObjectsList : warning : duplicate address found! i=%d:0x%04x j=%d:0x%04x"), i, j, ADDR(i), ADDR(j));
-                }
-            }
-        }
-    }
+//    for (byte i = 0; i < listSize; i++) {
+//        if (!IS_COM(i)) continue;
+//        for (byte j = 0; j < listSize; j++) {
+//            if ((i != j) && (ADDR(j) == ADDR(i)) && (IS_COM(j))) { // duplicate address found
+//                if (j < i) break; // duplicate address already treated
+//                else {
+//                    _assignedComObjectsNb--;
+//                    DEBUG_PRINTLN(F("AttachComObjectsList : warning : duplicate address found! i=%d:0x%04x j=%d:0x%04x"), i, j, ADDR(i), ADDR(j));
+//                }
+//            }
+//        }
+//    }
     _comObjectsList = comObjectsList;
     
     // Creation of the ordered index table
