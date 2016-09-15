@@ -173,7 +173,7 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
                 if (j < i) break; // duplicate address already treated
                 else {
                     _assignedComObjectsNb--;
-                    DEBUG_PRINTLN(F("AttachComObjectsList : warning : duplicate address found!"));
+                    DEBUG_PRINTLN(F("AttachComObjectsList : warning : duplicate address found! i=%d:0x%04x j=%d:0x%04x"), i, j, ADDR(i), ADDR(j));
                 }
             }
         }
