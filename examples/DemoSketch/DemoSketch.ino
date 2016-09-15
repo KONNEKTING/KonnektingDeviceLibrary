@@ -68,8 +68,8 @@ int laststate = false;
 // so we need to include Arduino's Wire.h
 #ifdef __SAMD21G18A__
 #include <Wire.h>
-// Example for 24AA02E64 I2C EEPROM
 
+// Example for 24AA02E64 I2C EEPROM
 int readEeprom(int index) {
     byte rdata = 0xFF;
 
