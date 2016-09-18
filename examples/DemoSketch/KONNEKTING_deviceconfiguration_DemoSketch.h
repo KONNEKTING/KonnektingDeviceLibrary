@@ -7,8 +7,8 @@
 #define PARAM_blinkDelay 0
         
 KnxComObject KnxDevice::_comObjectsList[] = {
-    /* Index 0 - commObj1 */ KnxComObject(KNX_DPT_1_001, 0x34),
-    /* Index 1 - commObj2 */ KnxComObject(KNX_DPT_1_001, 0x7f)
+    /* Index 0 - commObj1 */ KnxComObject(KNX_DPT_1_001, 0x2a),
+    /* Index 1 - commObj2 */ KnxComObject(KNX_DPT_1_001, 0x34)
 };
 const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do not change this code
        
