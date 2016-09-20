@@ -132,7 +132,11 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
     digitalWrite(_progLED, LOW);
 
+#ifdef __SAMD21G18A__
+    attachInterrupt(_progButton, KonnektingProgButtonPressed, RISING);
+#else    
     attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
+#endif    
     
     // hardcoded stuff
     DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
