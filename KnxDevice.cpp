@@ -235,18 +235,22 @@ void KnxDevice::task(void) {
 }
 
 
-// Quick method to read a short (<=1 byte) com object
-// NB : The returned value will be hazardous in case of use with long objects
-
+/**
+ * Quick method to read a short (<=1 byte) com object
+ * NB : The returned value will be hazardous in case of use with long objects
+ * @param objectIndex
+ * @retreturn 1-byte value of comobj
+ */
 byte KnxDevice::read(byte objectIndex) {
 //    return _comObjectsList[objectIndex].GetValue();
     return (objectIndex == 255 ? _progComObj.GetValue() : _comObjectsList[objectIndex].GetValue());
 }
 
 
-// Read an usual format com object
-// Supported DPT formats are short com object, U16, V16, U32, V32, F16 and F32 (not implemented yet)
-
+/**
+ * Read an usual format com object
+ * Supported DPT formats are short com object, U16, V16, U32, V32, F16 and F32 (not implemented yet)
+ */
 template <typename T> e_KnxDeviceStatus KnxDevice::read(byte objectIndex, T& returnedValue) {
     KnxComObject* comObj = (objectIndex == 255 ? &_progComObj : &_comObjectsList[objectIndex]);
     // Short com object case

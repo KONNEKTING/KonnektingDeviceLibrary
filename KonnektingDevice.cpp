@@ -133,6 +133,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
     digitalWrite(_progLED, LOW);
 
 #ifdef __SAMD21G18A__
+    // sollte eigtl. auch mit "digitalPinToInterrupt" funktionieren, tut es mit dem zero aber irgendwie nicht?!
     attachInterrupt(_progButton, KonnektingProgButtonPressed, RISING);
 #else    
     attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
