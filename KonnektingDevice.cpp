@@ -847,28 +847,25 @@ char* KonnektingDevice::getSTRING11Param(byte index) {
         return "";
     }
 
-    byte paramValue[11];
+    byte paramValue[PARAM_STRING11];
     getParamValue(index, paramValue);
     
     // check if string is 0x00 terminated (means <11 chars)
-    byte indexOf = -1;
-    for(byte i=0;i<11;i++) {
+    int indexOf = PARAM_STRING11; // by default, take complete string
+    for(int i=0;i<PARAM_STRING11;i++) { // but search for null-termination
         if (paramValue[i]==0x00) {
             indexOf = i;
+			DEBUG_PRINTLN(F("Found Null-termination in string at %d"), indexOf);
             break;
         }
     }
+	
+    byte* stringbytes = (byte*)malloc(indexOf);
+	
+    memcpy(stringbytes, paramValue, indexOf); // copy "indexOf" bytes from paramvalue to stringbytes	    
+
+    return (char*) stringbytes; // return string
     
-    // check if string needs to be cut before 0x00
-    if (indexOf!=-1) {
-        byte str[indexOf];
-        for(byte i=0;i<indexOf;i++) {
-            str[i] = paramValue[i];
-            return (char*) str;
-        }
-    } else {
-        return (char*) paramValue;
-    }
 }
 
 int KonnektingDevice::getFreeEepromOffset() {
