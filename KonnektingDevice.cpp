@@ -56,7 +56,6 @@
 KonnektingDevice KonnektingDevice::Konnekting;
 KonnektingDevice& Konnekting = KonnektingDevice::Konnekting;
 
-
 /**
  * Intercepting knx events to process internal com objects
  * @param index
@@ -106,17 +105,17 @@ KonnektingDevice::KonnektingDevice() {
  * 
  */
 void KonnektingDevice::init(HardwareSerial& serial,
-                            int progButtonPin,
-                            int progLedPin,
-                            word manufacturerID, 
-                            byte deviceID, 
-                            byte revisionID
-                            ) {
+        int progButtonPin,
+        int progLedPin,
+        word manufacturerID,
+        byte deviceID,
+        byte revisionID
+        ) {
 
     DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
-    
+
     DEBUG_PRINTLN("15/7/255 = 0x%04x", G_ADDR(15, 7, 255));
-    
+
     _initialized = true;
 
     _manufacturerID = manufacturerID;
@@ -138,7 +137,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
 #else    
     attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
 #endif    
-    
+
     // hardcoded stuff
     DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
 
@@ -150,7 +149,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
     _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
 
     DEBUG_PRINTLN(F("_deviceFlags: "BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-    
+
     _individualAddress = P_ADDR(1, 1, 254);
     if (!isFactorySetting()) {
         DEBUG_PRINTLN(F("->EEPROM"));
@@ -198,7 +197,7 @@ bool KonnektingDevice::isActive() {
 
 bool KonnektingDevice::isFactorySetting() {
     bool isFactory = (_deviceFlags == 0xff);
-//    DEBUG_PRINTLN(F("isFactorySetting: %d"), isFactory);
+    //    DEBUG_PRINTLN(F("isFactorySetting: %d"), isFactory);
     return isFactory;
 }
 
@@ -554,7 +553,7 @@ void KonnektingDevice::handleMsgReadIndividualAddress(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgReadIndividualAddress"));
     byte response[14];
     response[0] = PROTOCOLVERSION;
-    response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;   
+    response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;
     response[2] = (_individualAddress >> 8) & 0xff;
     response[3] = (_individualAddress >> 0) & 0xff;
     response[4] = 0x00;
@@ -588,10 +587,10 @@ void KonnektingDevice::handleMsgWriteParameter(byte msg[]) {
 #endif
 
 #if defined(WRITEMEM)    
-            // write byte by byte
+    // write byte by byte
     for (byte i = 0; i < paramLen; i++) {
 #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F(" data[%d]=0x%02x"), i, msg[3+i]);
+        DEBUG_PRINTLN(F(" data[%d]=0x%02x"), i, msg[3 + i]);
 #endif
         memoryUpdate(_paramTableStartindex + skipBytes + i, msg[3 + i]);
     }
@@ -693,8 +692,8 @@ void KonnektingDevice::handleMsgReadComObject(byte msg[]) {
 int KonnektingDevice::memoryRead(int index) {
     DEBUG_PRINTLN(F("memRead: index=0x%02x"), index);
     byte d = 0xFF;
-    
-    if (*eepromReadFunc!=NULL) {
+
+    if (*eepromReadFunc != NULL) {
         DEBUG_PRINTLN(F("memRead: using fctptr"));
         d = eepromReadFunc(index);
     } else {
@@ -716,13 +715,13 @@ void KonnektingDevice::memoryWrite(int index, byte data) {
         eepromWriteFunc(index, data);
     } else {
 #ifdef __SAMD21G18A__
-    DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+        DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    
-    DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
-    EEPROM.write(index, data);
+        DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
+        EEPROM.write(index, data);
 #else
-    EEPROM.write(index, data);
-    //    delay(10); // really required?
+        EEPROM.write(index, data);
+        //    delay(10); // really required?
 #endif 
     }
 
@@ -739,16 +738,16 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
         eepromUpdateFunc(index, data);
     } else {
 #ifdef __SAMD21G18A__   
-    DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+        DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    
-    DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
-    byte d = EEPROM.read(index);
-    if (d != data) {
-        EEPROM.write(index, data);
-    }
+        DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
+        byte d = EEPROM.read(index);
+        if (d != data) {
+            EEPROM.write(index, data);
+        }
 #else
-    EEPROM.update(index, data);
-    //    delay(10); // really required?
+        EEPROM.update(index, data);
+        //    delay(10); // really required?
 #endif
     }
     // EEPROM has been changed, reboot will be required
@@ -841,31 +840,27 @@ int32_t KonnektingDevice::getINT32Param(byte index) {
     return val;
 }
 
-char* KonnektingDevice::getSTRING11Param(byte index) {
+String KonnektingDevice::getSTRING11Param(byte index) {
+    String ret;
     if (getParamSize(index) != PARAM_STRING11) {
         DEBUG_PRINTLN(F("Requested STRING11 param for index %d but param has different length! Will Return \"\""), index);
-        return "";
+        ret = "";
+        return ret;
     }
 
     byte paramValue[PARAM_STRING11];
     getParamValue(index, paramValue);
-    
+
     // check if string is 0x00 terminated (means <11 chars)
-    int indexOf = PARAM_STRING11; // by default, take complete string
-    for(int i=0;i<PARAM_STRING11;i++) { // but search for null-termination
-        if (paramValue[i]==0x00) {
-            indexOf = i;
-			DEBUG_PRINTLN(F("Found Null-termination in string at %d"), indexOf);
-            break;
+    for (int i = 0; i < PARAM_STRING11; i++) {
+        if (paramValue[i] == 0x00) {
+            break; // stop at null-termination
+        } else {
+            ret += (char) paramValue[i]; // copy char by char into string      
         }
     }
-	
-    byte* stringbytes = (byte*)malloc(indexOf);
-	
-    memcpy(stringbytes, paramValue, indexOf); // copy "indexOf" bytes from paramvalue to stringbytes	    
 
-    return (char*) stringbytes; // return string
-    
+    return ret;
 }
 
 int KonnektingDevice::getFreeEepromOffset() {
@@ -877,15 +872,15 @@ int KonnektingDevice::getFreeEepromOffset() {
     return offset;
 }
 
-void KonnektingDevice::setEepromReadFunc(int (*func)(int)){
+void KonnektingDevice::setEepromReadFunc(int (*func)(int)) {
     eepromReadFunc = func;
 }
 
-void KonnektingDevice::setEepromWriteFunc(void (*func)(int, int)){
+void KonnektingDevice::setEepromWriteFunc(void (*func)(int, int)) {
     eepromWriteFunc = func;
 }
 
-void KonnektingDevice::setEepromUpdateFunc(void (*func)(int, int)){
+void KonnektingDevice::setEepromUpdateFunc(void (*func)(int, int)) {
     eepromUpdateFunc = func;
 }
 
