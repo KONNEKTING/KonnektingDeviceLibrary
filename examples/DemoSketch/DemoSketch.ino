@@ -187,7 +187,7 @@ void loop() {
         if (currentmillis - lastmillis >= blinkDelay) {
 
             Debug.println(F("Actual state: %d"), laststate);
-            Knx.write(COMOBJ_commObj2, laststate);
+            Knx.write(COMOBJ_trigger, laststate);
             laststate = !laststate;
             lastmillis = currentmillis;
 
@@ -208,9 +208,9 @@ void knxEvents(byte index) {
     // nothing to do in this sketch
     switch (index) {
 
-        case COMOBJ_commObj1: // object index has been updated
+        case COMOBJ_ledOnOff: // object index has been updated
 
-            if (Knx.read(COMOBJ_commObj1)) {
+            if (Knx.read(COMOBJ_ledOnOff)) {
                 digitalWrite(TEST_LED, HIGH);
                 Debug.println(F("Toggle LED: on"));
             } else {

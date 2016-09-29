@@ -4,7 +4,7 @@
                   xsi:schemaLocation="http://konnekting.de/xml/KonnektingDevice/v0 http://konnekting.de/xml/KonnektingDevice/KonnektingDeviceV0.xsd">
     <Device ManufacturerId="57005" DeviceId="255" Revision="0">
         <ManufacturerName>KONNEKTING</ManufacturerName>
-        <DeviceName>Demo Sketch</DeviceName>
+        <DeviceName>DemoSketch</DeviceName>
         <Parameters>
             <ParameterGroup Name="General" Id="0">
                 <Parameter Id="0" IdName="blinkDelay">
@@ -14,14 +14,14 @@
             </ParameterGroup>
         </Parameters>
         <CommObjects>
-            <CommObject Id="0" IdName="commObj1">
-                <Name>CommObj1</Name>
+            <CommObject Id="0" IdName="ledOnOff">
+                <Name>LED</Name>
                 <Function>LED on/off</Function>
                 <DataPointType>1.001</DataPointType>
                 <Flags>42</Flags>
             </CommObject>
-            <CommObject Id="1" IdName="commObj2">
-                <Name>CommObj2</Name>
+            <CommObject Id="1" IdName="trigger">
+                <Name>Trigger</Name>
                 <Function>Trigger with delay</Function>
                 <DataPointType>1.001</DataPointType>
                 <Flags>52</Flags>
