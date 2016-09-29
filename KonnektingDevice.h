@@ -97,6 +97,7 @@ class KonnektingDevice {
     int (*eepromReadFunc)(int);
     void (*eepromWriteFunc)(int, int);
     void (*eepromUpdateFunc)(int, int);
+    void (*eepromCommitFunc)(void);
     
     // Constructor, Destructor
     KonnektingDevice(); // private constructor (singleton design pattern)
@@ -108,9 +109,10 @@ class KonnektingDevice {
 public:
     static KonnektingDevice Konnekting;
     
-    void setEepromReadFunc(int (*func)(int));
-    void setEepromWriteFunc(void (*func)(int, int));
-    void setEepromUpdateFunc(void (*func)(int, int));
+    void setMemoryReadFunc(int (*func)(int));
+    void setMemoryWriteFunc(void (*func)(int, int));
+    void setMemoryUpdateFunc(void (*func)(int, int));
+    void setMemoryCommitFunc(void (*func)(void));
 
     void init(HardwareSerial& serial, 
                 int progButtonPin, 
@@ -215,6 +217,7 @@ private:
     int memoryRead(int index);
     void memoryWrite(int index, byte date);        
     void memoryUpdate(int index, byte date);        
+    void memoryCommit();        
 
 };
 

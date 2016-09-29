@@ -58,19 +58,19 @@ int laststate = false;
 
 
 // ################################################
-// ### Optional (HW dependant): EEPROM access
+// ### Optional (HW dependant): Memory access
 // ### Only required if HW does not support 
 // ### internal eeprom, like Arduino Zero
 // ################################################
 
 // Arduino Zero has no "real" internal EEPROM, 
-// so we use an external, accesses via I2C
-// so we need to include Arduino's Wire.h
+// so we can use an external I2C EEPROM.
+// For that we need to include Arduino's Wire.h
 #ifdef __SAMD21G18A__
 #include <Wire.h>
 
 // Example for 24AA02E64 I2C EEPROM
-int readEeprom(int index) {
+int readMemory(int index) {
     byte rdata = 0xFF;
 
     Wire.beginTransmission(0x50);
@@ -86,7 +86,7 @@ int readEeprom(int index) {
     return rdata;
 }
 
-void writeEeprom(int index, int val) {
+void writeMemory(int index, int val) {
     Wire.beginTransmission(0x50);
     Wire.write((int) (index));
     Wire.write(val);
@@ -95,10 +95,15 @@ void writeEeprom(int index, int val) {
     delay(5); //is it needed?!
 }
 
-void updateEeprom(int index, int val) {
-    if (readEeprom(index) != val) {
-        writeEeprom(index, val);
+void updateMemory(int index, int val) {
+    if (readMemory(index) != val) {
+        writeMemory(index, val);
     }
+}
+
+void commitMemory() {
+    // this is useful if using flash memory to reduce write cycles
+    // EEPROM needs no commit, so this function is intentionally left blank 
 }
 #endif
 
@@ -132,12 +137,13 @@ void setup() {
     /*
      * Only required when using external eeprom (or similar) storage.
      * function pointers should match the methods you have implemented above.
-     * If no external eeprom required, please remove all three Konnekting.setEeprom* lines below
+     * If no external eeprom required, please remove all three Konnekting.setMemory* lines below
      */
 #ifdef __SAMD21G18A__    
-    Konnekting.setEepromReadFunc(&readEeprom);
-    Konnekting.setEepromWriteFunc(&writeEeprom);
-    Konnekting.setEepromUpdateFunc(&updateEeprom);
+    Konnekting.setMemoryReadFunc(&readMemory);
+    Konnekting.setMemoryWriteFunc(&writeMemory);
+    Konnekting.setMemoryUpdateFunc(&updateMemory);
+    Konnekting.setMemoryCommitFunc(&commitMemory);
 #endif    
 
     // Initialize KNX enabled Arduino Board
