@@ -18,13 +18,13 @@
                 <Name>CommObj1</Name>
                 <Function>LED on/off</Function>
                 <DataPointType>1.001</DataPointType>
-                <Flags>52</Flags>
+                <Flags>42</Flags>
             </CommObject>
             <CommObject Id="1" IdName="commObj2">
                 <Name>CommObj2</Name>
                 <Function>Trigger with delay</Function>
                 <DataPointType>1.001</DataPointType>
-                <Flags>42</Flags>
+                <Flags>52</Flags>
             </CommObject>
         </CommObjects>
     </Device>
