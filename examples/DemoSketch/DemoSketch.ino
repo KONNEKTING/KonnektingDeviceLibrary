@@ -1,13 +1,13 @@
 #include <KonnektingDevice.h>
 
 // include device related configuration code, created by "KONNEKTING CodeGenerator"
-#include "KONNEKTING_deviceconfiguration_DemoSketch.h"
+#include "kdevice_DemoSketch.h"
 
 // ################################################
 // ### DEBUG CONFIGURATION
 // ################################################
-//#define DEBUG // comment this line to disable DEBUG mode
-#ifdef DEBUG
+//#define KDEBUG // comment this line to disable DEBUG mode
+#ifdef KDEBUG
 #include <DebugUtil.h>
 
 // Get correct serial port for debugging
@@ -115,7 +115,7 @@ void commitMemory() {
 void setup() {
 
     // debug related stuff
-#ifdef DEBUG
+#ifdef KDEBUG
 
     // Start debug serial with 9600 bauds
     DEBUGSERIAL.begin(9600);
