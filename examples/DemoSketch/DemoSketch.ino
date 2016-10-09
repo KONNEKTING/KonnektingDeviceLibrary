@@ -120,7 +120,7 @@ void setup() {
     // Start debug serial with 9600 bauds
     DEBUGSERIAL.begin(9600);
 
-#ifdef __AVR_ATmega32U4__ || __SAMD21G18A__
+#if defined(__AVR_ATmega32U4__) || defined(__SAMD21G18A__)
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro/Zero only
     while (!DEBUGSERIAL)
 #endif
