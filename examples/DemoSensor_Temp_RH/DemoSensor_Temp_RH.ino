@@ -1,7 +1,7 @@
 #include <KonnektingDevice.h>
 
 // include device related configuration code, created by "KONNEKTING CodeGenerator"
-#include "kdevice_Temperatur_-_Relative_Luftfeuchtigkeit.h"
+#include "kdevice_Temp_RH.h"
 
 // ################################################
 // ### DEBUG CONFIGURATION
