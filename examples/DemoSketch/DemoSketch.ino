@@ -139,7 +139,8 @@ void setup() {
      * function pointers should match the methods you have implemented above.
      * If no external eeprom required, please remove all three Konnekting.setMemory* lines below
      */
-#ifdef __SAMD21G18A__    
+#ifdef __SAMD21G18A__
+    Wire.begin();
     Konnekting.setMemoryReadFunc(&readMemory);
     Konnekting.setMemoryWriteFunc(&writeMemory);
     Konnekting.setMemoryUpdateFunc(&updateMemory);

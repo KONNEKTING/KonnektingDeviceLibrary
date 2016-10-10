@@ -1,7 +1,7 @@
 #include <KonnektingDevice.h>
 
 // include device related configuration code, created by "KONNEKTING CodeGenerator"
-#include "kdevice_Temperatur_DS18B20.h"
+#include "kdevice_Temperature_DS18B20.h"
 
 #include <OneWire.h> //https://github.com/PaulStoffregen/OneWire
 #include <DallasTemperature.h> //https://github.com/milesburton/Arduino-Temperature-Control-Library
