@@ -33,7 +33,7 @@
 #include "KnxComObject.h"
 #include "ActionRingBuffer.h"
 #include "KnxTpUart.h"
-#include "KnxTools.h"
+#include "KonnektingDevice.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 // DEBUG :
@@ -113,7 +113,9 @@ class KnxDevice {
     
     // Nb of attached Com Objects
     // The value shall be provided by the end-user
-    static const byte _numberOfComObjects;                
+    static const byte _numberOfComObjects;   
+    
+    KnxComObject _progComObj = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR);  
     
     // Current KnxDevice state
     e_KnxDeviceState _state;  

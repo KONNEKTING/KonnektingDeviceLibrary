@@ -1,76 +1,58 @@
-// comment following line to disable DEBUG mode
-#define DEBUG debugSerial
+#include <KonnektingDevice.h>
 
-// no need to comment, you can leave it as it is as long you do not change the "#define DEBUG debugSerial" line
-#ifdef DEBUG
+// include device related configuration code, created by "KONNEKTING CodeGenerator"
+#include "kdevice_Temp_RH.h"
+
+// ################################################
+// ### DEBUG CONFIGURATION
+// ################################################
+//#define KDEBUG // comment this line to disable DEBUG mode
+#ifdef KDEBUG
+#include <DebugUtil.h>
+
+// Get correct serial port for debugging
+#ifdef __AVR_ATmega32U4__
+// Leonardo/Micro/ProMicro use the USB serial port
+#define DEBUGSERIAL Serial
+#elif ESP8266
+// ESP8266 use the 2nd serial port with TX only
+#define DEBUGSERIAL Serial1
+#else
+// All other, (ATmega328P f.i.) use software serial
 #include <SoftwareSerial.h>
-SoftwareSerial debugSerial(11, 10); // RX, TX
+SoftwareSerial softserial(11, 10); // RX, TX
+#define DEBUGSERIAL softserial
+#endif
+// end of debugging defs
 #endif
 
-// include KnxDevice library
-#include <KnxDevice.h>
 #include <Wire.h>
 #include "SparkFunHTU21D.h" //https://github.com/sparkfun/SparkFun_HTU21D_Breakout_Arduino_Library
 
-
-// defaults to on-board LED for AVR Arduinos
-#define PROG_LED_PIN 8
-
-// define programming-button PIN
-#define PROG_BUTTON_PIN 3
-
-// Define KONNEKTING Device related IDs
-#define MANUFACTURER_ID 57005
-#define DEVICE_ID 1
-#define REVISION 0
-
-// define KNX Transceiver serial port
+// ################################################
+// ### KONNEKTING Configuration
+// ################################################
 #ifdef __AVR_ATmega328P__
 #define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
+#elif ESP8266
+#define KNX_SERIAL Serial // ESP8266 use Serial
 #else
 #define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
 #endif
 
-// Definition of the Communication Objects attached to the device
-KnxComObject KnxDevice::_comObjectsList[] = {
-    /* don't change this */ Tools.createProgComObject(),
-                            
-    // Currently, Sketch Index and Suite Index differ for ComObjects :-(
-                            
-    /* Sketch-Index 1, Suite-Index 0 : */ KnxComObject(KNX_DPT_9_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 2, Suite-Index 1 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 3, Suite-Index 2 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 4, Suite-Index 3 : */ KnxComObject(KNX_DPT_9_007, COM_OBJ_SENSOR),
-    /* Sketch-Index 5, Suite-Index 4 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
-    /* Sketch-Index 6, Suite-Index 5 : */ KnxComObject(KNX_DPT_1_001, COM_OBJ_SENSOR),
-};
-const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (KnxComObject); // do no change this code
+// ################################################
+// ### IO Configuration
+// ################################################
+#define PROG_LED_PIN 13
+#define PROG_BUTTON_PIN 7
 
-// Definition of parameter size
-byte KnxTools::_paramSizeList[] = {
-    
-    // For params, the index in Sketch and Suite is equal
-    
-    /* Param Index 0 */ PARAM_UINT8,
-    /* Param Index 1 */ PARAM_UINT8,
-    /* Param Index 2 */ PARAM_UINT32,
-    /* Param Index 3 */ PARAM_UINT8,
-    /* Param Index 4 */ PARAM_UINT8,
-    /* Param Index 5 */ PARAM_INT16,
-    /* Param Index 6 */ PARAM_UINT8,
-    /* Param Index 7 */ PARAM_INT16,
-    /* Param Index 8 */ PARAM_UINT8,
-    /* Param Index 9 */ PARAM_UINT32,
-    /* Param Index 10 */ PARAM_UINT8,
-    /* Param Index 11 */ PARAM_UINT8,
-    /* Param Index 12 */ PARAM_INT16,
-    /* Param Index 13 */ PARAM_UINT8,
-    /* Param Index 14 */ PARAM_INT16
-};
-const byte KnxTools::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
-// Create an instance for HTU32D sensor
+// Create an instance for HTU21D sensor
 HTU21D htu;
+
+// ################################################
+// ### Global variables, sketch related
+// ################################################
 
 unsigned long previousTimeTemp = 0;
 unsigned long previousTimeHumd = 0;
@@ -117,48 +99,61 @@ void limitReached(float comVal, float comValMin, float comValMax, int minObj, in
 
 void setup() {
 
-    // if debug mode is enabled, setup serial port with 9600 baud    
-#ifdef DEBUG
-    DEBUG.begin(9600);
+    // debug related stuff
+#ifdef KDEBUG
+
+    // Start debug serial with 9600 bauds
+    DEBUGSERIAL.begin(9600);
+
+#ifdef __AVR_ATmega32U4__
+    // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
+    while (!DEBUGSERIAL)
 #endif
+
+    // make debug serial port known to debug class
+    // Means: KONNEKTING will sue the same serial port for console debugging
+    Debug.setPrintStream(&DEBUGSERIAL);
+#endif
+
     // Initialize KNX enabled Arduino Board
-    Tools.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
-    if (!Tools.isFactorySetting()){
-        int startDelay = (int) Tools.getUINT8Param(0);
+    Konnekting.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
+    if (!Konnekting.isFactorySetting()){
+        int startDelay = (int) Konnekting.getUINT16Param(PARAM_initialDelay);
         if (startDelay > 0) {
-#ifdef DEBUG  
-            DEBUG.print("delay for ");
-            DEBUG.print(startDelay);
-            DEBUG.println("s");
+#ifdef KDEBUG  
+     Debug.println(F("delay for %d ms"),startDelay);
 #endif
-            delay(startDelay*1000);
-#ifdef DEBUG  
-            DEBUG.println("ready!");
+     delay(startDelay);
+#ifdef KDEBUG  
+     Debug.println(F("ready!"));
 #endif
     }
-
+    //set i2c clock to 400kHz
+    Wire.setClock(400000);
+    //htu sensor start
     htu.begin();
 
-    typeTemp = (int) Tools.getUINT8Param(1);
+    typeTemp = (int) Konnekting.getUINT8Param(PARAM_tempSendUpdate);
     
     //temperature polling interval (ms)
-    intervalTempUser = (long) Tools.getUINT32Param(2)*1000; 
+    intervalTempUser = (long) Konnekting.getUINT32Param(PARAM_tempPollingTime)*1000; 
     
     //minimal difference between previous and current temperature [°C]
-    diffTempUser = (float) Tools.getUINT8Param(3)*0.1; 
-    valueTempMin = Tools.getUINT8Param(4);
-    limitTempMin = Tools.getINT16Param(5);
-    valueTempMax = Tools.getUINT8Param(6);
-    limitTempMax = Tools.getINT16Param(7);
+    diffTempUser = (float) Konnekting.getUINT8Param(PARAM_tempDiff)*0.1; 
+    valueTempMin = Konnekting.getUINT8Param(PARAM_tempMinValue);
+    limitTempMin = Konnekting.getINT16Param(PARAM_tempMinLimit);
+    valueTempMax = Konnekting.getUINT8Param(PARAM_tempMaxValue);
+    limitTempMax = Konnekting.getINT16Param(PARAM_tempMaxLimit);
 
-    typeHumd = Tools.getUINT8Param(8);
-    intervalHumdUser = (long) Tools.getUINT32Param(9)*1000; //humidity polling interval (ms)
-    diffHumdUser = (float) Tools.getUINT8Param(10)*0.1;
-    valueHumdMin = Tools.getUINT8Param(11);
-    limitHumdMin = Tools.getINT16Param(12);
-    valueHumdMax = Tools.getUINT8Param(13);
-    limitHumdMax = Tools.getINT16Param(14);
+    typeHumd = Konnekting.getUINT8Param(PARAM_rhSendUpdate);
+    intervalHumdUser = (long) Konnekting.getUINT32Param(PARAM_rhPollingTime)*1000; //humidity polling interval (ms)
+    diffHumdUser = (float) Konnekting.getUINT8Param(PARAM_rhDiff)*0.1;
+    valueHumdMin = Konnekting.getUINT8Param(PARAM_rhMinValue);
+    limitHumdMin = Konnekting.getINT16Param(PARAM_rhMinLimit);
+    valueHumdMax = Konnekting.getUINT8Param(PARAM_rhMaxValue);
+    limitHumdMax = Konnekting.getINT16Param(PARAM_rhMaxLimit);
     }
+    Debug.println(F("Setup is ready. go to loop..."));
 }
 
 void loop() {
@@ -166,67 +161,74 @@ void loop() {
     unsigned long currentTime = millis();
     
     // only do measurements and other sketch related stuff if not in programming mode
-    if (!Tools.getProgState() && !Tools.isFactorySetting()) {
+    if (Konnekting.isReadyForApplication()) {
         
         // Get temperature
         if ((currentTime - previousTimeTemp) >= intervalTempUser) {
-            
-            long start = micros();
+           
+            unsigned long start = millis();
             currentTemp = htu.readTemperature();
-            long end = micros();
-#ifdef DEBUG  
-            DEBUG.print("currentTemp: ");
-            DEBUG.println(currentTemp);
-            DEBUG.print("time: ");
-            DEBUG.println((end-start));
+            unsigned long end = millis();
+#ifdef KDEBUG              
+            char currTempChar[10];
+            dtostrf(currentTemp,6,2,currTempChar);
+            Debug.println(F("currentTemp: %s time: %d ms"), currTempChar, (end-start));
 #endif
             if (currentTemp < 900) {
                 switch (typeTemp) {
                     case 0:
-                        Knx.write(1, currentTemp);
+                        Knx.write(COMOBJ_tempValue, currentTemp);
                         break;
                     case 1:
                         if (abs(currentTemp * 100 - previousTemp * 100) >= diffTempUser * 100) {//"*100" => "float to int"
-                            Knx.write(1, currentTemp);
+                            Knx.write(COMOBJ_tempValue, currentTemp);
                             previousTemp = currentTemp;
                         }
                         break;
                     default:
                         break;
                 }
-                limitReached(currentTemp, limitTempMin, limitTempMax, 2, 3, valueTempMin, valueTempMax);
-                previousTimeTemp = currentTime;
+                limitReached(currentTemp, limitTempMin, limitTempMax, COMOBJ_tempMin, COMOBJ_tempMax, valueTempMin, valueTempMax);
+                
+            }else{
+#ifdef KDEBUG              
+            Debug.println(F("Sensor error!"));
+#endif 
             }
+            previousTimeTemp = currentTime;
         }
         // Get humidity
         if ((currentTime - previousTimeHumd) >= intervalHumdUser) {
-            long start = micros();
+            unsigned long start = millis();
             currentHumd = htu.readHumidity();
-            long end = micros();
-            
-#ifdef DEBUG 
-            DEBUG.print("currentHumd: ");
-            DEBUG.println(currentHumd);
-            DEBUG.print("time: ");
-            DEBUG.println((end-start));
+            unsigned long end = millis();
+#ifdef KDEBUG              
+            char currRHChar[10];
+            dtostrf(currentHumd,6,2,currRHChar);
+            Debug.println(F("currentHumd: %s time: %d ms"), currRHChar, (end-start));
 #endif
             if (currentHumd < 900) {
                 
                 switch (typeHumd) {
                     case 0:
-                        Knx.write(4, currentHumd);
+                        Knx.write(COMOBJ_rhValue, currentHumd);
                         break;
                     case 1:
                         if (abs(currentHumd * 100 - previousHumd * 100) >= diffHumdUser * 100) {
-                            Knx.write(4, currentHumd);
+                            Knx.write(COMOBJ_rhValue, currentHumd);
                             previousHumd = currentHumd;
                         }
                     default:
                         break;
                 }
-                limitReached(currentHumd, limitHumdMin, limitHumdMax, 5, 6, valueHumdMin, valueHumdMax);
-                previousTimeHumd = currentTime;
+                limitReached(currentHumd, limitHumdMin, limitHumdMax, COMOBJ_rhMin, COMOBJ_rhMax, valueHumdMin, valueHumdMax);
+                
+            }else{
+#ifdef KDEBUG              
+            Debug.println(F("Sensor error!"));
+#endif 
             }
+            previousTimeHumd = currentTime;
         }
     }
 }

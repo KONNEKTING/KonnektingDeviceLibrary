@@ -36,6 +36,7 @@
 #define KNXTPUART_H
 
 #include "Arduino.h"
+#include "DebugUtil.h"
 #include "HardwareSerial.h"
 #include "KnxTelegram.h"
 #include "KnxComObject.h"
@@ -76,8 +77,8 @@
 #define TPUART_DATA_CONFIRM_FAILED            0x0B
 #define TPUART_STATE_INDICATION               0x07
 #define TPUART_STATE_INDICATION_MASK          0x07
-#define KNX_CONTROL_FIELD_PATTERN_MASK   B11010011
-#define KNX_CONTROL_FIELD_VALID_PATTERN  B10010000 // Only Standard Frame Format "10" is handled
+#define KNX_CONTROL_FIELD_PATTERN_MASK   B11010011 // 0xD3
+#define KNX_CONTROL_FIELD_VALID_PATTERN  B10010000 // 0x90, Only Standard Frame Format "10" is handled
 
 // Mask for STATE INDICATION service
 #define TPUART_STATE_INDICATION_SLAVE_COLLISION_MASK  0x80
@@ -266,10 +267,6 @@ static const char _debugErrorText[];
     // It shall be called periodically (max period of 0,5ms) in order to allow correct data reception
     // Typical calling period is 400 usec.
     boolean GetMonitoringData(type_MonitorData&);
-
-    // DEBUG purpose functions
-    void DEBUG_SendResetCommand(void);
-    void DEBUG_SendStateReqCommand(void);
 
   private:
 

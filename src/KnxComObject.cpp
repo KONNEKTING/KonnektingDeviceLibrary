@@ -26,6 +26,7 @@
 // Description : Handling of the KNX Communication Objects
 // Module dependencies : KnxTelegram
 
+#include <DebugUtil.h>
 #include "KnxComObject.h"
 
 // Data length is calculated in the same way as telegram payload length
@@ -44,12 +45,17 @@ KnxComObject::KnxComObject(e_KnxDPT_ID dptId, byte indicator )
 #endif
 {
     _active = false;
-	if (_length <= 2) _longValue = NULL; // short value case
+	if (_length <= 2) {
+            _longValue = NULL; // short value case
+        }
 	else { // long value case
 		_longValue = (byte *) malloc(_length-1);
 		for (byte i=0; i <_length-1 ; i++) _longValue[i] = 0;
 	}  
-	if (_indicator & KNX_COM_OBJ_I_INDICATOR) _validity = false; // case of object with "InitRead" indicator
+	if (_indicator & KNX_COM_OBJ_I_INDICATOR) {
+            _validity = false; // case of object with "InitRead" indicator
+        
+        }
 	else _validity = true; // case of object without "InitRead" indicator
 }
 
@@ -69,16 +75,26 @@ void KnxComObject::setActive(bool flag) {
 // Get the com obj value (short and long value cases)
 void KnxComObject::GetValue(byte dest[]) const
 {
-	if (_length <=2) dest[0] = _value; // short value case, ReadValue(void) fct should rather be used
-	else for (byte i=0; i < _length-1 ; i++) dest[i] = _longValue[i]; // long value case
+	if (_length <=2) {
+            dest[0] = _value; // short value case, ReadValue(void) fct should rather be used
+        } else {
+            for (byte i=0; i < _length-1 ; i++) {
+                dest[i] = _longValue[i]; // long value case
+            }
+        }
 }
-
 
 // Update the com obj value (short and long value cases)
 void KnxComObject::UpdateValue(const byte ori[])
 {
-	if (_length <=2) _value = ori[0]; // short value case, UpdateValue(byte) fct should rather be used
-	else for (byte i=0; i < _length-1 ; i++) _longValue[i] = ori[i]; // long value case
+	if (_length <=2) {
+            _value = ori[0]; // short value case, UpdateValue(byte) fct should rather be used
+        } else {
+            for (byte i=0; i < _length-1 ; i++) {
+                _longValue[i] = ori[i]; // long value case
+                //DEBUG_PRINTLN(F("_longValue[%d]=0x%02x == ori[%d]=0x%02x"), i, _longValue[i], i, ori[i]);
+            }
+        }
 	_validity = true;  // com obj set to valid
 }
 
