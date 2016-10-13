@@ -41,12 +41,15 @@
 #include <avr/wdt.h>
 #endif
 
-#define EEPROM_REMOTEWRITE_OFFSET    4
-#define EEPROM_DEVICE_FLAGS          0
-#define EEPROM_INDIVIDUALADDRESS_HI  1
-#define EEPROM_INDIVIDUALADDRESS_LO  2
-#define EEPROM_COMOBJECTTABLE_START 10
+// the first 4 bytes are not for the public!
+#define EEPROM_START_OFFSET    4
 
+#define EEPROM_DEVICE_FLAGS          0
+
+// TODO HI/LO correct? HI first, then LO or vice-versa?
+#define EEPROM_INDIVIDUALADDRESS_HI  4
+#define EEPROM_INDIVIDUALADDRESS_LO  5
+s
 #define PROTOCOLVERSION 0
 
 #define MSGTYPE_ACK                         0 // 0x00

@@ -603,7 +603,7 @@ void KonnektingDevice::handleMsgReadMemory(byte msg[]) {
     
     // fill in eeprom data
     for(int i=0;i<numberOfBytes;i++) {
-        response[2+i] = memoryRead(EEPROM_REMOTEWRITE_OFFSET+addr+i);
+        response[2+i] = memoryRead(EEPROM_START_OFFSET+addr+i);
     }
     // fill rest with 0xFF
     for(int i=2+numberOfBytes;i<14;i++) {
