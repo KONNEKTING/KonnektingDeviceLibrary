@@ -231,6 +231,7 @@ byte KnxTpUart::Init(void) {
         if (_tx.ackFctPtr == NULL) return KNX_TPUART_ERROR_NULL_ACK_CALLBACK_FCT;
 
         // Set Physical address. This allows to activate address evaluation by the TPUART
+/*      we don't need it anymore. it fixes also bug with PA 1.1.1 on NCN5120
         tpuartCmd[0] = TPUART_SET_ADDR_REQ;
         tpuartCmd[1] = (byte) (_physicalAddr >> 8);
         tpuartCmd[2] = (byte) _physicalAddr;
@@ -238,7 +239,7 @@ byte KnxTpUart::Init(void) {
 
         // Call U_State.request-Service in order to have the field _stateIndication up-to-date
         _serial.write(TPUART_STATE_REQ);
-
+*/
         _rx.state = RX_IDLE_WAITING_FOR_CTRL_FIELD;
         _tx.state = TX_IDLE;
         DEBUG_PRINTLN(F("Init : Normal mode started\n"));
