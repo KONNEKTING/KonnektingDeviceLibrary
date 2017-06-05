@@ -1,5 +1,10 @@
 #include "DebugUtil.h"
 
+#if defined(__SAMD21G18A__)
+    extern "C" char* sbrk(int incr);
+    extern char *__brkval;
+#endif
+
 // DebugUtil unique instance creation
 DebugUtil DebugUtil::Debug;
 DebugUtil& Debug = DebugUtil::Debug;
@@ -20,6 +25,9 @@ int DebugUtil::freeRam() {
     extern int __heap_start, *__brkval;
     int v;
     return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+#elif defined(__SAMD21G18A__)
+    char top;
+    return &top - reinterpret_cast<char*>(sbrk(0));
 #else
     return -1;
 #endif
@@ -45,7 +53,7 @@ void DebugUtil::print(const __FlashStringHelper *format, ...) {
         va_start(args, format);
 
 #if defined(__AVR__) || defined(ESP8266)   
-        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
+        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR and ESP8266
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
 #endif    
@@ -76,7 +84,7 @@ void DebugUtil::println(const __FlashStringHelper *format, ...) {
         va_start(args, format);
 
 #if defined(__AVR__) || defined(ESP8266)   
-        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
+        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR and ESP8266
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
 #endif    
