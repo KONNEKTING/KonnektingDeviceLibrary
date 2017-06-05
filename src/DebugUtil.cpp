@@ -13,8 +13,9 @@ void DebugUtil::setPrintStream(Stream* printstream) {
 }
 
 int DebugUtil::freeRam() {
-#ifdef ESP8266
-    return -1;
+#if defined(ESP8266) || defined(ESP32)
+    return ESP.getFreeHeap();
+#elif defined(__AVR_ATmega328P__) || (__AVR_ATmega32U4__)
 #elif __AVR_ATmega328P__ || __AVR_ATmega32U4__
     extern int __heap_start, *__brkval;
     int v;
@@ -43,7 +44,7 @@ void DebugUtil::print(const __FlashStringHelper *format, ...) {
         va_list args;
         va_start(args, format);
 
-#ifdef __AVR__    
+#if defined(__AVR__) || defined(ESP8266)   
         vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
@@ -74,7 +75,7 @@ void DebugUtil::println(const __FlashStringHelper *format, ...) {
         va_list args;
         va_start(args, format);
 
-#ifdef __AVR__    
+#if defined(__AVR__) || defined(ESP8266)   
         vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
