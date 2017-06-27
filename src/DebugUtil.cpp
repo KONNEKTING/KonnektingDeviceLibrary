@@ -1,6 +1,6 @@
 #include "DebugUtil.h"
 
-#if defined(__SAMD21G18A__)
+#if defined(ARDUINO_ARCH_SAMD)
     extern "C" char* sbrk(int incr);
     extern char *__brkval;
 #endif
@@ -25,7 +25,7 @@ int DebugUtil::freeRam() {
     extern int __heap_start, *__brkval;
     int v;
     return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-#elif defined(__SAMD21G18A__)
+#elif defined(ARDUINO_ARCH_SAMD)
     char top;
     return &top - reinterpret_cast<char*>(sbrk(0));
 #else

@@ -45,10 +45,6 @@
 #include <ESP8266WiFi.h>
 #endif
 
-#ifdef __SAMD21G18A__
-#include "SAMD21G18_Reset.h"
-#endif
-
 #define PROGCOMOBJ_INDEX 255
 
 
@@ -131,7 +127,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
     digitalWrite(_progLED, LOW);
 
-#ifdef __SAMD21G18A__
+#ifdef ARDUINO_ARCH_SAMD
     // sollte eigtl. auch mit "digitalPinToInterrupt" funktionieren, tut es mit dem zero aber irgendwie nicht?!
     attachInterrupt(_progButton, KonnektingProgButtonPressed, RISING);
 #else    
@@ -328,11 +324,14 @@ void KonnektingDevice::reboot() {
 #ifdef ESP8266 
     DEBUG_PRINTLN(F("ESP8266 restart"));
     ESP.restart();
-#elif __SAMD21G18A__
-    // do reset of arduino zero
-    setupWDT(0); // minimum period
-    while (1) {
-    }
+#elif ARDUINO_ARCH_SAMD
+    // do reset of arduino zero, inspired by http://forum.arduino.cc/index.php?topic=366836.0
+    WDT->CTRL.reg = 0; // disable watchdog
+    while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
+    WDT->CONFIG.reg = 0; // see Table 17-5 Timeout Period (valid values 0-11)
+    WDT->CTRL.reg = WDT_CTRL_ENABLE; //enable watchdog
+    while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
+    while (1) {}
 #elif __AVR_ATmega328P__
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
@@ -621,7 +620,7 @@ int KonnektingDevice::memoryRead(int index) {
         DEBUG_PRINTLN(F("memRead: using fctptr"));
         d = eepromReadFunc(index);
     } else {
-#ifdef __SAMD21G18A__
+#ifdef ARDUINO_ARCH_SAMD
         DEBUG_PRINTLN(F("memRead: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #else
         d = EEPROM.read(index);
@@ -638,7 +637,7 @@ void KonnektingDevice::memoryWrite(int index, byte data) {
         DEBUG_PRINTLN(F("memWrite: using fctptr"));
         eepromWriteFunc(index, data);
     } else {
-#ifdef __SAMD21G18A__
+#ifdef ARDUINO_ARCH_SAMD
         DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    
         DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
@@ -661,7 +660,7 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
         DEBUG_PRINTLN(F("memUpdate: using fctptr"));
         eepromUpdateFunc(index, data);
     } else {
-#ifdef __SAMD21G18A__   
+#ifdef ARDUINO_ARCH_SAMD   
         DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    
         DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
