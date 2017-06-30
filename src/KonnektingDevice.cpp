@@ -490,17 +490,11 @@ void KonnektingDevice::handleMsgWriteProgrammingMode(byte msg[]) {
 #endif
         setProgState(msg[4] == 0x01);
         sendAck(0x00, 0x00);
-        
-#ifdef ESP8266
-        // ESP8266 uses own EEPROM implementation which requires commit() call
-        if (msg[4] == 0x00) {
-            DEBUG_PRINTLN(F("ESP8266: EEPROM.commit()"));
-            EEPROM.commit();
-        }
-#else
+
         // commit memory changes
-        memoryCommit();
-#endif                
+        if (msg[4] == 0x00) {
+            memoryCommit();
+        }
 
     } else {
         DEBUG_PRINTLN(F("no matching IA"));
@@ -683,6 +677,13 @@ void KonnektingDevice::memoryCommit() {
         DEBUG_PRINTLN(F("memCommit: using fctptr"));
         eepromCommitFunc();
     }
+#ifdef ESP8266
+    else{
+        // ESP8266 uses own EEPROM implementation which requires commit() call
+        DEBUG_PRINTLN(F("ESP8266: EEPROM.commit()"));
+        EEPROM.commit();
+    }
+#endif
 }
 
 uint8_t KonnektingDevice::getUINT8Param(byte index) {
