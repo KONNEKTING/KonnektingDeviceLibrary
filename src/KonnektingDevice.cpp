@@ -408,11 +408,12 @@ KnxComObject KonnektingDevice::createProgComObject() {
 void KonnektingDevice::reboot() {
     Knx.end();
 
-#ifdef ESP8266 
-    DEBUG_PRINTLN(F("ESP8266 restart"));
+#if defined(ESP8266) || defined(ESP32) 
+    DEBUG_PRINTLN(F("ESP restart"));
     ESP.restart();
 #elif ARDUINO_ARCH_SAMD
     // do reset of arduino zero, inspired by http://forum.arduino.cc/index.php?topic=366836.0
+    DEBUG_PRINTLN(F("SAMD restart"));
     WDT->CTRL.reg = 0; // disable watchdog
     while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
     WDT->CONFIG.reg = 0; // see Table 17-5 Timeout Period (valid values 0-11)
@@ -425,6 +426,10 @@ void KonnektingDevice::reboot() {
     DEBUG_PRINTLN(F("software reset NOW"));
     delay(500);
     asm volatile ("  jmp 0");
+#elif STM32
+    DEBUG_PRINTLN(F("STM32 SystemReset"));
+    delay(100);
+    NVIC_SystemReset();
 #else     
     DEBUG_PRINTLN(F("WDT reset NOW"));
     wdt_enable(WDTO_500MS);

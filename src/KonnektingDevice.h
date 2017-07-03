@@ -32,7 +32,7 @@
 #include <KnxDevice.h>
 
 // AVR and ESP8266 use EEPROM (SAMD21 not ...)
-#if defined(__AVR__) || defined(ESP8266)
+#if defined(__AVR__) || defined(ESP8266) || defined(STM32)
 #include <EEPROM.h>
 #endif
 

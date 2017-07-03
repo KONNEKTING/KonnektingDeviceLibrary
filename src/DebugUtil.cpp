@@ -1,6 +1,6 @@
 #include "DebugUtil.h"
 
-#if defined(ARDUINO_ARCH_SAMD)
+#if defined(ARDUINO_ARCH_SAMD) || defined(STM32)
     extern "C" char* sbrk(int incr);
     extern char *__brkval;
 #endif
@@ -25,7 +25,7 @@ int DebugUtil::freeRam() {
     extern int __heap_start, *__brkval;
     int v;
     return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-#elif defined(ARDUINO_ARCH_SAMD)
+#elif defined(ARDUINO_ARCH_SAMD) || defined(STM32)
     char top;
     return &top - reinterpret_cast<char*>(sbrk(0));
 #else
@@ -55,7 +55,7 @@ void DebugUtil::print(const __FlashStringHelper *format, ...) {
 #if defined(__AVR__) || defined(ESP8266)   
         vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR and ESP8266
 #else
-        vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
+        vsnprintf(buf, sizeof (buf), (const char *) format, args);   // for rest of the world
 #endif    
         va_end(args);
         //Serial.print(buf);)    

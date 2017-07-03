@@ -23,13 +23,19 @@
 // File : KnxTpUart.cpp
 // Author : Franck Marini
 // Modified: Alexander Christian <info(at)root1.de>
+//           Eugen Burkowski <eugenius707(at)gmail.com>
+
 // Description : Communication with TPUART
 // Module dependencies : HardwareSerial, KnxTelegram, KnxComObject
 
 #include "KnxTpUart.h"
 
-#ifndef ESP8266 
-#include <avr/pgmspace.h>
+#ifndef ESP8266            //ESP8266 does't need pgmspace.h
+#ifdef ESP32               
+#include <pgmspace.h>      //ESP32
+#else
+#include <avr/pgmspace.h>  //rest of the world 
+#endif
 #endif
 
 /*
