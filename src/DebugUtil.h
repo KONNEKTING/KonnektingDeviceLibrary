@@ -25,7 +25,7 @@
 
 
 #include <Arduino.h>
-#ifdef __SAMD21G18A__
+#ifdef ARDUINO_ARCH_SAMD
 #include "stdarg.h"
 #endif
 

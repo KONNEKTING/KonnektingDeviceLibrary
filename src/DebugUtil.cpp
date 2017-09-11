@@ -13,6 +13,10 @@
  * 0x%02x = hex representation like 0xff
  * %% = % symbol
  */
+#if defined(ARDUINO_ARCH_SAMD)
+    extern "C" char* sbrk(int incr);
+    extern char *__brkval;
+#endif
 
 // DebugUtil unique instance creation
 DebugUtil DebugUtil::Debug;
@@ -27,12 +31,16 @@ void DebugUtil::setPrintStream(Stream* printstream) {
 }
 
 int DebugUtil::freeRam() {
-#ifdef ESP8266
-    return -1;
+#if defined(ESP8266) || defined(ESP32)
+    return ESP.getFreeHeap();
+#elif defined(__AVR_ATmega328P__) || (__AVR_ATmega32U4__)
 #elif __AVR_ATmega328P__ || __AVR_ATmega32U4__
     extern int __heap_start, *__brkval;
     int v;
     return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+#elif defined(ARDUINO_ARCH_SAMD)
+    char top;
+    return &top - reinterpret_cast<char*>(sbrk(0));
 #else
     return -1;
 #endif
@@ -57,8 +65,8 @@ void DebugUtil::print(const __FlashStringHelper *format, ...) {
         va_list args;
         va_start(args, format);
 
-#ifdef __AVR__    
-        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
+#if defined(__AVR__) || defined(ESP8266)   
+        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR and ESP8266
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
 #endif    
@@ -88,8 +96,8 @@ void DebugUtil::println(const __FlashStringHelper *format, ...) {
         va_list args;
         va_start(args, format);
 
-#ifdef __AVR__    
-        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR
+#if defined(__AVR__) || defined(ESP8266)   
+        vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR and ESP8266
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world
 #endif    

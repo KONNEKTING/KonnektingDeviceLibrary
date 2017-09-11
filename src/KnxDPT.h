@@ -117,7 +117,7 @@ enum eKnxDPT_Format {
 const byte KnxDPTFormatToLengthBit[] PROGMEM = {
   1 , //  KNX_DPT_FORMAT_B1 = 0,
   2 , //  KNX_DPT_FORMAT_B2,
-  4 , // KNX_DPT_FORMAT_B1U3
+  4 , //  KNX_DPT_FORMAT_B1U3
   8 , //  KNX_DPT_FORMAT_A8,
   8 , //  KNX_DPT_FORMAT_U8,
   8 , //  KNX_DPT_FORMAT_V8,
@@ -139,8 +139,8 @@ const byte KnxDPTFormatToLengthBit[] PROGMEM = {
   8 , //  KNX_DPT_FORMAT_N8,
   8 , //  KNX_DPT_FORMAT_B8,
   16, //  KNX_DPT_FORMAT_B16,
-  2 ,//  KNX_DPT_FORMAT_N2,
- 112,//  KNX_DPT_FORMAT_AN,
+  2 , //  KNX_DPT_FORMAT_N2,
+ 112, //  KNX_DPT_FORMAT_AN,
   8 , //  KNX_DPT_FORMAT_U4U4,
   8 , //  KNX_DPT_FORMAT_R1B1U6,
   32, //  KNX_DPT_FORMAT_B32,
@@ -176,12 +176,13 @@ const byte KnxDPTFormatToLengthBit[] PROGMEM = {
   64, //  KNX_DPT_FORMAT_U16U32U8N8,
   24, //  KNX_DPT_FORMAT_A8A8A8A8,
   24, //  KNX_DPT_FORMAT_U8U8U8,
-  16 //  KNX_DPT_FORMAT_A8A8
+  16  //  KNX_DPT_FORMAT_A8A8
 };
 
-// Define all the KNX Datapoint IDs (from 1.001 to 14.007 only)
+// Define all the KNX Datapoint IDs
 enum e_KnxDPT_ID { 
-  KNX_DPT_1_001 = 0, // 1.001 B1 DPT_Switch
+  KNX_DPT_1_000 = 0, // 1.000 B1 general bool
+  KNX_DPT_1_001, // 1.001 B1 DPT_Switch
   KNX_DPT_1_002, // 1.002 B1 DPT_Bool
   KNX_DPT_1_003, // 1.003 B1 DPT_Enable
   KNX_DPT_1_004, // 1.004 B1 DPT_Ramp
@@ -220,6 +221,7 @@ enum e_KnxDPT_ID {
   KNX_DPT_3_008, // 3.008 B1U3 DPT_Control_Blinds
   KNX_DPT_4_001, // 4.001 A8 DPT_Char_ASCII
   KNX_DPT_4_002, // 4.002 A8 DPT_Char_8859_1
+  KNX_DPT_5_000, // 5.000 U8 general byte
   KNX_DPT_5_001, // 5.001 U8 DPT_Scaling
   KNX_DPT_5_003, // 5.003 U8 DPT_Angle
   KNX_DPT_5_004, // 5.004 U8 DPT_Percent_U8
@@ -229,6 +231,7 @@ enum e_KnxDPT_ID {
   KNX_DPT_6_001, // 6.001 V8 DPT_Percent_V8
   KNX_DPT_6_010, // 6.010 V8 DPT_Value_1_Count
   KNX_DPT_6_020, // 6.020 B5N3 DPT_Status_Mode3
+  KNX_DPT_7_000, // 7.001 U16 general unsigned integer
   KNX_DPT_7_001, // 7.001 U16 DPT_Value_2_Ucount
   KNX_DPT_7_002, // 7.002 U16 DPT_TimePeriodMsec
   KNX_DPT_7_003, // 7.003 U16 DPT_TimePeriod10MSec
@@ -240,6 +243,7 @@ enum e_KnxDPT_ID {
   KNX_DPT_7_011, // 7.011 U16 DPT_Length_mm
   KNX_DPT_7_012, // 7.012 U16 DPT_UElCurrentmA
   KNX_DPT_7_013, // 7.013 U16 DPT_Brightness
+  KNX_DPT_8_000, // 8.000 V16 general integer
   KNX_DPT_8_001, // 8.001 V16 DPT_Value_2_Count
   KNX_DPT_8_002, // 8.002 V16 DPT_DeltaTimeMsec
   KNX_DPT_8_003, // 8.003 V16 DPT_DeltaTime10MSec
@@ -249,6 +253,7 @@ enum e_KnxDPT_ID {
   KNX_DPT_8_007, // 8.007 V16 DPT_DeltaTimeHrs
   KNX_DPT_8_010, // 8.010 V16 DPT_Percent_V16
   KNX_DPT_8_011, // 8.011 V16 DPT_Rotation_Angle
+  KNX_DPT_9_000, // 9.000 F16 general float
   KNX_DPT_9_001, // 9.001 F16 DPT_Value_Temp
   KNX_DPT_9_002, // 9.002 F16 DPT_Value_Tempd
   KNX_DPT_9_003, // 9.003 F16 DPT_Value_Tempa
@@ -270,7 +275,9 @@ enum e_KnxDPT_ID {
   KNX_DPT_9_028, // 9.028 F16 DPT_Value_Wsp_kmh
   KNX_DPT_10_001, // 10.001 N3N5r2N6r2N6 DPT_TimeOfDay
   KNX_DPT_11_001, // 11.001 r3N5r4N4r1U7 DPT_Date
+  KNX_DPT_12_000, // 12.000 U32 general unsigned long
   KNX_DPT_12_001, // 12.001 U32 DPT_Value_4_Ucount
+  KNX_DPT_13_000, // 13.000 V32 general long
   KNX_DPT_13_001, // 13.001 V32 DPT_Value_4_Count
   KNX_DPT_13_010, // 13.010 V32 DPT_ActiveEnergy
   KNX_DPT_13_011, // 13.011 V32 DPT_ApparantEnergy
@@ -298,6 +305,7 @@ enum e_KnxDPT_ID {
 // Definition of the format according to the ID
 // NB : table is stored in flash program memory to save RAM
 const byte KnxDPTIdToFormat[] PROGMEM = {
+  KNX_DPT_FORMAT_B1, //  KNX_DPT_1_000, // 1.000 B1 general bool
   KNX_DPT_FORMAT_B1, //  KNX_DPT_1_001, // 1.001 B1 DPT_Switch
   KNX_DPT_FORMAT_B1, //  KNX_DPT_1_002, // 1.002 B1 DPT_Bool
   KNX_DPT_FORMAT_B1, //  KNX_DPT_1_003, // 1.003 B1 DPT_Enable
@@ -337,6 +345,7 @@ const byte KnxDPTIdToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_B1U3, //  KNX_DPT_3_008, // 3.008 B1U3 DPT_Control_Blinds
   KNX_DPT_FORMAT_A8, //  KNX_DPT_4_001, // 4.001 A8 DPT_Char_ASCII
   KNX_DPT_FORMAT_A8, //  KNX_DPT_4_002, // 4.002 A8 DPT_Char_8859_1
+  KNX_DPT_FORMAT_U8, //  KNX_DPT_5_000, // 5.000 U8 general byte
   KNX_DPT_FORMAT_U8, //  KNX_DPT_5_001, // 5.001 U8 DPT_Scaling
   KNX_DPT_FORMAT_U8, //  KNX_DPT_5_003, // 5.003 U8 DPT_Angle
   KNX_DPT_FORMAT_U8, //  KNX_DPT_5_004, // 5.004 U8 DPT_Percent_U8
@@ -346,6 +355,7 @@ const byte KnxDPTIdToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_V8, //  KNX_DPT_6_001, // 6.001 V8 DPT_Percent_V8
   KNX_DPT_FORMAT_V8, //  KNX_DPT_6_010, // 6.010 V8 DPT_Value_1_Count
   KNX_DPT_FORMAT_B5N3, //  KNX_DPT_6_020, // 6.020 B5N3 DPT_Status_Mode3
+  KNX_DPT_FORMAT_U16, //  KNX_DPT_7_000, // 7.000 U16 general unsigned integer
   KNX_DPT_FORMAT_U16, //  KNX_DPT_7_001, // 7.001 U16 DPT_Value_2_Ucount
   KNX_DPT_FORMAT_U16, //  KNX_DPT_7_002, // 7.002 U16 DPT_TimePeriodMsec
   KNX_DPT_FORMAT_U16, //  KNX_DPT_7_003, // 7.003 U16 DPT_TimePeriod10MSec
@@ -357,6 +367,7 @@ const byte KnxDPTIdToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_U16, //  KNX_DPT_7_011, // 7.011 U16 DPT_Length_mm
   KNX_DPT_FORMAT_U16, //  KNX_DPT_7_012, // 7.012 U16 DPT_UElCurrentmA
   KNX_DPT_FORMAT_U16, //  KNX_DPT_7_013, // 7.013 U16 DPT_Brightness
+  KNX_DPT_FORMAT_V16, //  KNX_DPT_8_000, // 8.000 V16 general integer
   KNX_DPT_FORMAT_V16, //  KNX_DPT_8_001, // 8.001 V16 DPT_Value_2_Count
   KNX_DPT_FORMAT_V16, //  KNX_DPT_8_002, // 8.002 V16 DPT_DeltaTimeMsec
   KNX_DPT_FORMAT_V16, //  KNX_DPT_8_003, // 8.003 V16 DPT_DeltaTime10MSec
@@ -366,6 +377,7 @@ const byte KnxDPTIdToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_V16, //  KNX_DPT_8_007, // 8.007 V16 DPT_DeltaTimeHrs
   KNX_DPT_FORMAT_V16, //  KNX_DPT_8_010, // 8.010 V16 DPT_Percent_V16
   KNX_DPT_FORMAT_V16, //  KNX_DPT_8_011, // 8.011 V16 DPT_Rotation_Angle
+  KNX_DPT_FORMAT_F16, //  KNX_DPT_9_000, // 9.000 F16 general float
   KNX_DPT_FORMAT_F16, //  KNX_DPT_9_001, // 9.001 F16 DPT_Value_Temp
   KNX_DPT_FORMAT_F16, //  KNX_DPT_9_002, // 9.002 F16 DPT_Value_Tempd
   KNX_DPT_FORMAT_F16, //  KNX_DPT_9_003, // 9.003 F16 DPT_Value_Tempa
@@ -387,7 +399,9 @@ const byte KnxDPTIdToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_F16, //  KNX_DPT_9_028, // 9.028 F16 DPT_Value_Wsp_kmh
   KNX_DPT_FORMAT_N3N5R2N6R2N6, //  KNX_DPT_10_001, // 10.001 N3N5r2N6r2N6 DPT_TimeOfDay
   KNX_DPT_FORMAT_R3N5R4N4R1U7, //  KNX_DPT_11_001, // 11.001 r3N5r4N4r1U7 DPT_Date
+  KNX_DPT_FORMAT_U32, //  KNX_DPT_12_000, // 12.000 U32 general unsigned long
   KNX_DPT_FORMAT_U32, //  KNX_DPT_12_001, // 12.001 U32 DPT_Value_4_Ucount
+  KNX_DPT_FORMAT_V32, //  KNX_DPT_13_000, // 13.000 V32 general long
   KNX_DPT_FORMAT_V32, //  KNX_DPT_13_001, // 13.001 V32 DPT_Value_4_Count
   KNX_DPT_FORMAT_V32, //  KNX_DPT_13_010, // 13.010 V32 DPT_ActiveEnergy
   KNX_DPT_FORMAT_V32, //  KNX_DPT_13_011, // 13.011 V32 DPT_ApparantEnergy
