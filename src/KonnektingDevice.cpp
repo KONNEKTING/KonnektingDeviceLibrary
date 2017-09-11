@@ -121,8 +121,8 @@ void KonnektingDevice::init(HardwareSerial& serial,
     _deviceID = deviceID;
     _revisionID = revisionID;
 
-    _progLED = progLedPin; // default pin D8
-    _progButton = progButtonPin; // default pin D3 (->interrupt!)
+    _progLED = progLedPin; 
+    _progButton = progButtonPin; 
 
     _lastProgbtn = 0;
     _progbtnCount = 0;
@@ -274,7 +274,7 @@ void KonnektingDevice::toggleProgState() {
     _progState = !_progState; // toggle
     setProgState(_progState); // set
     if (_rebootRequired) {
-        DEBUG_PRINTLN(F("EEPROM changed, triggering reboot"));
+        DEBUG_PRINTLN(F("found rebootRequired flag, triggering reboot"));
         reboot();
     }
 }
@@ -763,7 +763,11 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
         DEBUG_PRINTLN(F(" using fctptr"));
         eepromUpdateFunc(index, data);
     } else {
+<<<<<<< HEAD
         DEBUG_PRINTLN(F(""));
+=======
+
+>>>>>>> origin/develop_beta5
 #ifdef ARDUINO_ARCH_SAMD   
         DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    
