@@ -266,6 +266,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::read(byte objectIndex, T& ret
 }
 
 template e_KnxDeviceStatus KnxDevice::read <bool>(byte objectIndex, bool& returnedValue);
+template e_KnxDeviceStatus KnxDevice::read <byte>(byte objectIndex, byte& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <short>(byte objectIndex, short& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <unsigned short>(byte objectIndex, unsigned short& returnedValue);
 template e_KnxDeviceStatus KnxDevice::read <int>(byte objectIndex, int& returnedValue);
