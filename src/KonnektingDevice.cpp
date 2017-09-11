@@ -763,11 +763,7 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
         DEBUG_PRINTLN(F(" using fctptr"));
         eepromUpdateFunc(index, data);
     } else {
-<<<<<<< HEAD
         DEBUG_PRINTLN(F(""));
-=======
-
->>>>>>> origin/develop_beta5
 #ifdef ARDUINO_ARCH_SAMD   
         DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    
