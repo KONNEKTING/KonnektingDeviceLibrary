@@ -32,7 +32,8 @@
 #include <KnxDevice.h>
 #include <KnxDptConstants.h>
 
-#ifndef __SAMD21G18A__
+// AVR and ESP8266 use EEPROM (SAMD21 not ...)
+#if defined(__AVR__) || defined(ESP8266) || defined(STM32)
 #include <EEPROM.h>
 #ifndef ESP8266
 #include <avr/wdt.h>
@@ -98,6 +99,7 @@ class KonnektingDevice {
     void (*eepromWriteFunc)(int, int);
     void (*eepromUpdateFunc)(int, int);
     void (*eepromCommitFunc)(void);
+    void (*setProgLedFunc)(bool);
     
     // Constructor, Destructor
     KonnektingDevice(); // private constructor (singleton design pattern)
@@ -113,6 +115,13 @@ public:
     void setMemoryWriteFunc(void (*func)(int, int));
     void setMemoryUpdateFunc(void (*func)(int, int));
     void setMemoryCommitFunc(void (*func)(void));
+
+    void init(HardwareSerial& serial, 
+                void (*func)(bool), 
+                word manufacturerID, 
+                byte deviceID, 
+                byte revisionID
+                );
 
     void init(HardwareSerial& serial, 
                 int progButtonPin, 
@@ -133,6 +142,7 @@ public:
     
     // must be public to be accessible from KonnektingProgButtonPressed())
     void toggleProgState();
+    void setProgState(bool state);
 
     KnxComObject createProgComObject();
 
@@ -190,8 +200,9 @@ private:
     int _paramTableStartindex;
 
 
-    int _progLED; // default pin D8
-    int _progButton; // default pin D3 (->interrupt)
+    int _progLED;
+    int _progButton; // (->interrupt)
+    void setProgLed(bool state);
 
     bool _progState;
 

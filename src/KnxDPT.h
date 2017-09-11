@@ -23,14 +23,19 @@
 // File : KnxDPT.h
 // Author : Franck Marini
 // Modified: Alexander Christian <info(at)root1.de>
+//           Eugen Burkowski <eugenius707(at)gmail.com>
 // Description : Definition of the KNX Datapoints types as per "knx.org" specification
 
 #ifndef KNXDPT_H
 #define KNXDPT_H
 
-// prepare for ESP8266 support ...
-#ifndef ARDUINO_ARCH_ESP8266
-#include <avr/pgmspace.h> // DPT arrays are stored in flash using PROG MEMORY
+// DPT arrays are stored in flash using PROG MEMORY
+#ifndef ESP8266            //ESP8266 does't need pgmspace.h
+#ifdef ESP32               
+#include <pgmspace.h>      //ESP32
+#else
+#include <avr/pgmspace.h>  //rest of the world 
+#endif
 #endif
 
 // List of the DPT formats
