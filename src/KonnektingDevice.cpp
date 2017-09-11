@@ -33,6 +33,8 @@
 
 #define DEBUG_PROTOCOL
 #define WRITEMEM
+// reboot fearure via progbutton
+#define REBOOT_BUTTON
 
 #include "Arduino.h"
 #include "DebugUtil.h"
@@ -50,6 +52,7 @@
 #endif
 
 #define PROGCOMOBJ_INDEX 255
+
 
 
 // KonnektingDevice unique instance creation
@@ -124,6 +127,9 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
     _progLED = progLedPin; // default pin D8
     _progButton = progButtonPin; // default pin D3 (->interrupt!)
+
+    _lastProgbtn = 0;
+    _progbtnCount = 0;
 
     pinMode(_progLED, OUTPUT);
     pinMode(_progButton, INPUT);
@@ -254,6 +260,21 @@ void KonnektingProgButtonPressed() {
  * User-toggle the actually ProgState
  */
 void KonnektingDevice::toggleProgState() {
+
+#ifdef REBOOT_BUTTON    
+    if (millis() - _lastProgbtn < 300) {
+        _progbtnCount++;
+        
+        if (_progbtnCount==3) {
+            DEBUG_PRINTLN(F("Forced-Reboot-Request detected"));
+            reboot();
+        }
+    } else {
+        _progbtnCount = 1;
+    }
+    _lastProgbtn = millis();
+#endif    
+    
     _progState = !_progState; // toggle
     setProgState(_progState); // set
     if (_rebootRequired) {
@@ -358,7 +379,7 @@ bool KonnektingDevice::internalComObject(byte index) {
     DEBUG_PRINTLN(F("internalComObject index=%d"), index);
     bool consumed = false;
     switch (index) {
-        case PROGCOMOBJ_INDEX: // prog com object index 255 has been updated
+        case 255: // prog com object index 255 has been updated
 
             byte buffer[14];
             Knx.read(PROGCOMOBJ_INDEX, buffer);
@@ -401,11 +422,17 @@ bool KonnektingDevice::internalComObject(byte index) {
                     case MSGTYPE_READ_INDIVIDUAL_ADDRESS:
                         if (_progState) handleMsgReadIndividualAddress(buffer);
                         break;
-                    case MSGTYPE_WRITE_MEMORY:
-                        if (_progState) handleMsgWriteMemory(buffer);
+                    case MSGTYPE_WRITE_PARAMETER:
+                        if (_progState) handleMsgWriteParameter(buffer);
                         break;
-                    case MSGTYPE_READ_MEMORY:
-                        if (_progState) handleMsgReadMemory(buffer);
+                    case MSGTYPE_READ_PARAMETER:
+                        handleMsgReadParameter(buffer);
+                        break;
+                    case MSGTYPE_WRITE_COM_OBJECT:
+                        if (_progState) handleMsgWriteComObject(buffer);
+                        break;
+                    case MSGTYPE_READ_COM_OBJECT:
+                        handleMsgReadComObject(buffer);
                         break;
                     default:
                         DEBUG_PRINTLN(F("Unsupported msgtype: 0x%02x"), msgType);
@@ -431,7 +458,7 @@ void KonnektingDevice::sendAck(byte errorcode, byte indexinformation) {
     response[3] = errorcode;
     response[4] = indexinformation;
     for (byte i = 5; i < 14; i++) {
-        response[i] = 0xFF;
+        response[i] = 0x00;
     }
     Knx.write(PROGCOMOBJ_INDEX, response);
 }
@@ -450,11 +477,11 @@ void KonnektingDevice::handleMsgReadDeviceInfo(byte msg[]) {
         response[6] = _deviceFlags;
         response[7] = (_individualAddress >> 8) & 0xff;
         response[8] = (_individualAddress >> 0) & 0xff;
-        response[9] = 0xFF;
-        response[10] = 0xFF;
-        response[11] = 0xFF;
-        response[12] = 0xFF;
-        response[13] = 0xFF;
+        response[9] = 0x00;
+        response[10] = 0x00;
+        response[11] = 0x00;
+        response[12] = 0x00;
+        response[13] = 0x00;
         Knx.write(PROGCOMOBJ_INDEX, response);
     } else {
 #ifdef DEBUG_PROTOCOL
@@ -516,16 +543,16 @@ void KonnektingDevice::handleMsgReadProgrammingMode(byte msg[]) {
         response[1] = MSGTYPE_ANSWER_PROGRAMMING_MODE;
         response[2] = (_individualAddress >> 8) & 0xff;
         response[3] = (_individualAddress >> 0) & 0xff;
-        response[4] = 0xFF;
-        response[5] = 0xFF;
-        response[6] = 0xFF;
-        response[7] = 0xFF;
-        response[8] = 0xFF;
-        response[9] = 0xFF;
-        response[10] = 0xFF;
-        response[11] = 0xFF;
-        response[12] = 0xFF;
-        response[13] = 0xFF;
+        response[4] = 0x00;
+        response[5] = 0x00;
+        response[6] = 0x00;
+        response[7] = 0x00;
+        response[8] = 0x00;
+        response[9] = 0x00;
+        response[10] = 0x00;
+        response[11] = 0x00;
+        response[12] = 0x00;
+        response[13] = 0x00;
         Knx.write(PROGCOMOBJ_INDEX, response);
     }
 }
@@ -555,70 +582,145 @@ void KonnektingDevice::handleMsgReadIndividualAddress(byte msg[]) {
     response[1] = MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS;
     response[2] = (_individualAddress >> 8) & 0xff;
     response[3] = (_individualAddress >> 0) & 0xff;
-    response[4] = 0xFF;
-    response[5] = 0xFF;
-    response[6] = 0xFF;
-    response[7] = 0xFF;
-    response[8] = 0xFF;
-    response[9] = 0xFF;
-    response[10] = 0xFF;
-    response[11] = 0xFF;
-    response[12] = 0xFF;
-    response[13] = 0xFF;
+    response[4] = 0x00;
+    response[5] = 0x00;
+    response[6] = 0x00;
+    response[7] = 0x00;
+    response[8] = 0x00;
+    response[9] = 0x00;
+    response[10] = 0x00;
+    response[11] = 0x00;
+    response[12] = 0x00;
+    response[13] = 0x00;
     Knx.write(PROGCOMOBJ_INDEX, response);
 }
 
-void KonnektingDevice::handleMsgWriteMemory(byte msg[]) {
-    DEBUG_PRINTLN(F("handleMsgWriteMemory"));
+void KonnektingDevice::handleMsgWriteParameter(byte msg[]) {
+    DEBUG_PRINTLN(F("handleMsgWriteParameter"));
 
-    int addr = (msg[2] << 8) & msg[3]; // addr
-    int numberOfBytes = msg[4];
-   
-    #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("handleMsgWriteMemory addr=%d #bytes={}"), addr, numberOfBytes);
-    #endif
+    byte index = msg[2];
 
-    for (int i=0;i<numberOfBytes;i++) {
-#if defined(WRITEMEM)    
-        memoryUpdate(EEPROM_REMOTEWRITE_OFFSET+addr+i, msg[5+i]);
-#endif
+    if (index > _numberOfParams - 1) {
+        sendAck(KNX_DEVICE_INVALID_INDEX, index);
+        return;
     }
-  
+
+    int skipBytes = calcParamSkipBytes(index);
+    int paramLen = getParamSize(index);
+
+#ifdef DEBUG_PROTOCOL
+    DEBUG_PRINTLN(F("id=%d"), index);
+#endif
+
+#if defined(WRITEMEM)    
+    // write byte by byte
+    for (byte i = 0; i < paramLen; i++) {
+#ifdef DEBUG_PROTOCOL
+        DEBUG_PRINTLN(F(" data[%d]=0x%02x"), i, msg[3 + i]);
+#endif
+        memoryUpdate(_paramTableStartindex + skipBytes + i, msg[3 + i]);
+    }
+#endif
     sendAck(0x00, 0x00);
 }
 
-void KonnektingDevice::handleMsgReadMemory(byte msg[]) {
-    DEBUG_PRINTLN(F("handleMsgReadMemory"));
-    
-    int addr = (msg[2] << 8) & msg[3]; // addr
-    int numberOfBytes = msg[4];
-    
-    #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("handleMsgReadMemory addr=%d #bytes={}"), addr, numberOfBytes);
-    #endif
+void KonnektingDevice::handleMsgReadParameter(byte msg[]) {
+    DEBUG_PRINTLN(F("handleMsgReadParameter"));
+    byte index = msg[0];
+
+    byte paramSize = getParamSize(index);
+
+    byte paramValue[paramSize];
+    getParamValue(index, paramValue);
 
     byte response[14];
     response[0] = PROTOCOLVERSION;
-    response[1] = MSGTYPE_ANSWER_MEMORY;
-    
-    // fill in eeprom data
-    for(int i=0;i<numberOfBytes;i++) {
-        response[2+i] = memoryRead(EEPROM_START_OFFSET+addr+i);
+    response[1] = MSGTYPE_ANSWER_PARAMETER;
+    response[2] = index;
+
+    // fill in param value
+    for (byte i = 0; i < paramSize; i++) {
+        response[3 + i] = paramValue[i];
     }
-    // fill rest with 0xFF
-    for(int i=2+numberOfBytes;i<14;i++) {
-        response[i] = 0xFF;
+
+    // fill rest with 0x00
+    for (byte i = 0; i < 11 /* max param length */ - paramSize; i++) {
+        response[3 + paramSize + i] = 0;
+    }
+
+    Knx.write(PROGCOMOBJ_INDEX, response);
+
+}
+
+void KonnektingDevice::handleMsgWriteComObject(byte msg[]) {
+    DEBUG_PRINTLN(F("handleMsgWriteComObject"));
+
+    byte comObjId = msg[2];
+    byte gaHi = msg[3];
+    byte gaLo = msg[4];
+    byte settings = msg[5];
+    word ga = (gaHi << 8) + (gaLo << 0);
+
+#ifdef DEBUG_PROTOCOL
+    DEBUG_PRINTLN(F("CO id=%d hi=0x%02x lo=0x%02x GA=0x%04x settings=0x%02x"), comObjId, gaHi, gaLo, ga, settings);
+
+    bool foundWrongUndefined = false;
+    for (int i = 6; i < 13; i++) {
+        if (msg[i] != 0x00) foundWrongUndefined = true;
+    }
+    if (foundWrongUndefined) {
+        DEBUG_PRINTLN(F("!!!!!!!!!!! WARNING: Suite is sending wrong data. Ensure Suite version matches the Device Lib !!!!!"));
+    }
+#endif        
+
+    if (comObjId >= Knx.getNumberOfComObjects()) {
+        sendAck(KNX_DEVICE_INVALID_INDEX, comObjId);
+        return;
+    }
+
+#if defined(WRITEMEM)            
+    // write to eeprom?!
+    memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId * 3) + 0, gaHi);
+    memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId * 3) + 1, gaLo);
+    memoryUpdate(EEPROM_COMOBJECTTABLE_START + (comObjId * 3) + 2, settings);
+#endif
+    //    }
+
+    sendAck(0x00, 0x00);
+}
+
+void KonnektingDevice::handleMsgReadComObject(byte msg[]) {
+#ifdef DEBUG_PROTOCOL
+    DEBUG_PRINTLN(F("handleMsgReadComObject"));
+#endif
+
+    byte comObjId = msg[2];
+
+
+    word ga = Knx.getComObjectAddress(comObjId);
+
+    byte response[14];
+    response[0] = PROTOCOLVERSION;
+    response[1] = MSGTYPE_ANSWER_COM_OBJECT;
+    response[2] = comObjId;
+    response[3] = (ga >> 8) & 0xff; // GA Hi
+    response[4] = (ga >> 0) & 0xff; // GA Lo
+    response[5] = 0x00; // Settings
+
+    // fill rest with 0x00
+    for (byte i = 6; i < 13; i++) {
+        response[i] = 0;
     }
 
     Knx.write(PROGCOMOBJ_INDEX, response);
 }
 
 int KonnektingDevice::memoryRead(int index) {
-    DEBUG_PRINTLN(F("memRead: index=0x%02x"), index);
+    DEBUG_PRINT(F("memRead: index=0x%02x"), index);
     byte d = 0xFF;
 
     if (*eepromReadFunc != NULL) {
-        DEBUG_PRINTLN(F("memRead: using fctptr"));
+        DEBUG_PRINT(F(" using fctptr"));
         d = eepromReadFunc(index);
     } else {
 #ifdef __SAMD21G18A__
@@ -627,17 +729,18 @@ int KonnektingDevice::memoryRead(int index) {
         d = EEPROM.read(index);
 #endif
     }
-    DEBUG_PRINTLN(F("memRead: data=0x%02x"), d);
+    DEBUG_PRINTLN(F(" data=0x%02x"), d);
     return d;
 }
 
 void KonnektingDevice::memoryWrite(int index, byte data) {
 
-    DEBUG_PRINTLN(F("memWrite: index=0x%02x data=0x%02x"), index, data);
+    DEBUG_PRINT(F("memWrite: index=0x%02x data=0x%02x"), index, data);
     if (*eepromWriteFunc != NULL) {
-        DEBUG_PRINTLN(F("memWrite: using fctptr"));
+        DEBUG_PRINTLN(F(" using fctptr"));
         eepromWriteFunc(index, data);
     } else {
+        DEBUG_PRINTLN(F(""));
 #ifdef __SAMD21G18A__
         DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    
@@ -655,12 +758,13 @@ void KonnektingDevice::memoryWrite(int index, byte data) {
 
 void KonnektingDevice::memoryUpdate(int index, byte data) {
 
-    DEBUG_PRINTLN(F("memUpdate: index=0x%02x data=0x%02x"), index, data);
+    DEBUG_PRINT(F("memUpdate: index=0x%02x data=0x%02x"), index, data);
 
     if (*eepromUpdateFunc != NULL) {
-        DEBUG_PRINTLN(F("memUpdate: using fctptr"));
+        DEBUG_PRINTLN(F(" using fctptr"));
         eepromUpdateFunc(index, data);
     } else {
+        DEBUG_PRINTLN(F(""));
 #ifdef __SAMD21G18A__   
         DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #elif ESP8266    

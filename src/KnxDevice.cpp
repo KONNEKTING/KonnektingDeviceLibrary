@@ -197,7 +197,7 @@ void KnxDevice::task(void) {
 
                 case KNX_WRITE_REQUEST: // a write operation of a Com Object on the KNX network is required
                     // update the com obj value
-                    DEBUG_PRINTLN(F("KNX_WRITE_REQUEST index=%d"), action.index);
+                    //DEBUG_PRINTLN(F("KNX_WRITE_REQUEST index=%d"), action.index);
                     
                     
                     if ((comObj->GetLength()) <= 2) {
@@ -319,6 +319,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T val
 }
 
 template e_KnxDeviceStatus KnxDevice::write <bool>(byte objectIndex, bool value);
+template e_KnxDeviceStatus KnxDevice::write <byte>(byte objectIndex, byte value);
 template e_KnxDeviceStatus KnxDevice::write <short>(byte objectIndex, short value);
 template e_KnxDeviceStatus KnxDevice::write <unsigned short>(byte objectIndex, unsigned short value);
 template e_KnxDeviceStatus KnxDevice::write <int>(byte objectIndex, int value);

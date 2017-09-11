@@ -1,5 +1,19 @@
 #include "DebugUtil.h"
 
+/*
+ * Format Help:
+ * http://www.cplusplus.com/reference/cstdio/printf/
+ * 
+ * %i = signed decimal integer
+ * %u = unsigned decimal integer
+ * %x = hex
+ * %X = upper case hex
+ * %s = string
+ * %c = character
+ * 0x%02x = hex representation like 0xff
+ * %% = % symbol
+ */
+
 // DebugUtil unique instance creation
 DebugUtil DebugUtil::Debug;
 DebugUtil& Debug = DebugUtil::Debug;

@@ -74,6 +74,8 @@ public:
     void print(const __FlashStringHelper *format, ...);
     void println(char *format, ...);
     void println(const __FlashStringHelper *format, ...);
+    
+    
 };
 
 // Reference to the KnxDevice unique instance

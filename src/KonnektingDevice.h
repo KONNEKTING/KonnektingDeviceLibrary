@@ -30,26 +30,20 @@
 #include <Arduino.h> 
 #include <DebugUtil.h>
 #include <KnxDevice.h>
+#include <KnxDptConstants.h>
 
-// AVR and ESP8266 use EEPROM (SAMD21 not ...)
-#if defined(__AVR__) || defined(ESP8266)
+#ifndef __SAMD21G18A__
 #include <EEPROM.h>
-#endif
-
-// only AVR boards have wdt.h, SAMD21 uses different mechanism
-#ifdef __AVR__
+#ifndef ESP8266
 #include <avr/wdt.h>
 #endif
-
-// the first 4 bytes are not for the public!
-#define EEPROM_START_OFFSET    4
+#endif
 
 #define EEPROM_DEVICE_FLAGS          0
+#define EEPROM_INDIVIDUALADDRESS_HI  1
+#define EEPROM_INDIVIDUALADDRESS_LO  2
+#define EEPROM_COMOBJECTTABLE_START 10
 
-// TODO HI/LO correct? HI first, then LO or vice-versa?
-#define EEPROM_INDIVIDUALADDRESS_HI  4
-#define EEPROM_INDIVIDUALADDRESS_LO  5
-s
 #define PROTOCOLVERSION 0
 
 #define MSGTYPE_ACK                         0 // 0x00
@@ -65,14 +59,13 @@ s
 #define MSGTYPE_READ_INDIVIDUAL_ADDRESS     21 // 0x15
 #define MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS   22 // 0x16
 
-#define MSGTYPE_WRITE_MEMORY                30 // 0x1E
-#define MSGTYPE_READ_MEMORY                 31 // 0x1F
-#define MSGTYPE_ANSWER_MEMORY               32 // 0x20
+#define MSGTYPE_WRITE_PARAMETER             30 // 0x1E
+#define MSGTYPE_READ_PARAMETER              31 // 0x1F
+#define MSGTYPE_ANSWER_PARAMETER            32 // 0x20
 
-// obsolete...
-// #define MSGTYPE_WRITE_COM_OBJECT            40 // 0x28
-// #define MSGTYPE_READ_COM_OBJECT             41 // 0x29
-// #define MSGTYPE_ANSWER_COM_OBJECT           42 // 0x2A
+#define MSGTYPE_WRITE_COM_OBJECT            40 // 0x28
+#define MSGTYPE_READ_COM_OBJECT             41 // 0x29
+#define MSGTYPE_ANSWER_COM_OBJECT           42 // 0x2A
 
 #define PARAM_INT8 1
 #define PARAM_UINT8 1
@@ -183,6 +176,9 @@ private:
 
     bool _rebootRequired = false;
     bool _initialized = false;
+   
+    int _progbtnCount = 0;
+    long _lastProgbtn = 0;
 
     word _individualAddress;
 
@@ -216,14 +212,14 @@ private:
     void handleMsgReadProgrammingMode(byte* msg);
     void handleMsgWriteIndividualAddress(byte* msg);
     void handleMsgReadIndividualAddress(byte* msg);
-    void handleMsgWriteMemory(byte* msg);
-    void handleMsgReadMemory(byte* msg);
-    
-    
+    void handleMsgWriteParameter(byte* msg);
+    void handleMsgReadParameter(byte* msg);
+    void handleMsgWriteComObject(byte* msg);
+    void handleMsgReadComObject(byte* msg);
     
     int memoryRead(int index);
-    void memoryWrite(int index, byte data);        
-    void memoryUpdate(int index, byte data);        
+    void memoryWrite(int index, byte date);        
+    void memoryUpdate(int index, byte date);        
     void memoryCommit();        
 
 };

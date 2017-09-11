@@ -119,11 +119,6 @@ typedef struct {
   e_TpUartRxState state;        // Current TPUART RX state
   KnxTelegram receivedTelegram; // Where each received telegram is stored (the content is overwritten on each telegram reception)
                                 // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
-  
-  // TODO with multiple GAs: use list/array?! 
-  // at max. 255 assignments possible, but only 85 KOs possible. so max. is 85, not 255
-  // byte *addressedComObjectsIndices[85];
-  
   byte addressedComObjectIndex; // Where the index to the targeted com object is stored (the value is overwritten on each telegram reception)
                                 // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
 } type_tpuart_rx;
@@ -313,9 +308,7 @@ inline KnxTelegram& KnxTpUart::GetReceivedTelegram(void)
 
 
 inline byte KnxTpUart::GetTargetedComObjectIndex(void) const
-{ 
-    return _rx.addressedComObjectIndex; 
-} // return the index of the adress addressed by the received KNX Telegram
+{ return _rx.addressedComObjectIndex; } // return the index of the adress addressed by the received KNX Telegram
 
 
 inline boolean KnxTpUart::IsActive(void) const

@@ -229,7 +229,7 @@ byte KnxTpUart::Init(void) {
         if (_comObjectsList == NULL) DEBUG_PRINTLN(F("Init : warning : empty object list!\n"));
         if (_evtCallbackFct == NULL) return KNX_TPUART_ERROR_NULL_EVT_CALLBACK_FCT;
         if (_tx.ackFctPtr == NULL) return KNX_TPUART_ERROR_NULL_ACK_CALLBACK_FCT;
-
+/*
         // Set Physical address. This allows to activate address evaluation by the TPUART
         tpuartCmd[0] = TPUART_SET_ADDR_REQ;
         tpuartCmd[1] = (byte) (_physicalAddr >> 8);
@@ -238,7 +238,7 @@ byte KnxTpUart::Init(void) {
 
         // Call U_State.request-Service in order to have the field _stateIndication up-to-date
         _serial.write(TPUART_STATE_REQ);
-
+*/
         _rx.state = RX_IDLE_WAITING_FOR_CTRL_FIELD;
         _tx.state = TX_IDLE;
         DEBUG_PRINTLN(F("Init : Normal mode started\n"));
