@@ -142,7 +142,6 @@ public:
     
     // must be public to be accessible from KonnektingProgButtonPressed())
     void toggleProgState();
-    void setProgState(bool state);
 
     KnxComObject createProgComObject();
 

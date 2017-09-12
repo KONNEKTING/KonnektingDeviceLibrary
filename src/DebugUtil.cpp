@@ -1,6 +1,14 @@
 #include "DebugUtil.h"
 
 #if defined(ARDUINO_ARCH_SAMD) || defined(STM32)
+    extern "C" char* sbrk(int incr);
+    extern char *__brkval;
+#endif
+
+// DebugUtil unique instance creation
+DebugUtil DebugUtil::Debug;
+DebugUtil& Debug = DebugUtil::Debug;
+
 /*
  * Format Help:
  * http://www.cplusplus.com/reference/cstdio/printf/
@@ -14,15 +22,6 @@
  * 0x%02x = hex representation like 0xff
  * %% = % symbol
  */
-#if defined(ARDUINO_ARCH_SAMD)
-    extern "C" char* sbrk(int incr);
-    extern char *__brkval;
-#endif
-
-// DebugUtil unique instance creation
-DebugUtil DebugUtil::Debug;
-DebugUtil& Debug = DebugUtil::Debug;
-
 DebugUtil::DebugUtil() {
 }
 
