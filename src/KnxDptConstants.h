@@ -4,8 +4,11 @@
 #define DPT1_002_false 0
 #define DPT1_002_true 1
 
-#define DPT1_003_disable 0
-#define DPT1_003_enable 1
+/** Lock */
+#define DPT1_003_disable 0 
+
+/** Unlock */
+#define DPT1_003_enable 1 
 
 #define DPT1_004_no_ramp 0
 #define DPT1_004_ramp 1
