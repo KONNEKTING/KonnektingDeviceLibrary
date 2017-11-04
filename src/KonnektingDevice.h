@@ -95,9 +95,9 @@ class KonnektingDevice {
     static byte _paramSizeList[];
     static const byte _numberOfParams;                // Nb of attached Parameters
     
-    int (*eepromReadFunc)(int);
-    void (*eepromWriteFunc)(int, int);
-    void (*eepromUpdateFunc)(int, int);
+    byte (*eepromReadFunc)(int);
+    void (*eepromWriteFunc)(int, byte);
+    void (*eepromUpdateFunc)(int, byte);
     void (*eepromCommitFunc)(void);
     void (*setProgLedFunc)(bool);
     
@@ -111,9 +111,9 @@ class KonnektingDevice {
 public:
     static KonnektingDevice Konnekting;
     
-    void setMemoryReadFunc(int (*func)(int));
-    void setMemoryWriteFunc(void (*func)(int, int));
-    void setMemoryUpdateFunc(void (*func)(int, int));
+    void setMemoryReadFunc(byte (*func)(int));
+    void setMemoryWriteFunc(void (*func)(int, byte));
+    void setMemoryUpdateFunc(void (*func)(int, byte));
     void setMemoryCommitFunc(void (*func)(void));
 
     void init(HardwareSerial& serial, 

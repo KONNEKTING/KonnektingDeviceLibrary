@@ -906,19 +906,18 @@ int KonnektingDevice::getFreeEepromOffset() {
     return offset;
 }
 
-void KonnektingDevice::setMemoryReadFunc(int (*func)(int)) {
+void KonnektingDevice::setMemoryReadFunc(byte (*func)(int)) {
     eepromReadFunc = func;
 }
 
-void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, int)) {
+void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
     eepromWriteFunc = func;
 }
 
-void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, int)) {
+void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
     eepromUpdateFunc = func;
 }
 
 void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
     eepromCommitFunc = func;
 }
-
