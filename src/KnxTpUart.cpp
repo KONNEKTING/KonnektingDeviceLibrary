@@ -150,8 +150,8 @@ byte KnxTpUart::Reset(void) {
 // The function must be called prior to Init() execution
 
 byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSize) {
-#define IS_COM(index) (comObjectsList[index].GetIndicator() & KNX_COM_OBJ_C_INDICATOR)
-#define ADDR(index) (comObjectsList[index].GetAddr())
+#define IS_COM(index) (comObjectsList[index].getIndicator() & KNX_COM_OBJ_C_INDICATOR)
+#define ADDR(index) (comObjectsList[index].getAddr())
 
     if ((_rx.state != RX_INIT) || (_tx.state != TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
 
@@ -584,14 +584,14 @@ boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
     // reduce the address range if needed
     while (divisionCounter) {
         searchIndexRange >>= 1; // Divide range width by 2
-        if (addr >= _comObjectsList[_orderedIndexTable[searchIndexStart + searchIndexRange]].GetAddr())
+        if (addr >= _comObjectsList[_orderedIndexTable[searchIndexStart + searchIndexRange]].getAddr())
             searchIndexStart += searchIndexRange;
         else searchIndexStop -= searchIndexRange;
         divisionCounter--;
     }
 
     // search the address value and index in the reduced range
-    for (i = searchIndexStart; ((_comObjectsList[_orderedIndexTable[i]].GetAddr() != addr) && (i <= searchIndexStop)); i++);
+    for (i = searchIndexStart; ((_comObjectsList[_orderedIndexTable[i]].getAddr() != addr) && (i <= searchIndexStop)); i++);
     
     if (i > searchIndexStop) {
         return false; // Address is NOT part of the assigned addresses

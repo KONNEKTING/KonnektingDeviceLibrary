@@ -331,7 +331,7 @@ bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
 KnxComObject KonnektingDevice::createProgComObject() {
     DEBUG_PRINTLN(F("createProgComObject"));
     KnxComObject p = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
-    p.SetAddr(G_ADDR(15, 7, 255));
+    p.setAddr(G_ADDR(15, 7, 255));
     p.setActive(true);
     return /* Index 0 */ p;
 }
