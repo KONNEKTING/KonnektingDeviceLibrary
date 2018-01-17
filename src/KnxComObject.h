@@ -30,7 +30,7 @@
 #define KNXCOMOBJECT_H
 
 #include "KnxTelegram.h"
-#include "KnxDPT.h"
+#include "KnxDataPointTypes.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 
@@ -113,7 +113,7 @@ class KnxComObject {
 
 public:
     // Constructor :
-    KnxComObject(e_KnxDPT_ID dptId, byte indicator);
+    KnxComObject(KnxDpt dptId, byte indicator);
 
     // Destructor
     ~KnxComObject();

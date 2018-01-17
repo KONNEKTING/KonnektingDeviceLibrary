@@ -34,8 +34,8 @@
  * @param dptId
  * @return 
  */
-byte calcLength(e_KnxDPT_ID dptId) {
-    return (pgm_read_byte(&KnxDPTFormatToLengthBit[ pgm_read_byte(&KnxDPTIdToFormat[dptId])]) / 8) + 1;
+byte calcLength(KnxDpt dptId) {
+    return (pgm_read_byte(&KnxDptFormatToLength[ pgm_read_byte(&KnxDptToFormat[dptId])]) / 8) + 1;
 }
 
 /**
@@ -43,7 +43,7 @@ byte calcLength(e_KnxDPT_ID dptId) {
  * @param dptId
  * @param indicator
  */
-KnxComObject::KnxComObject(e_KnxDPT_ID dptId, byte indicator)
+KnxComObject::KnxComObject(KnxDpt dptId, byte indicator)
 : _dptId(dptId), _indicator(indicator), _dataLength(calcLength(dptId)) {
     _active = false;
     if (_dataLength <= 2) {

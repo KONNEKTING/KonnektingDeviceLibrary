@@ -247,7 +247,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::read(byte objectIndex, T& ret
     {
         byte dptValue[14]; // define temporary DPT value with max length
         comObj->getValue(dptValue);
-        return ConvertFromDpt(dptValue, returnedValue, pgm_read_byte(&KnxDPTIdToFormat[comObj->getDptId()]));
+        return ConvertFromDpt(dptValue, returnedValue, pgm_read_byte(&KnxDptToFormat[comObj->getDptId()]));
     }
 }
 
@@ -291,7 +291,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T val
     if (length <= 2) action.byteValue = (byte) value; // short object case
     else { // long object case, let's try to translate value to the com object DPT
         destValue = (byte *) malloc(length - 1); // allocate the memory for DPT
-        e_KnxDeviceStatus status = ConvertToDpt(value, destValue, pgm_read_byte(&KnxDPTIdToFormat[comObj->getDptId()]));
+        e_KnxDeviceStatus status = ConvertToDpt(value, destValue, pgm_read_byte(&KnxDptToFormat[comObj->getDptId()]));
         if (status) // translation error
         {
             free(destValue);

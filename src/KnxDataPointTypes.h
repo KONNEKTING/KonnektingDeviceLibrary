@@ -1,9 +1,5 @@
 /*
  *    This file is part of KONNEKTING Knx Device Library.
- * 
- *    It is derived from another GPLv3 licensed project:
- *      The Arduino Knx Bus Device library allows to turn Arduino into "self-made" KNX bus device.
- *      Copyright (C) 2014 2015 Franck MARINI (fm@liwan.fr)
  *
  *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -19,15 +15,15 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * Definition of KNX Datapoints types
+ * 
+ * @author Alexander Christian <info(at)root1.de>
+ * @author Eugen Burkowski <eugenius707(at)gmail.com>
+ */
 
-// File : KnxDPT.h
-// Author : Franck Marini
-// Modified: Alexander Christian <info(at)root1.de>
-//           Eugen Burkowski <eugenius707(at)gmail.com>
-// Description : Definition of the KNX Datapoints types as per "knx.org" specification
-
-#ifndef KNXDPT_H
-#define KNXDPT_H
+#ifndef KNXDATAPOINTTYPES_H
+#define KNXDATAPOINTTYPES_H
 
 // DPT arrays are stored in flash using PROG MEMORY
 #ifndef ESP8266            //ESP8266 does't need pgmspace.h
@@ -38,21 +34,24 @@
 #endif
 #endif
 
-// List of the DPT formats
-// A Character
-// A[n] String of n characters
-// B Boolean / Bit set
-// C Control
-// E Exponent
-// F Floating point value
-// M Mantissa
-// N eNumeration
-// r Reserved bit or field
-// S Sign
-// U Unsigned value
-// V 2's Complement signed value
-// Z8 Standardised Status/Command B8. Encoding as in DPT_StatusGen
-enum eKnxDPT_Format {
+
+/**
+ * List of the DPT formats
+ *   A Character
+ *   A[n] String of n characters
+ *   B Boolean / Bit set
+ *   C Control
+ *   E Exponent
+ *   F Floating point value
+ *   M Mantissa
+ *   N eNumeration
+ *   r Reserved bit or field
+ *   S Sign
+ *   U Unsigned value
+ *   V 2's Complement signed value
+ *   Z8 Standardised Status/Command B8. Encoding as in DPT_StatusGen
+ */
+enum KnxDPTFormat {
   KNX_DPT_FORMAT_B1 = 0,
   KNX_DPT_FORMAT_B2,
   KNX_DPT_FORMAT_B1U3,
@@ -117,75 +116,10 @@ enum eKnxDPT_Format {
   KNX_DPT_FORMAT_A8A8
 };
 
-// Definition of the length in bits according to the format
-// NB : table is stored in flash program memory to save RAM
-const byte KnxDPTFormatToLengthBit[] PROGMEM = {
-  1 , //  KNX_DPT_FORMAT_B1 = 0,
-  2 , //  KNX_DPT_FORMAT_B2,
-  4 , //  KNX_DPT_FORMAT_B1U3
-  8 , //  KNX_DPT_FORMAT_A8,
-  8 , //  KNX_DPT_FORMAT_U8,
-  8 , //  KNX_DPT_FORMAT_V8,
-  8 , //  KNX_DPT_FORMAT_B5N3,
-  16, //  KNX_DPT_FORMAT_U16,
-  16, //  KNX_DPT_FORMAT_V16,
-  16, //  KNX_DPT_FORMAT_F16,
-  24, //  KNX_DPT_FORMAT_N3N5R2N6N2N6,
-  24, //  KNX_DPT_FORMAT_R3N5R4N4R1N7,
-  32, //  KNX_DPT_FORMAT_U32,
-  32, //  KNX_DPT_FORMAT_V32,
-  32, //  KNX_DPT_FORMAT_F32,
-  32, //  KNX_DPT_FORMAT_U4U4U4U4U4U4B4N4,
- 112, //  KNX_DPT_FORMAT_A112,
-  8 , //  KNX_DPT_FORMAT_R2U6, 
-  8 , //  KNX_DPT_FORMAT_B1R1U6,
-  56, //  KNX_DPT_FORMAT_U8R4U4R3U5U3U5R2U6B16,
-  64, //  KNX_DPT_FORMAT_U8R4U4R3U5U3U5R2U6R2U6B16,
-  8 , //  KNX_DPT_FORMAT_N8,
-  8 , //  KNX_DPT_FORMAT_B8,
-  16, //  KNX_DPT_FORMAT_B16,
-  2 , //  KNX_DPT_FORMAT_N2,
- 112, //  KNX_DPT_FORMAT_AN,
-  8 , //  KNX_DPT_FORMAT_U4U4,
-  8 , //  KNX_DPT_FORMAT_R1B1U6,
-  32, //  KNX_DPT_FORMAT_B32,
-  64, //  KNX_DPT_FORMAT_V64,
-  24, //  KNX_DPT_FORMAT_B24,
-  3 , //  KNX_DPT_FORMAT_N3,
-  2 , //  KNX_DPT_FORMAT_B1Z8,
-  16, //  KNX_DPT_FORMAT_N8Z8,
-  16, //  KNX_DPT_FORMAT_U8Z8,
-  24, //  KNX_DPT_FORMAT_U16Z8,
-  16, //  KNX_DPT_FORMAT_V8Z8,
-  24, //  KNX_DPT_FORMAT_V16Z8,
-  24, //  KNX_DPT_FORMAT_U16N8,
-  16, //  KNX_DPT_FORMAT_U8B8,
-  24, //  KNX_DPT_FORMAT_V16B8,
-  32, //  KNX_DPT_FORMAT_V16B16,
-  16, //  KNX_DPT_FORMAT_U8N8,
-  48, //  KNX_DPT_FORMAT_V16V16V16,
-  64, //  KNX_DPT_FORMAT_V16V16V16V16,
-  32, //  KNX_DPT_FORMAT_V16U8B8,
-  40, //  KNX_DPT_FORMAT_V16U8B16,
-  48, //  KNX_DPT_FORMAT_U16U8N8N8P8,
-  16, //  KNX_DPT_FORMAT_U5U5U6,
-  40, //  KNX_DPT_FORMAT_V32Z8,
-  48, //  KNX_DPT_FORMAT_U8N8N8N8B8B8,
-  32, //  KNX_DPT_FORMAT_U16V16,
-  48, //  KNX_DPT_FORMAT_N16U32,
-  48, //  KNX_DPT_FORMAT_F16F16F16,
-  24, //  KNX_DPT_FORMAT_V8N8N8,
-  48, //  KNX_DPT_FORMAT_V16V16N8N8,
-  24, //  KNX_DPT_FORMAT_U16U8,
-  48, //  KNX_DPT_FORMAT_V32N8Z8,
-  64, //  KNX_DPT_FORMAT_U16U32U8N8,
-  24, //  KNX_DPT_FORMAT_A8A8A8A8,
-  24, //  KNX_DPT_FORMAT_U8U8U8,
-  16  //  KNX_DPT_FORMAT_A8A8
-};
-
-// Define all the KNX Datapoint IDs
-enum e_KnxDPT_ID { 
+/**
+ * Definition of all available DPTs
+ */
+enum KnxDpt { 
   KNX_DPT_1_000 = 0, // 1.000 B1 general bool
   KNX_DPT_1_001, // 1.001 B1 DPT_Switch
   KNX_DPT_1_002, // 1.002 B1 DPT_Bool
@@ -307,9 +241,81 @@ enum e_KnxDPT_ID {
   KNX_DPT_60000_60000// 60000.60000 A112 DPT_KONNEKTING_PROGRAM
 };		 
 
-// Definition of the format according to the ID
-// NB : table is stored in flash program memory to save RAM
-const byte KnxDPTIdToFormat[] PROGMEM = {
+/**
+ * Mapping-Table:
+ * KnxDptFormat -> it's length in bits
+ */
+const byte KnxDptFormatToLength[] PROGMEM = {
+  1 , //  KNX_DPT_FORMAT_B1 = 0,
+  2 , //  KNX_DPT_FORMAT_B2,
+  4 , //  KNX_DPT_FORMAT_B1U3
+  8 , //  KNX_DPT_FORMAT_A8,
+  8 , //  KNX_DPT_FORMAT_U8,
+  8 , //  KNX_DPT_FORMAT_V8,
+  8 , //  KNX_DPT_FORMAT_B5N3,
+  16, //  KNX_DPT_FORMAT_U16,
+  16, //  KNX_DPT_FORMAT_V16,
+  16, //  KNX_DPT_FORMAT_F16,
+  24, //  KNX_DPT_FORMAT_N3N5R2N6N2N6,
+  24, //  KNX_DPT_FORMAT_R3N5R4N4R1N7,
+  32, //  KNX_DPT_FORMAT_U32,
+  32, //  KNX_DPT_FORMAT_V32,
+  32, //  KNX_DPT_FORMAT_F32,
+  32, //  KNX_DPT_FORMAT_U4U4U4U4U4U4B4N4,
+ 112, //  KNX_DPT_FORMAT_A112,
+  8 , //  KNX_DPT_FORMAT_R2U6, 
+  8 , //  KNX_DPT_FORMAT_B1R1U6,
+  56, //  KNX_DPT_FORMAT_U8R4U4R3U5U3U5R2U6B16,
+  64, //  KNX_DPT_FORMAT_U8R4U4R3U5U3U5R2U6R2U6B16,
+  8 , //  KNX_DPT_FORMAT_N8,
+  8 , //  KNX_DPT_FORMAT_B8,
+  16, //  KNX_DPT_FORMAT_B16,
+  2 , //  KNX_DPT_FORMAT_N2,
+ 112, //  KNX_DPT_FORMAT_AN,
+  8 , //  KNX_DPT_FORMAT_U4U4,
+  8 , //  KNX_DPT_FORMAT_R1B1U6,
+  32, //  KNX_DPT_FORMAT_B32,
+  64, //  KNX_DPT_FORMAT_V64,
+  24, //  KNX_DPT_FORMAT_B24,
+  3 , //  KNX_DPT_FORMAT_N3,
+  2 , //  KNX_DPT_FORMAT_B1Z8,
+  16, //  KNX_DPT_FORMAT_N8Z8,
+  16, //  KNX_DPT_FORMAT_U8Z8,
+  24, //  KNX_DPT_FORMAT_U16Z8,
+  16, //  KNX_DPT_FORMAT_V8Z8,
+  24, //  KNX_DPT_FORMAT_V16Z8,
+  24, //  KNX_DPT_FORMAT_U16N8,
+  16, //  KNX_DPT_FORMAT_U8B8,
+  24, //  KNX_DPT_FORMAT_V16B8,
+  32, //  KNX_DPT_FORMAT_V16B16,
+  16, //  KNX_DPT_FORMAT_U8N8,
+  48, //  KNX_DPT_FORMAT_V16V16V16,
+  64, //  KNX_DPT_FORMAT_V16V16V16V16,
+  32, //  KNX_DPT_FORMAT_V16U8B8,
+  40, //  KNX_DPT_FORMAT_V16U8B16,
+  48, //  KNX_DPT_FORMAT_U16U8N8N8P8,
+  16, //  KNX_DPT_FORMAT_U5U5U6,
+  40, //  KNX_DPT_FORMAT_V32Z8,
+  48, //  KNX_DPT_FORMAT_U8N8N8N8B8B8,
+  32, //  KNX_DPT_FORMAT_U16V16,
+  48, //  KNX_DPT_FORMAT_N16U32,
+  48, //  KNX_DPT_FORMAT_F16F16F16,
+  24, //  KNX_DPT_FORMAT_V8N8N8,
+  48, //  KNX_DPT_FORMAT_V16V16N8N8,
+  24, //  KNX_DPT_FORMAT_U16U8,
+  48, //  KNX_DPT_FORMAT_V32N8Z8,
+  64, //  KNX_DPT_FORMAT_U16U32U8N8,
+  24, //  KNX_DPT_FORMAT_A8A8A8A8,
+  24, //  KNX_DPT_FORMAT_U8U8U8,
+  16  //  KNX_DPT_FORMAT_A8A8
+};
+
+
+/**
+ * Mapping-Table:
+ * KnxDpt -> KNX DPT Format
+ */
+const byte KnxDptToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_B1, //  KNX_DPT_1_000, // 1.000 B1 general bool
   KNX_DPT_FORMAT_B1, //  KNX_DPT_1_001, // 1.001 B1 DPT_Switch
   KNX_DPT_FORMAT_B1, //  KNX_DPT_1_002, // 1.002 B1 DPT_Bool
@@ -431,4 +437,4 @@ const byte KnxDPTIdToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_A112 //  KNX_DPT_60000_60000// 60000.60000 A112 DPT_KONNEKTING_PROGRAM
 };
 
-#endif // KNXDPT_H
+#endif // KNXDATAPOINTTYPES_H

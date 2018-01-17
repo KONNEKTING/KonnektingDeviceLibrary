@@ -40,7 +40,7 @@
 #include "DebugUtil.h"
 #include "KnxDevice.h"
 #include "KnxComObject.h"
-#include "KnxDPT.h"
+#include "KnxDataPointTypes.h"
 #include "KonnektingDevice.h"
 
 #ifdef ESP8266
