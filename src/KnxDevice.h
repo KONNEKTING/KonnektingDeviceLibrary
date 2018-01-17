@@ -127,7 +127,7 @@ class KnxDevice {
     RingBuff<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; 
     
     // True when all the Com Object with Init attr have been initialized
-    boolean _initCompleted;                         
+    bool _initCompleted;                         
     
     // Index to the last initiated object
     byte _initIndex;                                
@@ -221,8 +221,12 @@ class KnxDevice {
      */
     void update(byte objectIndex);
 
-    // The function returns true if there is rx/tx activity ongoing, else false
-    boolean isActive(void) const;
+    
+    /**
+     * TODO document me
+     * @return 
+     */ 
+    bool isActive(void) const;
     
     /*
      * Overwrite the address of an attache Com Object
