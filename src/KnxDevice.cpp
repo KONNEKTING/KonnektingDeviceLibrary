@@ -120,7 +120,6 @@ void KnxDevice::task(void) {
 
             if (_initIndex == _numberOfComObjects) {
                 _initCompleted = true; // All the Com Object initialization have been performed
-                //  DebugInfo(String("KNXDevice INFO: Com Object init completed, ")+ String( _nbOfInits) + String("objs initialized.\n"));
             } else { // Com Object to be initialised has been found
                 // Add a READ request in the TX action list
                 action.command = KNX_READ_REQUEST;
@@ -430,7 +429,6 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
         
         switch (Knx._rxTelegram->GetCommand()) {
             case KNX_COMMAND_VALUE_READ:
-                Knx.DebugInfo("READ req.\n");
                 // READ command coming from the bus
                 // if the Com Object has read attribute, then add RESPONSE action in the TX action list
                 if ((comObj->GetIndicator()) & KNX_COM_OBJ_R_INDICATOR) { // The targeted Com Object can indeed be read
@@ -441,7 +439,6 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                 break;
 
             case KNX_COMMAND_VALUE_RESPONSE:
-                Knx.DebugInfo("RESP req.\n");
                 // RESPONSE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has UPDATE attribute
                 if ((comObj->GetIndicator()) & KNX_COM_OBJ_U_INDICATOR) {
@@ -453,7 +450,6 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
 
             case KNX_COMMAND_VALUE_WRITE:
-                Knx.DebugInfo("WRITE req.\n");
                 // WRITE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has WRITE attribute
                 if ((comObj->GetIndicator()) & KNX_COM_OBJ_W_INDICATOR) {
@@ -490,20 +486,6 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
 void KnxDevice::TxTelegramAck(e_TpUartTxAck value) {
     Knx._state = IDLE;
-#ifdef KNXDevice_DEBUG
-    if (value != ACK_RESPONSE) {
-        switch (value) {
-            case NACK_RESPONSE: DebugInfo("NACK RESPONSE!!\n");
-                break;
-            case NO_ANSWER_TIMEOUT: DebugInfo("NO ANSWER TIMEOUT RESPONSE!!\n");
-                ;
-                break;
-            case TPUART_RESET_RESPONSE: DebugInfo("RESET RESPONSE!!\n");
-                ;
-                break;
-        }
-    }
-#endif // KNXDevice_DEBUG
 }
 
 
