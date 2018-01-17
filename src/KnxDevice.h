@@ -147,12 +147,6 @@ class KnxDevice {
     // Reference to the telegram received by the TPUART
     KnxTelegram *_rxTelegram;                       
     
-#if defined(KNXDEVICE_DEBUG_INFO)
-    byte _nbOfInits;                                // Nb of Initialized Com Objects
-    String *_debugStrPtr;
-    static const char _debugInfoText[];
-#endif
-    
     // Constructor, Destructor
     // private constructor (singleton design pattern)
     KnxDevice();  
@@ -242,12 +236,6 @@ class KnxDevice {
      */
     word getComObjectAddress(byte index);
     
-    // Inline Debug function (definition later in this file)
-    // Set the string used for debug traces
-#if defined(KNXDEVICE_DEBUG_INFO)
-    void SetDebugString(String *strPtr);
-#endif
-
   private:
     /*
      * Static GetTpUartEvents() function called by the KnxTpUart layer (callback)
@@ -258,26 +246,8 @@ class KnxDevice {
      * Static TxTelegramAck() function called by the KnxTpUart layer (callback)
      */
     static void TxTelegramAck(e_TpUartTxAck);
-
-    /* 
-     * Inline Debug function (definition later in this file)
-     */
-    void DebugInfo(const char[]) const;
     
 };
-
-#if defined(KNXDEVICE_DEBUG_INFO)
-// Set the string used for debug traces
-inline void KnxDevice::SetDebugString(String *strPtr) {_debugStrPtr = strPtr;}
-#endif
-
-
-inline void KnxDevice::DebugInfo(const char comment[]) const
-{
-#if defined(KNXDEVICE_DEBUG_INFO)
-	if (_debugStrPtr != NULL) *_debugStrPtr += String(_debugInfoText) + String(comment);
-#endif
-}
 
 // Reference to the KnxDevice unique instance
 extern KnxDevice& Knx;
