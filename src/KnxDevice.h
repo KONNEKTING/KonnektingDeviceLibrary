@@ -31,7 +31,7 @@
 #include "Arduino.h"
 #include "KnxTelegram.h"
 #include "KnxComObject.h"
-#include "ActionRingBuffer.h"
+#include "RingBuff.h"
 #include "KnxTpUart.h"
 #include "KonnektingDevice.h"
 
@@ -124,7 +124,7 @@ class KnxDevice {
     KnxTpUart *_tpuart;                             
     
     // Queue of transmit actions to be performed
-    ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; 
+    RingBuff<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; 
     
     // True when all the Com Object with Init attr have been initialized
     boolean _initCompleted;                         

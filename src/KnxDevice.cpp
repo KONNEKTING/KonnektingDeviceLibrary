@@ -23,7 +23,7 @@
 // Author : Franck Marini
 // Modified: Alexander Christian <info(at)root1.de>
 // Description : KnxDevice Abstraction Layer
-// Module dependencies : HardwareSerial, KnxTelegram, KnxComObject, KnxTpUart, RingBuffer
+// Module dependencies : HardwareSerial, KnxTelegram, KnxComObject, KnxTpUart, RingBuff
 
 #include "KnxDevice.h"
 #include "KonnektingDevice.h"
@@ -31,10 +31,6 @@
 static inline word TimeDeltaWord(word now, word before) {
     return (word) (now - before);
 }
-
-#ifdef KNXDEVICE_DEBUG_INFO
-const char KnxDevice::_debugInfoText[] = "KNXDEVICE INFO: ";
-#endif
 
 // KnxDevice unique instance creation
 KnxDevice KnxDevice::Knx;
@@ -46,14 +42,10 @@ KnxDevice& Knx = KnxDevice::Knx;
 KnxDevice::KnxDevice() {
     _state = INIT;
     _tpuart = NULL;
-    _txActionList = ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE>();
+    _txActionList = RingBuff<type_tx_action, ACTIONS_QUEUE_SIZE>();
     _initCompleted = false;
     _initIndex = 0;
     _rxTelegram = NULL;
-#if defined(KNXDEVICE_DEBUG_INFO)
-    _nbOfInits = 0;
-    _debugStrPtr = NULL;
-#endif
     //AC
     _progComObj.SetAddr(G_ADDR(15, 7, 255));
     _progComObj.setActive(true);
@@ -88,9 +80,7 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     DEBUG_PRINTLN(F("Init successful"));
     _lastInitTimeMillis = millis();
     _lastTXTimeMicros = _lastTXTimeMicros = micros();
-#if defined(KNXDEVICE_DEBUG_INFO)
-    _nbOfInits = 0;
-#endif
+
     return KNX_DEVICE_OK;
 }
 
@@ -100,7 +90,7 @@ void KnxDevice::end() {
     type_tx_action action;
 
     _state = INIT;
-    while (_txActionList.Pop(action)); // empty ring buffer
+    while (_txActionList.pop(action)); // empty ring buffer
     _initCompleted = false;
     _initIndex = 0;
     _rxTelegram = NULL;
@@ -133,12 +123,9 @@ void KnxDevice::task(void) {
                 //  DebugInfo(String("KNXDevice INFO: Com Object init completed, ")+ String( _nbOfInits) + String("objs initialized.\n"));
             } else { // Com Object to be initialised has been found
                 // Add a READ request in the TX action list
-#if defined(KNXDEVICE_DEBUG_INFO) || defined(KNXDEVICE_DEBUG_INFO_VERBOSE)
-                _nbOfInits++;
-#endif
                 action.command = KNX_READ_REQUEST;
                 action.index = _initIndex;
-                _txActionList.Append(action);
+                _txActionList.append(action);
                 _lastInitTimeMillis = millis(); // Update the timer
             }
         }
@@ -156,7 +143,7 @@ void KnxDevice::task(void) {
 
     // STEP 3 : Send KNX messages following TX actions
     if (_state == IDLE) {
-        if (_txActionList.Pop(action)) { // Data to be transmitted
+        if (_txActionList.pop(action)) { // Data to be transmitted
             
             //DEBUG_PRINTLN(F("Data to be transmitted index=%d"), action.index);
             KnxComObject* comObj = (action.index == 255 ? &_progComObj : &_comObjectsList[action.index]);
@@ -315,7 +302,7 @@ template <typename T> e_KnxDeviceStatus KnxDevice::write(byte objectIndex, T val
     // add WRITE action in the TX action queue
     action.command = KNX_WRITE_REQUEST;
     action.index = objectIndex;
-    _txActionList.Append(action);
+    _txActionList.append(action);
     return KNX_DEVICE_OK;
 }
 
@@ -368,14 +355,14 @@ e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
         action.valuePtr = (byte *) dptValue;
         
         // bis hier hin alles okay
-        _txActionList.Append(action);
+        _txActionList.append(action);
         //for (byte i = 0; i < length - 1; i++) {
         //    DEBUG_PRINTLN(F("action.valuePtr[%d]=0x%02x"), i, action.valuePtr[i]);
         //}
         // immer noch okay. 
         
         // TODO: pop machen und dann daten testen. Wenn dann noch okay, muss jemand die Daten zu späterem zeitpunkt manipulieren.
-        //_txActionList.Pop(action2);
+        //_txActionList.pop(action2);
         //for (byte i = 0; i < length - 1; i++) {
         //    DEBUG_PRINTLN(F("action2.valuePtr[%d]=0x%02x"), i, action2.valuePtr[i]);
         //}
@@ -396,7 +383,7 @@ void KnxDevice::update(byte objectIndex) {
     type_tx_action action;
     action.command = KNX_READ_REQUEST;
     action.index = objectIndex;
-    _txActionList.Append(action);
+    _txActionList.append(action);
 }
 
 
@@ -406,7 +393,7 @@ void KnxDevice::update(byte objectIndex) {
 boolean KnxDevice::isActive(void) const {
     if (_tpuart->IsActive()) return true; // TPUART is active
     if (_state == TX_ONGOING) return true; // the Device is sending a request
-    if (_txActionList.ElementsNb()) return true; // there is at least one tx action in the queue
+    if (_txActionList.getItemCount()) return true; // there is at least one tx action in the queue
     return false;
 }
 
@@ -449,7 +436,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
                 if ((comObj->GetIndicator()) & KNX_COM_OBJ_R_INDICATOR) { // The targeted Com Object can indeed be read
                     action.command = KNX_RESPONSE_REQUEST;
                     action.index = targetedComObjIndex;
-                    Knx._txActionList.Append(action);
+                    Knx._txActionList.append(action);
                 }
                 break;
 
