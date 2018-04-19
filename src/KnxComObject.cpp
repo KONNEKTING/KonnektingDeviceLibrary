@@ -135,7 +135,7 @@ byte KnxComObject::updateValue(const KnxTelegram& other) {
     
     switch (_dataLength) {
         case 1:
-            d_value = other.GetFirstPayloadByte();
+            _value = other.GetFirstPayloadByte();
             break;
         case 2:
             other.GetLongPayload(&_value, 1);

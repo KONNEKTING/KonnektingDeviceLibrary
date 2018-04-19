@@ -27,7 +27,7 @@
 #ifndef KONNEKTING_h
 #define KONNEKTING_h
 
-#include <Arduino.h> 
+#include "Arduino.h>
 #include <DebugUtil.h>
 #include <KnxDevice.h>
 #include <KnxDptConstants.h>
@@ -93,7 +93,7 @@ extern void konnektingKnxEvents(byte index);
 
 class KonnektingDevice {
     static byte _paramSizeList[];
-    static const byte _numberOfParams;                // Nb of attached Parameters
+    static const int _numberOfParams;
     
     byte (*eepromReadFunc)(int);
     void (*eepromWriteFunc)(int, byte);
@@ -145,19 +145,19 @@ public:
 
     KnxComObject createProgComObject();
 
-    byte getParamSize(byte index);
+    byte getParamSize(int index);
     void getParamValue(int index, byte* value);
     
-    uint8_t getUINT8Param(byte index);
-    int8_t getINT8Param(byte index);
+    uint8_t getUINT8Param(int index);
+    int8_t getINT8Param(int index);
     
-    uint16_t getUINT16Param(byte index);
-    int16_t getINT16Param(byte index);
+    uint16_t getUINT16Param(int index);
+    int16_t getINT16Param(int index);
     
-    uint32_t getUINT32Param(byte index);
-    int32_t getINT32Param(byte index);
+    uint32_t getUINT32Param(int index);
+    int32_t getINT32Param(int index);
     
-    String getSTRING11Param(byte index);
+    String getSTRING11Param(int index);
 
     /**
      * Check whether the Knx KonnektingDevice is initialized (Konnekting.init(...)) and therefore active or not
@@ -205,7 +205,7 @@ private:
 
     bool _progState;
 
-    int calcParamSkipBytes(byte index);
+    int calcParamSkipBytes(int index);
 
     void setProgState(bool state);
     
@@ -215,7 +215,7 @@ private:
     void reboot();
 
     // prog methods    
-    void sendAck(byte errorcode, byte indexinformation);
+    void sendAck(byte errorcode, int indexinformation);
     void handleMsgReadDeviceInfo(byte* msg);
     void handleMsgRestart(byte* msg);
     void handleMsgWriteProgrammingMode(byte* msg);

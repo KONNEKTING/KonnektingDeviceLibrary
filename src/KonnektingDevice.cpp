@@ -16,9 +16,14 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Knx Programming via GroupWrite-telegram
+/**
+ * \class KonnektingDevice
+ * \brief Knx Programming via GroupWrite-telegram
  * 
+ * Here comes the description ...
+ * 
+ * \version 1.0.0-beta5 $
+ 
  * @author Alexander Christian <info(at)root1.de>
  * @since 2015-11-06
  * @license GPLv3
@@ -208,18 +213,18 @@ bool KonnektingDevice::isFactorySetting() {
  * @param parameter-id to calc skipbytes for
  * @return bytes to skip
  */
-int KonnektingDevice::calcParamSkipBytes(byte index) {
+int KonnektingDevice::calcParamSkipBytes(int index) {
     // calc bytes to skip
     int skipBytes = 0;
     if (index > 0) {
-        for (byte i = 0; i < index; i++) {
+        for (int i = 0; i < index; i++) {
             skipBytes += getParamSize(i);
         }
     }
     return skipBytes;
 }
 
-byte KonnektingDevice::getParamSize(byte index) {
+byte KonnektingDevice::getParamSize(int index) {
     return _paramSizeList[index];
 }
 
@@ -235,7 +240,7 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
     DEBUG_PRINTLN(F("getParamValue: index=%d _paramTableStartindex=%d skipbytes=%d paremLen=%d"), index, _paramTableStartindex, skipBytes, paramLen);
 
     // read byte by byte
-    for (byte i = 0; i < paramLen; i++) {
+    for (int i = 0; i < paramLen; i++) {
 
         int addr = _paramTableStartindex + skipBytes + i;
 
@@ -448,15 +453,16 @@ bool KonnektingDevice::internalComObject(byte index) {
 
 }
 
-void KonnektingDevice::sendAck(byte errorcode, byte indexinformation) {
-    DEBUG_PRINTLN(F("sendAck errorcode=0x%02x indexInformation=0x%02x"), errorcode, indexinformation);
+void KonnektingDevice::sendAck(byte errorcode, int indexinformation) {
+    DEBUG_PRINTLN(F("sendAck errorcode=0x%02x indexInformation=0x%04x"), errorcode, indexinformation);
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ACK;
     response[2] = (errorcode == 0x00 ? 0x00 : 0xFF);
     response[3] = errorcode;
-    response[4] = indexinformation;
-    for (byte i = 5; i < 14; i++) {
+    response[4] = (indexinformation >> 8) & 0xff;
+    response[5] = (indexinformation >> 0) & 0xff;
+    for (byte i = 6; i < 14; i++) {
         response[i] = 0x00;
     }
     Knx.write(PROGCOMOBJ_INDEX, response);
@@ -789,7 +795,7 @@ void KonnektingDevice::memoryCommit() {
     }
 }
 
-uint8_t KonnektingDevice::getUINT8Param(byte index) {
+uint8_t KonnektingDevice::getUINT8Param(int index) {
     if (getParamSize(index) != PARAM_UINT8) {
         DEBUG_PRINTLN(F("Requested UINT8 param for index %d but param has different length! Will Return 0."), index);
         return 0;
@@ -801,7 +807,7 @@ uint8_t KonnektingDevice::getUINT8Param(byte index) {
     return paramValue[0];
 }
 
-int8_t KonnektingDevice::getINT8Param(byte index) {
+int8_t KonnektingDevice::getINT8Param(int index) {
     if (getParamSize(index) != PARAM_INT8) {
         DEBUG_PRINTLN(F("Requested INT8 param for index %d but param has different length! Will Return 0."), index);
         return 0;
@@ -813,7 +819,7 @@ int8_t KonnektingDevice::getINT8Param(byte index) {
     return paramValue[0];
 }
 
-uint16_t KonnektingDevice::getUINT16Param(byte index) {
+uint16_t KonnektingDevice::getUINT16Param(int index) {
     if (getParamSize(index) != PARAM_UINT16) {
         DEBUG_PRINTLN(F("Requested UINT16 param for index %d but param has different length! Will Return 0."), index);
         return 0;
@@ -827,7 +833,7 @@ uint16_t KonnektingDevice::getUINT16Param(byte index) {
     return val;
 }
 
-int16_t KonnektingDevice::getINT16Param(byte index) {
+int16_t KonnektingDevice::getINT16Param(int index) {
     if (getParamSize(index) != PARAM_INT16) {
         DEBUG_PRINTLN(F("Requested INT16 param for index %d but param has different length! Will Return 0."), index);
         return 0;
@@ -846,7 +852,7 @@ int16_t KonnektingDevice::getINT16Param(byte index) {
     return val;
 }
 
-uint32_t KonnektingDevice::getUINT32Param(byte index) {
+uint32_t KonnektingDevice::getUINT32Param(int index) {
     if (getParamSize(index) != PARAM_UINT32) {
         DEBUG_PRINTLN(F("Requested UINT32 param for index %d but param has different length! Will Return 0."), index);
         return 0;
@@ -860,7 +866,7 @@ uint32_t KonnektingDevice::getUINT32Param(byte index) {
     return val;
 }
 
-int32_t KonnektingDevice::getINT32Param(byte index) {
+int32_t KonnektingDevice::getINT32Param(int index) {
     if (getParamSize(index) != PARAM_INT32) {
         DEBUG_PRINTLN(F("Requested INT32 param for index %d but param has different length! Will Return 0."), index);
         return 0;
@@ -874,7 +880,7 @@ int32_t KonnektingDevice::getINT32Param(byte index) {
     return val;
 }
 
-String KonnektingDevice::getSTRING11Param(byte index) {
+String KonnektingDevice::getSTRING11Param(int index) {
     String ret;
     if (getParamSize(index) != PARAM_STRING11) {
         DEBUG_PRINTLN(F("Requested STRING11 param for index %d but param has different length! Will Return \"\""), index);
