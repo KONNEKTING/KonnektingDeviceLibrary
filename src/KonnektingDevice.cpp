@@ -150,8 +150,8 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
     DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
 
-    // calc index of parameter table in eeprom --> depends on number of com objects
-    _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
+    // calc  of parameter table in eeprom --> depends on number of com objects
+    _paramTableStart = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
 
     _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
 
@@ -603,7 +603,7 @@ void KonnektingDevice::handleMsgReadIndividualAddress(byte msg[]) {
 void KonnektingDevice::handleMsgWriteParameter(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgWriteParameter"));
 
-    byte index = msg[2];
+    int index = msg[2];
 
     if (index > _numberOfParams - 1) {
         sendAck(KNX_DEVICE_INVALID_INDEX, index);
@@ -631,7 +631,7 @@ void KonnektingDevice::handleMsgWriteParameter(byte msg[]) {
 
 void KonnektingDevice::handleMsgReadParameter(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgReadParameter"));
-    byte index = msg[0];
+    int index = msg[0];
 
     byte paramSize = getParamSize(index);
 
