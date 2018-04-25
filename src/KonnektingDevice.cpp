@@ -22,8 +22,7 @@
  * 
  * Here comes the description ...
  * 
- * \version 1.0.0-beta5 $
- 
+ * \version 1.0.0-beta4a $ 
  * @author Alexander Christian <info(at)root1.de>
  * @since 2015-11-06
  * @license GPLv3
@@ -38,7 +37,7 @@
 
 #define DEBUG_PROTOCOL
 #define WRITEMEM
-// reboot fearure via progbutton
+// reboot feature via progbutton
 #define REBOOT_BUTTON
 
 #include "Arduino.h"
