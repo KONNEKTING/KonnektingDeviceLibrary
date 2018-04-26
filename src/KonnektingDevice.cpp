@@ -912,6 +912,14 @@ void KonnektingDevice::memoryCommit() {
     }
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the uint8 value of given parameter
+ *  @param  index
+ *          index of parameter
+ *  @return uint8 value of parameter
+ */
+/**************************************************************************/
 uint8_t KonnektingDevice::getUINT8Param(int index) {
     if (getParamSize(index) != PARAM_UINT8) {
         DEBUG_PRINTLN(F("Requested UINT8 param for index %d but param has different length! Will Return 0."), index);
@@ -924,6 +932,14 @@ uint8_t KonnektingDevice::getUINT8Param(int index) {
     return paramValue[0];
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the int8 value of given parameter
+ *  @param  index
+ *          index of parameter
+ *  @return int8 value of parameter
+ */
+/**************************************************************************/
 int8_t KonnektingDevice::getINT8Param(int index) {
     if (getParamSize(index) != PARAM_INT8) {
         DEBUG_PRINTLN(F("Requested INT8 param for index %d but param has different length! Will Return 0."), index);
@@ -936,6 +952,14 @@ int8_t KonnektingDevice::getINT8Param(int index) {
     return paramValue[0];
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the uint16 value of given parameter
+ *  @param  index
+ *          index of parameter
+ *  @return uint16 value of parameter
+ */
+/**************************************************************************/
 uint16_t KonnektingDevice::getUINT16Param(int index) {
     if (getParamSize(index) != PARAM_UINT16) {
         DEBUG_PRINTLN(F("Requested UINT16 param for index %d but param has different length! Will Return 0."), index);
@@ -950,6 +974,14 @@ uint16_t KonnektingDevice::getUINT16Param(int index) {
     return val;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the int16 value of given parameter
+ *  @param  index
+ *          index of parameter
+ *  @return int16 value of parameter
+ */
+/**************************************************************************/
 int16_t KonnektingDevice::getINT16Param(int index) {
     if (getParamSize(index) != PARAM_INT16) {
         DEBUG_PRINTLN(F("Requested INT16 param for index %d but param has different length! Will Return 0."), index);
@@ -969,6 +1001,14 @@ int16_t KonnektingDevice::getINT16Param(int index) {
     return val;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the uint32 value of given parameter
+ *  @param  index
+ *          index of parameter
+ *  @return uint32 value of parameter
+ */
+/**************************************************************************/
 uint32_t KonnektingDevice::getUINT32Param(int index) {
     if (getParamSize(index) != PARAM_UINT32) {
         DEBUG_PRINTLN(F("Requested UINT32 param for index %d but param has different length! Will Return 0."), index);
@@ -983,6 +1023,14 @@ uint32_t KonnektingDevice::getUINT32Param(int index) {
     return val;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the int32 value of given parameter
+ *  @param  index
+ *          index of parameter
+ *  @return int32 value of parameter
+ */
+/**************************************************************************/
 int32_t KonnektingDevice::getINT32Param(int index) {
     if (getParamSize(index) != PARAM_INT32) {
         DEBUG_PRINTLN(F("Requested INT32 param for index %d but param has different length! Will Return 0."), index);
@@ -997,6 +1045,14 @@ int32_t KonnektingDevice::getINT32Param(int index) {
     return val;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the string value of given parameter
+ *  @param  index
+ *          index of parameter
+ *  @return string value of parameter
+ */
+/**************************************************************************/
 String KonnektingDevice::getSTRING11Param(int index) {
     String ret;
     if (getParamSize(index) != PARAM_STRING11) {
@@ -1020,6 +1076,13 @@ String KonnektingDevice::getSTRING11Param(int index) {
     return ret;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Returns the address at which the "user space" in eeprom starts.
+ *          The area in front of this address is used by KONNEKTING and writing to this area is not allowed
+ *  @return eeprom address at which the "user space" starts
+ */
+/**************************************************************************/
 int KonnektingDevice::getFreeEepromOffset() {
 
     int offset = _paramTableStartindex;
@@ -1029,18 +1092,50 @@ int KonnektingDevice::getFreeEepromOffset() {
     return offset;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Sets the function to call when doing 'read' on memory.
+ *  @param  func
+ *          function pointer to memory read function
+ *  @return void
+ */
+/**************************************************************************/
 void KonnektingDevice::setMemoryReadFunc(byte(*func)(int)) {
     eepromReadFunc = func;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Sets the function to call when doing 'write' on memory.
+ *  @param  func
+ *          function pointer to memory write function
+ *  @return void
+ */
+/**************************************************************************/
 void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
     eepromWriteFunc = func;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Sets the function to call when doing 'update' on memory.
+ *  @param  func
+ *          function pointer to memory update function
+ *  @return void
+ */
+/**************************************************************************/
 void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
     eepromUpdateFunc = func;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Sets the function to call when memory changes are done ('commit').
+ *  @param  func
+ *          function pointer to memory commit function
+ *  @return void
+ */
+/**************************************************************************/
 void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
     eepromCommitFunc = func;
 }
