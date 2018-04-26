@@ -186,7 +186,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
     DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
 
     // calc  of parameter table in eeprom --> depends on number of com objects
-    _paramTableStart = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
+    _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
 
     _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
 
