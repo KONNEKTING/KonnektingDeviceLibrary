@@ -91,17 +91,18 @@ extern void konnektingKnxEvents(byte index);
 /*! 
  *  @brief  Main class provides KONNEKTING Device API
  */
+
 /**************************************************************************/
 class KonnektingDevice {
     static byte _paramSizeList[];
     static const int _numberOfParams;
-    
-    byte (*eepromReadFunc)(int);
+
+    byte(*eepromReadFunc)(int);
     void (*eepromWriteFunc)(int, byte);
     void (*eepromUpdateFunc)(int, byte);
     void (*eepromCommitFunc)(void);
     void (*setProgLedFunc)(bool);
-    
+
     // Constructor, Destructor
     KonnektingDevice(); // private constructor (singleton design pattern)
 
@@ -111,29 +112,29 @@ class KonnektingDevice {
 
 public:
     static KonnektingDevice Konnekting;
-    
-    void setMemoryReadFunc(byte (*func)(int));
+
+    void setMemoryReadFunc(byte(*func)(int));
     void setMemoryWriteFunc(void (*func)(int, byte));
     void setMemoryUpdateFunc(void (*func)(int, byte));
     void setMemoryCommitFunc(void (*func)(void));
 
-    void init(HardwareSerial& serial, 
-                void (*func)(bool), 
-                word manufacturerID, 
-                byte deviceID, 
-                byte revisionID
-                );
+    void init(HardwareSerial& serial,
+            void (*func)(bool),
+            word manufacturerID,
+            byte deviceID,
+            byte revisionID
+            );
 
-    void init(HardwareSerial& serial, 
-                int progButtonPin, 
-                int progLedPin, 
-                word manufacturerID, 
-                byte deviceID, 
-                byte revisionID
-                );
+    void init(HardwareSerial& serial,
+            int progButtonPin,
+            int progLedPin,
+            word manufacturerID,
+            byte deviceID,
+            byte revisionID
+            );
 
     bool internalKnxEvents(byte index);
-    
+
     // must be public to be accessible from KonnektingProgButtonPressed())
     void toggleProgState();
 
@@ -141,32 +142,32 @@ public:
 
     byte getParamSize(int index);
     void getParamValue(int index, byte* value);
-    
+
     uint8_t getUINT8Param(int index);
     int8_t getINT8Param(int index);
-    
+
     uint16_t getUINT16Param(int index);
     int16_t getINT16Param(int index);
-    
+
     uint32_t getUINT32Param(int index);
     int32_t getINT32Param(int index);
-    
+
     String getSTRING11Param(int index);
 
     bool isActive();
     bool isFactorySetting();
-    
+
     bool isProgState();
-    
+
     bool isReadyForApplication();
 
     int getFreeEepromOffset();
-    
+
 private:
 
     bool _rebootRequired = false;
     bool _initialized = false;
-   
+
     int _progbtnCount = 0;
     long _lastProgbtn = 0;
 
@@ -189,8 +190,8 @@ private:
     int calcParamSkipBytes(int index);
 
     void setProgState(bool state);
-    
-    
+
+
     bool isMatchingIA(byte hi, byte lo);
 
     void reboot();
@@ -207,11 +208,11 @@ private:
     void handleMsgReadParameter(byte* msg);
     void handleMsgWriteComObject(byte* msg);
     void handleMsgReadComObject(byte* msg);
-    
+
     int memoryRead(int index);
-    void memoryWrite(int index, byte date);        
-    void memoryUpdate(int index, byte date);        
-    void memoryCommit();        
+    void memoryWrite(int index, byte date);
+    void memoryUpdate(int index, byte date);
+    void memoryCommit();
 
 };
 
