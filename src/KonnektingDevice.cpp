@@ -233,16 +233,21 @@ void KonnektingDevice::init(HardwareSerial& serial,
     }
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  checks if the device is already initialized and active.
+ *  @return True if the device has been initialized (by calling one of the init() functions).
+ */
+/**************************************************************************/
 bool KonnektingDevice::isActive() {
     return _initialized;
 }
 
 /**************************************************************************/
 /*!
- *  @brief  checks if the device is in factory settings mode, means: has not been programmed so far
+ *  @brief  checks if the device is in factory settings mode, means: has not been programmed so far.
  *  @return True if factory settings are active
  */
-
 /**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
     bool isFactory = (_deviceFlags == 0xff);
