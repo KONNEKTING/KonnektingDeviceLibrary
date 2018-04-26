@@ -89,8 +89,8 @@ extern void konnektingKnxEvents(byte index);
 
 /**************************************************************************/
 /*! 
-    @brief  Main class provides KONNEKTING Device API
-*/
+ *  @brief  Main class provides KONNEKTING Device API
+ */
 /**************************************************************************/
 class KonnektingDevice {
     static byte _paramSizeList[];
@@ -153,24 +153,11 @@ public:
     
     String getSTRING11Param(int index);
 
-    /**
-     * Check whether the Knx KonnektingDevice is initialized (Konnekting.init(...)) and therefore active or not
-     * @return true, if tools are initialized and active, false if not
-     */
     bool isActive();
     bool isFactorySetting();
     
-    /**
-     * Gets programming state
-     * @return true, if programming is active, false if not
-     */
     bool isProgState();
     
-    /**
-     * Check whether Konnekting is ready for application logic. 
-     * (Means: no busy with programming-mode and not running with factory settings)
-     * @return true if it's safe to run application logic
-     */
     bool isReadyForApplication();
 
     int getFreeEepromOffset();
