@@ -1,4 +1,26 @@
-/*
+/*!
+ * @file KonnektingDevice.cpp
+ *
+ * @mainpage KONNEKTING Device Library
+ *
+ * @section intro_sec Introduction
+ *
+ * This is the documentation for KONNEKTINGs Arduno Device Library.
+ *
+ * See https://wiki.konnekting.de for more information
+ *
+ * @section dependencies Dependencies
+ *
+ * This library depends on <a href="https://foo/bar">
+ * Foo Bar</a> being present on your system. Please make sure you have
+ * installed the latest version before using this library.
+ *
+ * @section author Author
+ *
+ * Written by Alexander Christian.
+ *
+ * @section license License
+ *
  *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights reserved.
  *    This file is part of KONNEKTING Knx Device Library.
  * 
@@ -14,18 +36,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * \class KonnektingDevice
- * \brief Knx Programming via GroupWrite-telegram
- * 
- * Here comes the description ...
- * 
- * \version 1.0.0-beta4a $ 
- * @author Alexander Christian <info(at)root1.de>
- * @since 2015-11-06
- * @license GPLv3
+ *
  */
 
 
@@ -63,19 +74,35 @@ KonnektingDevice& Konnekting = KonnektingDevice::Konnekting;
  * Intercepting knx events to process internal com objects
  * @param index
  */
+/**************************************************************************/
+/*!
+    @brief  Intercepting knx events to process internal com objects
+    @param    index
+                Comobject index
+    @return void
+ */
+
+/**************************************************************************/
 void konnektingKnxEvents(byte index) {
 
     DEBUG_PRINTLN(F("\n\nkonnektingKnxEvents index=%d"), index);
 
     // if it's not a internal com object, route back to knxEvents()
-    if (!Konnekting.internalComObject(index)) {
+    if (!Konnekting.internalKnxEvents(index)) {
         knxEvents(index);
     }
 }
 
-/**
- * Constructor
+/***************************************************************************
+ CONSTRUCTOR
+ ***************************************************************************/
+
+/**************************************************************************/
+/*!
+    @brief  Instantiates a new KONNEKTING Device class
  */
+
+/**************************************************************************/
 KonnektingDevice::KonnektingDevice() {
 
     DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
@@ -96,17 +123,26 @@ KonnektingDevice::KonnektingDevice() {
 
 }
 
-/**
- * Starts KNX KonnektingDevice, as well as KNX Device
- * 
- * @param serial serial port reference, f.i. "Serial" or "Serial1"
- * @param progButtonPin pin which drives LED when in programming mode
- * @param progLedPin pin which toggles programming mode, needs an interrupt capable pin!
- * @param manufacturerID
- * @param deviceID
- * @param revisionID
- * 
+
+/**************************************************************************/
+/*!
+ *  @brief   Starts KNX KonnektingDevice, as well as KNX Device
+ *  @param  serial 
+ *          serial port reference, f.i. "Serial" or "Serial1"
+ *  @param  progButtonPin 
+ *          pin which drives LED when in programming mode
+ *  @param  progLedPin 
+ *          pin which toggles programming mode, needs an interrupt capable pin!
+ *  @param  manufacturerID
+ *          The ID of manufacturer
+ *  @param  deviceID
+ *          The ID of the device
+ *  @param  revisionID
+ *          The device's revision
+ *  @return void
  */
+
+/**************************************************************************/
 void KonnektingDevice::init(HardwareSerial& serial,
         int progButtonPin,
         int progLedPin,
@@ -125,8 +161,8 @@ void KonnektingDevice::init(HardwareSerial& serial,
     _deviceID = deviceID;
     _revisionID = revisionID;
 
-    _progLED = progLedPin; 
-    _progButton = progButtonPin; 
+    _progLED = progLedPin;
+    _progButton = progButtonPin;
 
     _lastProgbtn = 0;
     _progbtnCount = 0;
@@ -201,17 +237,28 @@ bool KonnektingDevice::isActive() {
     return _initialized;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  checks if the device is in factory settings mode, means: has not been programmed so far
+ *  @return True if factory settings are active
+ */
+
+/**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
     bool isFactory = (_deviceFlags == 0xff);
     //    DEBUG_PRINTLN(F("isFactorySetting: %d"), isFactory);
     return isFactory;
 }
 
-/*
- * Bytes to skip when reading/writing in param-table
- * @param parameter-id to calc skipbytes for
- * @return bytes to skip
+/**************************************************************************/
+/*!
+ *  @brief  Bytes to skip when reading/writing in param-table
+ *  @param  index
+ *          parameter-id to calc skipbytes for
+ *  @return bytes to skip
  */
+
+/**************************************************************************/
 int KonnektingDevice::calcParamSkipBytes(int index) {
     // calc bytes to skip
     int skipBytes = 0;
@@ -223,10 +270,30 @@ int KonnektingDevice::calcParamSkipBytes(int index) {
     return skipBytes;
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the size in byte of a param identified by its index
+ *  @param  index
+ *          parameter-id to get the size of
+ *  @return size in bytes
+ */
+
+/**************************************************************************/
 byte KonnektingDevice::getParamSize(int index) {
     return _paramSizeList[index];
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Gets the size in byte of a param identified by its index
+ *  @param  index
+ *          parameter-id of the parameter to get the value for
+ *  @param[out] value
+ *          the value of the parameter
+ *  @return void
+ */
+
+/**************************************************************************/
 void KonnektingDevice::getParamValue(int index, byte value[]) {
 
     if (index > _numberOfParams - 1) {
@@ -248,24 +315,34 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
     }
 }
 
-/**
- * prog-button-interrupt ISR
+/**************************************************************************/
+/*!
+ *  @brief  Interrupt Service Routines for the prog-button
+ *          Used when actually using the built-int prog-button-feature that requires an interrupt enabled pin.
+ *          Although this function is "public", it's NOT part of the API and should not be called by users.
+ *  @return void
  */
+
+/**************************************************************************/
 void KonnektingProgButtonPressed() {
     DEBUG_PRINTLN(F("PrgBtn toggle"));
     Konnekting.toggleProgState();
 }
 
-/**
- * User-toggle the actually ProgState
+/**************************************************************************/
+/*!
+ *  @brief  Toggle the "programming mode" state. 
+ *          This is typically called by prog-button-implementation.
+ *  @return void
  */
+/**************************************************************************/
 void KonnektingDevice::toggleProgState() {
 
 #ifdef REBOOT_BUTTON    
     if (millis() - _lastProgbtn < 300) {
         _progbtnCount++;
-        
-        if (_progbtnCount==3) {
+
+        if (_progbtnCount == 3) {
             DEBUG_PRINTLN(F("Forced-Reboot-Request detected"));
             reboot();
         }
@@ -274,7 +351,7 @@ void KonnektingDevice::toggleProgState() {
     }
     _lastProgbtn = millis();
 #endif    
-    
+
     _progState = !_progState; // toggle
     setProgState(_progState); // set
     if (_rebootRequired) {
@@ -283,28 +360,39 @@ void KonnektingDevice::toggleProgState() {
     }
 }
 
-/**
- * Gets programming state
- * @return true, if programming is active, false if not
+/**************************************************************************/
+/*!
+ *  @brief  Gets programming mode state
+ *  @return true, if programming is active, false if not
  */
+
+/**************************************************************************/
 bool KonnektingDevice::isProgState() {
     return _progState;
 }
 
-/**
- * Check whether Konnekting is ready for application logic. 
- * (Means: not busy with programming-mode and not running with factory settings)
- * @return true if it's safe to run application logic
+/**************************************************************************/
+/*!
+ *  @brief  Check whether Konnekting is ready for application logic. 
+ *          Means: not busy with programming-mode and not running with factory settings
+ *  @return true if it's safe to run application logic
  */
+
+/**************************************************************************/
 bool KonnektingDevice::isReadyForApplication() {
     bool isReady = (!isProgState() && !isFactorySetting());
     return isReady;
 }
 
-/**
- * Sets thep prog state to given boolean value
- * @param state new prog state
+/**************************************************************************/
+/*!
+ *  @brief  Sets thep prog state to given boolean value
+ *  @param  state 
+ *          new prog state
+ *  @return true if it's safe to run application logic
  */
+
+/**************************************************************************/
 void KonnektingDevice::setProgState(bool state) {
     if (state == true) {
         _progState = true;
@@ -317,10 +405,17 @@ void KonnektingDevice::setProgState(bool state) {
     }
 }
 
-/**
- * Check if given 2byte ID is matching the current set IA
- * @return true if match, false if not
+/**************************************************************************/
+/*!
+ *  @brief  Check if given 2byte ID is matching the current set IA
+ *  @param  hi
+ *          high byte of IA
+ *  @param  lo
+ *          low byte of IA
+ *  @return true if match, false if not
  */
+
+/**************************************************************************/
 bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
     byte iaHi = (_individualAddress >> 8) & 0xff;
     byte iaLo = (_individualAddress >> 0) & 0xff;
@@ -328,10 +423,12 @@ bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
     return (hi == iaHi && lo == iaLo);
 }
 
-/**
- * Creates inter prog-com-object
- * @return prog com object
+/**************************************************************************/
+/*!
+ *  @brief  Creates internal programming ComObj
+ *  @return KnxComObject
  */
+/**************************************************************************/
 KnxComObject KonnektingDevice::createProgComObject() {
     DEBUG_PRINTLN(F("createProgComObject"));
     KnxComObject p = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
@@ -340,9 +437,14 @@ KnxComObject KonnektingDevice::createProgComObject() {
     return /* Index 0 */ p;
 }
 
-/**
- * Reboot device 
+/**************************************************************************/
+/*!
+ *  @brief  Reboot the device
+ *          This is typically done after finishing the programming process
+ *          to get the device back in a well-known state with new settings
+ *  @return void
  */
+/**************************************************************************/
 void KonnektingDevice::reboot() {
     Knx.end();
 
@@ -356,7 +458,8 @@ void KonnektingDevice::reboot() {
     WDT->CONFIG.reg = 0; // see Table 17-5 Timeout Period (valid values 0-11)
     WDT->CTRL.reg = WDT_CTRL_ENABLE; //enable watchdog
     while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
-    while (1) {}
+    while (1) {
+    }
 #elif __AVR_ATmega328P__
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
@@ -372,14 +475,19 @@ void KonnektingDevice::reboot() {
 
 }
 
-/**
- * Check if given index is an internal comobject
- * @param index
- * @return true, if index was internal comobject and has been handled, false if not
+/**************************************************************************/
+/*!
+ *  @brief  processes internal comobj for programming purpose.
+ *          This method is feed with _all_ comobj events. If it's internal comobj, it's handled and return value is true.
+ *          If it's a user defined comobj, all processing is skipped and false is returned.
+ *  @param  index
+ *          index of incoming comobj
+ *  @return true, if index was internal comobject and has been handled, false if not
  */
-bool KonnektingDevice::internalComObject(byte index) {
+/**************************************************************************/
+bool KonnektingDevice::internalKnxEvents(byte index) {
 
-    DEBUG_PRINTLN(F("internalComObject index=%d"), index);
+    DEBUG_PRINTLN(F("internalKnxEvents index=%d"), index);
     bool consumed = false;
     switch (index) {
         case 255: // prog com object index 255 has been updated
@@ -452,6 +560,16 @@ bool KonnektingDevice::internalComObject(byte index) {
 
 }
 
+/**************************************************************************/
+/*!
+ *  @brief  Sending ACK message back to the bus
+ *  @param  errorcode
+ *          error code, if any
+ *  @param  indexinformation
+ *          indexinformation, if error is related to an index 
+ *  @return void
+ */
+/**************************************************************************/
 void KonnektingDevice::sendAck(byte errorcode, int indexinformation) {
     DEBUG_PRINTLN(F("sendAck errorcode=0x%02x indexInformation=0x%04x"), errorcode, indexinformation);
     byte response[14];
@@ -522,7 +640,7 @@ void KonnektingDevice::handleMsgWriteProgrammingMode(byte msg[]) {
 #endif
         setProgState(msg[4] == 0x01);
         sendAck(0x00, 0x00);
-        
+
 #ifdef ESP8266
         // ESP8266 uses own EEPROM implementation which requires commit() call
         if (msg[4] == 0x00) {
@@ -911,7 +1029,7 @@ int KonnektingDevice::getFreeEepromOffset() {
     return offset;
 }
 
-void KonnektingDevice::setMemoryReadFunc(byte (*func)(int)) {
+void KonnektingDevice::setMemoryReadFunc(byte(*func)(int)) {
     eepromReadFunc = func;
 }
 

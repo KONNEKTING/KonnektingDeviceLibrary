@@ -1,4 +1,8 @@
-/*
+/*!
+ * @file KonnektingDevice.h
+ *
+ * This is part of KONNEKTING Device Library for the Arduino platform.  
+ *
  *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights reserved.
  *    This file is part of KONNEKTING Knx Device Library.
  *
@@ -14,14 +18,6 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * Knx Programming via GroupWrite-telegram
- * 
- * @author Alexander Christian <info(at)root1.de>
- * @since 2015-11-06
- * @license GPLv3
  */
 
 #ifndef KONNEKTING_h
@@ -40,17 +36,17 @@
 #endif
 #endif
 
-#define EEPROM_DEVICE_FLAGS          0
-#define EEPROM_INDIVIDUALADDRESS_HI  1
-#define EEPROM_INDIVIDUALADDRESS_LO  2
-#define EEPROM_COMOBJECTTABLE_START 10
+#define EEPROM_DEVICE_FLAGS          0  ///< EEPROM index for device flags
+#define EEPROM_INDIVIDUALADDRESS_HI  1  ///< EEPROM index for IA, high byte
+#define EEPROM_INDIVIDUALADDRESS_LO  2  ///< EEPROM index for IA, low byte
+#define EEPROM_COMOBJECTTABLE_START 10  ///< EEPROM index start of comobj table
 
 #define PROTOCOLVERSION 0
 
-#define MSGTYPE_ACK                         0 // 0x00
-#define MSGTYPE_READ_DEVICE_INFO            1 // 0x01
-#define MSGTYPE_ANSWER_DEVICE_INFO          2 // 0x02
-#define MSGTYPE_RESTART                     9 // 0x09
+#define MSGTYPE_ACK                         0 ///< Message Type: ACK 0x00
+#define MSGTYPE_READ_DEVICE_INFO            1 ///< Message Type: Read Device Information 0x01
+#define MSGTYPE_ANSWER_DEVICE_INFO          2 ///< Message Type: Answer Device Information 0x02
+#define MSGTYPE_RESTART                     9 ///< Message Type: Restart 0x09
 
 #define MSGTYPE_WRITE_PROGRAMMING_MODE      10 // 0x0A
 #define MSGTYPE_READ_PROGRAMMING_MODE       11 // 0x0B
@@ -91,6 +87,11 @@
 // process intercepted knxEvents-calls with this method
 extern void konnektingKnxEvents(byte index);
 
+/**************************************************************************/
+/*! 
+    @brief  Main class provides KONNEKTING Device API
+*/
+/**************************************************************************/
 class KonnektingDevice {
     static byte _paramSizeList[];
     static const int _numberOfParams;
@@ -131,14 +132,7 @@ public:
                 byte revisionID
                 );
 
-    /**
-     * needs to be called in "void konnektingKnxEvents(byte index)" to check if ComObject is
-     * an internal ComObject which is not needed to be handled by developer
-     * f.i. ComObject 0 --> for programming purpose
-     * @param index index of KnxComObject
-     * @return if provided comobject index is an internal comobject (true) or not (false)
-     */
-    bool internalComObject(byte index);
+    bool internalKnxEvents(byte index);
     
     // must be public to be accessible from KonnektingProgButtonPressed())
     void toggleProgState();
