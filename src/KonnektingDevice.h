@@ -160,6 +160,8 @@ public:
     bool isProgState();
 
     bool isReadyForApplication();
+	
+	void setProgState(bool state);
 
     int getFreeEepromOffset();
 
@@ -188,10 +190,7 @@ private:
     bool _progState;
 
     int calcParamSkipBytes(int index);
-
-    void setProgState(bool state);
-
-
+	
     bool isMatchingIA(byte hi, byte lo);
 
     void reboot();

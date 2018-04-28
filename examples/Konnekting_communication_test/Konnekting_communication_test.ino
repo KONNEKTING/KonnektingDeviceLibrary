@@ -26,12 +26,17 @@ SoftwareSerial softserial(11, 10); // RX, TX
 // ################################################
 // ### IO Configuration
 // ################################################
-#define PROG_LED_PIN 13
-#define PROG_BUTTON_PIN 7
+#define LED_PIN LED_BUILTIN
 
 // defaults to on-board LED for AVR Arduinos
-#define TEST_LED 13 //or change it to another pin
+#define TEST_LED LED_BUILTIN //or change it to another pin
 
+// ################################################
+// ### set LED status
+// ################################################
+void progLed (bool state){ 
+    digitalWrite(LED_PIN, state);
+}
 
 //(use knx_address_calculator.html to calculate your own address/GA)
 //define hardcoded address 1.1.199 
@@ -72,7 +77,7 @@ const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (K
 byte KonnektingDevice::_paramSizeList[] = {
     /* Param Index 0 */ PARAM_UINT16
 };
-const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
+const int KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
 unsigned long blinkDelay = 2500;
 unsigned long lastmillis = millis(); 
@@ -90,10 +95,10 @@ void knxEvents(byte index) {
         case 0: // object index has been updated
 
             if (Knx.read(0)) {
-                digitalWrite(TEST_LED, HIGH);
+                digitalWrite(LED_PIN, HIGH);
                 Debug.println(F("Toggle LED: on"));
             } else {
-                digitalWrite(TEST_LED, LOW);
+                digitalWrite(LED_PIN, LOW);
                 Debug.println(F("Toggle LED: off"));
             }
             break;
@@ -106,9 +111,9 @@ void knxEvents(byte index) {
 void setup() {
 
 //write hardcoded PA and GAs
-EEPROM.write(0, hiAddr);  //Set "not factory" flag
-EEPROM.write(1, hiAddr);  //hiAddr
-EEPROM.write(2, loAddr);  //loAddr
+EEPROM.write(0, 0x00);   //Set "not factory" flag
+EEPROM.write(1, hiAddr); //hiAddr
+EEPROM.write(2, loAddr); //loAddr
 EEPROM.write(10, hiGA1); //hi GA1
 EEPROM.write(11, loGA1); //lo GA1
 EEPROM.write(12, 0x80);  //activate GA1
@@ -120,8 +125,8 @@ EEPROM.write(15, 0x80);  //activate GA2
     // debug related stuff
 #ifdef KDEBUG
 
-    // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(9600);
+    // Start debug serial with 115200 bauds
+    DEBUGSERIAL.begin(115200);
 
 #ifdef __AVR_ATmega32U4__
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
@@ -133,8 +138,11 @@ EEPROM.write(15, 0x80);  //activate GA2
     Debug.setPrintStream(&DEBUGSERIAL);
 #endif
     // Initialize KNX enabled Arduino Board
-    Konnekting.init(KNX_SERIAL, PROG_BUTTON_PIN, PROG_LED_PIN, MANUFACTURER_ID, DEVICE_ID, REVISION);
-
+    Konnekting.init(KNX_SERIAL,
+            &progLed,
+            MANUFACTURER_ID,
+            DEVICE_ID,
+            REVISION);
 
     Debug.println(F("Toggle LED every %d ms."), blinkDelay);
     Debug.println(F("Setup is ready. go to loop..."));
@@ -162,7 +170,7 @@ void loop() {
             laststate = !laststate;
             lastmillis = currentmillis;
 
-            digitalWrite(TEST_LED, HIGH);
+            digitalWrite(LED_PIN, HIGH);
             Debug.println(F("DONE"));
 
         }

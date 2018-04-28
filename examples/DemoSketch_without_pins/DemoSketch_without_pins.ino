@@ -44,9 +44,9 @@ SoftwareSerial softserial(11, 10); // RX, TX
 // ################################################
 // ### IO Configuration
 // ################################################
-#define PROG_LED_PIN 9
-#define PROG_BUTTON_PIN 3
-#define TEST_LED 5 //or change it to another pin
+#define LED_1_PIN 11 //prog state
+#define LED_2_PIN 12 //comObj state
+#define LED_3_PIN 13 //blinking LED
 
 
 // ################################################
@@ -70,6 +70,12 @@ int laststate = false;
 #include "EEPROM_24AA256.h"
 #endif
 
+// ################################################
+// ### set ProgLED status
+// ################################################
+void progLed (bool state){ 
+    digitalWrite(LED_1_PIN, state);
+}
 
 // ################################################
 // ### SETUP
@@ -80,7 +86,7 @@ void setup() {
     // debug related stuff
 #ifdef KDEBUG
 
-    // Start debug serial with 9600 bauds
+    // Start debug serial with 115200 bauds
     DEBUGSERIAL.begin(115200);
 
 #if defined(__AVR_ATmega32U4__) || defined(__SAMD21G18A__)
@@ -94,8 +100,9 @@ void setup() {
 #endif
 
     Debug.print(F("KONNEKTING DemoSketch\n"));
-
-    pinMode(TEST_LED, OUTPUT);
+    pinMode(LED_1_PIN, OUTPUT);
+    pinMode(LED_2_PIN, OUTPUT);
+    pinMode(LED_3_PIN, OUTPUT);
 
     /*
      * Only required when using external eeprom (or similar) storage.
@@ -112,8 +119,7 @@ void setup() {
 
     // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL,
-            PROG_BUTTON_PIN,
-            PROG_LED_PIN,
+            &progLed,
             MANUFACTURER_ID,
             DEVICE_ID,
             REVISION);
@@ -128,6 +134,11 @@ void setup() {
 
     Debug.println(F("Toggle LED every %d ms."), blinkDelay);
     Debug.println(F("Setup is ready. go to loop..."));
+    
+    if (Konnekting.isFactorySetting()) {
+        Debug.println(F("Device is in factory mode. Starting programming mode..."));
+        Konnekting.setProgState(true);
+    }
 }
 
 // ################################################
@@ -155,7 +166,7 @@ void loop() {
             laststate = !laststate;
             lastmillis = currentmillis;
 
-            digitalWrite(TEST_LED, HIGH);
+            digitalWrite(LED_3_PIN, laststate);
             Debug.println(F("DONE"));
 
         }
@@ -175,10 +186,10 @@ void knxEvents(byte index) {
         case COMOBJ_ledOnOff: // object index has been updated
 
             if (Knx.read(COMOBJ_ledOnOff)) {
-                digitalWrite(TEST_LED, HIGH);
+                digitalWrite(LED_2_PIN, HIGH);
                 Debug.println(F("Toggle LED: on"));
             } else {
-                digitalWrite(TEST_LED, LOW);
+                digitalWrite(LED_2_PIN, LOW);
                 Debug.println(F("Toggle LED: off"));
             }
             break;
@@ -186,5 +197,5 @@ void knxEvents(byte index) {
         default:
             break;
     }
-};
+}
 

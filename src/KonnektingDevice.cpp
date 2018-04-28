@@ -123,16 +123,111 @@ KonnektingDevice::KonnektingDevice() {
 
 }
 
-
 /**************************************************************************/
 /*!
  *  @brief   Starts KNX KonnektingDevice, as well as KNX Device
  *  @param  serial 
  *          serial port reference, f.i. "Serial" or "Serial1"
+ *  @param  setProgLedFunc
+ *          function pointer to the function to toggle programming mode
+ *  @param  manufacturerID
+ *          The ID of manufacturer
+ *  @param  deviceID
+ *          The ID of the device
+ *  @param  revisionID
+ *          The device's revision
+ *  @return void
+ */
+
+/**************************************************************************/
+
+void KonnektingDevice::init(HardwareSerial& serial,
+        void (*func)(bool),
+        word manufacturerID,
+        byte deviceID,
+        byte revisionID
+        ) {
+
+    DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
+
+    DEBUG_PRINTLN("15/7/255 = 0x%04x", G_ADDR(15, 7, 255));
+
+    _initialized = true;
+
+    _manufacturerID = manufacturerID;
+    _deviceID = deviceID;
+    _revisionID = revisionID;
+
+    setProgLedFunc = func;
+
+    _lastProgbtn = 0;
+    _progbtnCount = 0;
+
+    setProgState(false);
+
+
+    // hardcoded stuff
+    DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
+
+    DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
+
+    // calc  of parameter table in eeprom --> depends on number of com objects
+    _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
+
+    _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
+
+    DEBUG_PRINTLN(F("_deviceFlags: "BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+
+    _individualAddress = P_ADDR(1, 1, 254);
+    if (!isFactorySetting()) {
+        DEBUG_PRINTLN(F("->EEPROM"));
+        /*
+         * Read eeprom stuff
+         */
+
+        // PA
+        byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
+        byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
+        _individualAddress = (hiAddr << 8) + (loAddr << 0);
+
+        // ComObjects
+        // at most 254 com objects, 255 is progcomobj
+        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
+            byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
+            byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
+            byte settings = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
+            word comObjAddr = (hi << 8) + (lo << 0);
+
+            bool active = ((settings & 0x80) == 0x80);
+            Knx.setComObjectAddress(i, comObjAddr, active);
+
+            DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x setting=0x%02x active=%d"), i, hi, lo, comObjAddr, settings, active);
+        }
+
+    } else {
+        DEBUG_PRINTLN(F("->FACTORY"));
+    }
+    DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
+    e_KnxDeviceStatus status;
+    status = Knx.begin(serial, _individualAddress);
+    DEBUG_PRINTLN(F("KnxDevice startup status: 0x%02x"), status);
+
+    if (status != KNX_DEVICE_OK) {
+        DEBUG_PRINTLN(F("Knx init ERROR. Retry after reboot!!"));
+        delay(500);
+        reboot();
+    }
+}
+
+/**************************************************************************/
+/*!
+ *  @brief  Starts KNX KonnektingDevice, as well as KNX Device
+ *  @param  serial 
+ *          serial port reference, f.i. "Serial" or "Serial1"
  *  @param  progButtonPin 
- *          pin which drives LED when in programming mode
- *  @param  progLedPin 
  *          pin which toggles programming mode, needs an interrupt capable pin!
+ *  @param  progLedPin 
+ *          pin which drives LED when in programming mode
  *  @param  manufacturerID
  *          The ID of manufacturer
  *  @param  deviceID
@@ -169,16 +264,10 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
     pinMode(_progLED, OUTPUT);
     pinMode(_progButton, INPUT);
-    //digitalWrite(_progButton, HIGH); //PULLUP
 
-    digitalWrite(_progLED, LOW);
+    setProgState(false);
 
-#ifdef ARDUINO_ARCH_SAMD
-    // sollte eigtl. auch mit "digitalPinToInterrupt" funktionieren, tut es mit dem zero aber irgendwie nicht?!
-    attachInterrupt(_progButton, KonnektingProgButtonPressed, RISING);
-#else    
     attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
-#endif    
 
     // hardcoded stuff
     DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
@@ -357,8 +446,7 @@ void KonnektingDevice::toggleProgState() {
     _lastProgbtn = millis();
 #endif    
 
-    _progState = !_progState; // toggle
-    setProgState(_progState); // set
+    setProgState(!_progState); // toggle and set
     if (_rebootRequired) {
         DEBUG_PRINTLN(F("found rebootRequired flag, triggering reboot"));
         reboot();
@@ -391,23 +479,38 @@ bool KonnektingDevice::isReadyForApplication() {
 
 /**************************************************************************/
 /*!
- *  @brief  Sets thep prog state to given boolean value
+ *  @brief  Sets the prog state to given boolean value
  *  @param  state 
  *          new prog state
- *  @return true if it's safe to run application logic
+ *  @return void
  */
 
 /**************************************************************************/
 void KonnektingDevice::setProgState(bool state) {
-    if (state == true) {
-        _progState = true;
-        digitalWrite(_progLED, HIGH);
-        DEBUG_PRINTLN(F("PrgBtn 1"));
-    } else if (state == false) {
-        _progState = false;
-        digitalWrite(_progLED, LOW);
-        DEBUG_PRINTLN(F("PrgBtn 0"));
-    }
+	_progState = state;
+	setProgLed(state);
+	DEBUG_PRINTLN(F("PrgState %d"),state);
+	if (*setProgLedFunc == NULL) {
+		digitalWrite(_progLED, state);
+	}
+}
+
+/**************************************************************************/
+/*!
+ *  @brief  Sets the prog LED to given boolean value
+ *  @param  state 
+ *          new prog state
+ *  @return void
+ */
+
+/**************************************************************************/
+void KonnektingDevice::setProgLed(bool state) {
+	if (*setProgLedFunc != NULL) {
+		setProgLedFunc(state);
+	}else{
+		digitalWrite(_progLED, state);
+	}
+	DEBUG_PRINTLN(F("PrgLed %d"),state);
 }
 
 /**************************************************************************/

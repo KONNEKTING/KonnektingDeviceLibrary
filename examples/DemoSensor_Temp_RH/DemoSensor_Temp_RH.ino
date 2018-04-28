@@ -27,7 +27,7 @@ SoftwareSerial softserial(11, 10); // RX, TX
 #endif
 
 #include <Wire.h>
-#include "SparkFunHTU21D.h" //https://github.com/sparkfun/SparkFun_HTU21D_Breakout_Arduino_Library
+#include "SparkFunHTU21D.h" // http://librarymanager/All#SparkFun_HTU21D
 
 // ################################################
 // ### KONNEKTING Configuration
