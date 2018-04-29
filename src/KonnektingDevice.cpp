@@ -58,9 +58,9 @@
 #include "KnxDataPointTypes.h"
 #include "KonnektingDevice.h"
 
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#endif
+//#ifdef ESP8266
+//#include <ESP8266WiFi.h>
+//#endif
 
 #define PROGCOMOBJ_INDEX 255
 
@@ -107,13 +107,13 @@ KonnektingDevice::KonnektingDevice() {
 
     DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
 
-#ifdef ESP8266
+#if defined(ESP8266)
     //DEBUG_PRINT(F("Setup ESP8266 ... "));
 
     // disable WIFI per default
-    WiFi.mode(WIFI_OFF);
-    WiFi.forceSleepBegin();
-    delay(100);
+//    WiFi.mode(WIFI_OFF);
+//    WiFi.forceSleepBegin();
+//    delay(100);
 
     // enable 1k EEPROM on ESP8266 platform
     EEPROM.begin(1024);
@@ -320,6 +320,9 @@ void KonnektingDevice::init(HardwareSerial& serial,
         delay(500);
         reboot();
     }
+#ifdef ESP32
+    EEPROM.begin(1024);
+#endif
 }
 
 /**************************************************************************/
@@ -432,7 +435,7 @@ void KonnektingProgButtonPressed() {
 /**************************************************************************/
 void KonnektingDevice::toggleProgState() {
 
-#ifdef REBOOT_BUTTON    
+#ifdef REBOOT_BUTTON
     if (millis() - _lastProgbtn < 300) {
         _progbtnCount++;
 
@@ -444,7 +447,7 @@ void KonnektingDevice::toggleProgState() {
         _progbtnCount = 1;
     }
     _lastProgbtn = millis();
-#endif    
+#endif
 
     setProgState(!_progState); // toggle and set
     if (_rebootRequired) {
@@ -487,12 +490,12 @@ bool KonnektingDevice::isReadyForApplication() {
 
 /**************************************************************************/
 void KonnektingDevice::setProgState(bool state) {
-	_progState = state;
-	setProgLed(state);
-	DEBUG_PRINTLN(F("PrgState %d"),state);
-	if (*setProgLedFunc == NULL) {
-		digitalWrite(_progLED, state);
-	}
+    _progState = state;
+    setProgLed(state);
+    DEBUG_PRINTLN(F("PrgState %d"),state);
+    if (*setProgLedFunc == NULL) {
+        digitalWrite(_progLED, state);
+    }
 }
 
 /**************************************************************************/
@@ -505,12 +508,12 @@ void KonnektingDevice::setProgState(bool state) {
 
 /**************************************************************************/
 void KonnektingDevice::setProgLed(bool state) {
-	if (*setProgLedFunc != NULL) {
-		setProgLedFunc(state);
-	}else{
-		digitalWrite(_progLED, state);
-	}
-	DEBUG_PRINTLN(F("PrgLed %d"),state);
+    if (*setProgLedFunc != NULL) {
+        setProgLedFunc(state);
+    }else{
+        digitalWrite(_progLED, state);
+    }
+    DEBUG_PRINTLN(F("PrgLed %d"),state);
 }
 
 /**************************************************************************/
@@ -556,11 +559,12 @@ KnxComObject KonnektingDevice::createProgComObject() {
 void KonnektingDevice::reboot() {
     Knx.end();
 
-#ifdef ESP8266 
-    DEBUG_PRINTLN(F("ESP8266 restart"));
+#if defined(ESP8266) || defined(ESP32) 
+    DEBUG_PRINTLN(F("ESP restart"));
     ESP.restart();
 #elif ARDUINO_ARCH_SAMD
     // do reset of arduino zero, inspired by http://forum.arduino.cc/index.php?topic=366836.0
+    DEBUG_PRINTLN(F("SAMD SystemReset"));
     WDT->CTRL.reg = 0; // disable watchdog
     while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
     WDT->CONFIG.reg = 0; // see Table 17-5 Timeout Period (valid values 0-11)
@@ -568,17 +572,21 @@ void KonnektingDevice::reboot() {
     while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
     while (1) {
     }
-#elif __AVR_ATmega328P__
+#elif ARDUINO_ARCH_STM32
+    DEBUG_PRINTLN(F("STM32 SystemReset"));
+    delay(100);
+    NVIC_SystemReset();
+#elif __AVR_ATmega32U4__
+    DEBUG_PRINTLN(F("WDT reset NOW"));
+    wdt_enable(WDTO_500MS);
+    while (1) {
+    }
+#else     
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
     DEBUG_PRINTLN(F("software reset NOW"));
     delay(500);
     asm volatile ("  jmp 0");
-#else     
-    DEBUG_PRINTLN(F("WDT reset NOW"));
-    wdt_enable(WDTO_500MS);
-    while (1) {
-    }
 #endif    
 
 }
@@ -749,10 +757,10 @@ void KonnektingDevice::handleMsgWriteProgrammingMode(byte msg[]) {
         setProgState(msg[4] == 0x01);
         sendAck(0x00, 0x00);
 
-#ifdef ESP8266
-        // ESP8266 uses own EEPROM implementation which requires commit() call
+#if defined(ESP8266) || defined(ESP32)
+        // ESP8266/ESP32 uses own EEPROM implementation which requires commit() call
         if (msg[4] == 0x00) {
-            DEBUG_PRINTLN(F("ESP8266: EEPROM.commit()"));
+            DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.commit()"));
             EEPROM.commit();
         }
 #else
@@ -973,15 +981,10 @@ void KonnektingDevice::memoryWrite(int index, byte data) {
         DEBUG_PRINTLN(F(""));
 #ifdef ARDUINO_ARCH_SAMD
         DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
-#elif ESP8266    
-        DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
-        EEPROM.write(index, data);
 #else
         EEPROM.write(index, data);
-        //    delay(10); // really required?
 #endif 
     }
-
     // EEPROM has been changed, reboot will be required
     _rebootRequired = true;
 }
@@ -995,17 +998,16 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
         eepromUpdateFunc(index, data);
     } else {
         DEBUG_PRINTLN(F(""));
-#ifdef ARDUINO_ARCH_SAMD   
-        DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
-#elif ESP8266    
-        DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
+#if defined(ESP8266) || defined(ESP32)
+        DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.update"));
         byte d = EEPROM.read(index);
         if (d != data) {
             EEPROM.write(index, data);
         }
+#elif ARDUINO_ARCH_SAMD   
+        DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #else
         EEPROM.update(index, data);
-        //    delay(10); // really required?
 #endif
     }
     // EEPROM has been changed, reboot will be required

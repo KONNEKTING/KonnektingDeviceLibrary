@@ -114,7 +114,9 @@ byte KnxTpUart::Reset(void) {
     }
     // CONFIGURATION OF THE ARDUINO USART WITH CORRECT FRAME FORMAT (19200, 8 bits, parity even, 1 stop bit)
     _serial.begin(19200, SERIAL_8E1);
-    
+#ifdef ESP8266
+    _serial.swap();
+#endif
     while (attempts--) { // we send a RESET REQUEST and wait for the reset indication answer
         
         DEBUG_PRINTLN(F("Reset attempts: %d"), attempts);

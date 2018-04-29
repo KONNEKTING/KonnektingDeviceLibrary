@@ -102,8 +102,8 @@ void setup() {
     // debug related stuff
 #ifdef KDEBUG
 
-    // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(9600);
+    // Start debug serial with 115200 bauds
+    DEBUGSERIAL.begin(115200);
 
 #ifdef __AVR_ATmega32U4__
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
