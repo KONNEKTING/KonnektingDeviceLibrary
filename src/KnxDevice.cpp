@@ -389,7 +389,7 @@ void KnxDevice::update(byte objectIndex) {
 /**
  *  The function returns true if there is rx/tx activity ongoing, else false
  */
-boolean KnxDevice::isActive(void) const {
+boolean KnxDevice::isActive() const {
     if (_tpuart->IsActive()) return true; // TPUART is active
     if (_state == TX_ONGOING) return true; // the Device is sending a request
     if (_txActionList.getItemCount()) return true; // there is at least one tx action in the queue
