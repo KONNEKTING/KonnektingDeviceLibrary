@@ -110,6 +110,14 @@ KonnektingDevice::KonnektingDevice() {
 /**************************************************************************/
 /*!
  *  @brief  Internal init function
+ *  @param  serial 
+ *          serial port reference, f.i. "Serial" or "Serial1"
+ *  @param  manufacturerID
+ *          The ID of manufacturer
+ *  @param  deviceID
+ *          The ID of the device
+ *  @param  revisionID
+ *          The device's revision
  *  @return void
  */
 
