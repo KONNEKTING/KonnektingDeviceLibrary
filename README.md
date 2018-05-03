@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/KONNEKTING/KonnektingDeviceLibrary.svg?branch=develop_beta4a)](https://travis-ci.com/KONNEKTING/KonnektingDeviceLibrary)
+
 # KONNEKTING Device Library
 This is a library for Arduino boards, that allow creating own DIY KNX devices, programmable via KNX bus.... 
 
