@@ -15,4 +15,4 @@ const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (K
 byte KonnektingDevice::_paramSizeList[] = {
     /* Index 0 - blinkDelay */ PARAM_UINT16
 };
-const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do not change this code
+const int KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do not change this code
