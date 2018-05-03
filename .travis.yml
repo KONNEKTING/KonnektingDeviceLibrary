@@ -15,7 +15,7 @@ before_install:
    - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
  
 install:
-   - arduino --install-library "OneWire","DallasTemperature","SparkFun HTU21D Humidity and Temperature Sensor Breakout","SoftwareSerial"
+   - arduino --install-library "OneWire","DallasTemperature","SparkFun HTU21D Humidity and Temperature Sensor Breakout"
  
 script:
 #   - build_main_platforms
