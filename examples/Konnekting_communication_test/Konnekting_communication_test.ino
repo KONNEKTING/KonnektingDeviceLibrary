@@ -1,3 +1,7 @@
+#ifdef __SAMD21G18A__
+#error Arduino Zero not yet supported
+#endif
+
 #include <KonnektingDevice.h>
 
 // ################################################
