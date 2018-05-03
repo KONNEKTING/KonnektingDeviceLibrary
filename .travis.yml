@@ -18,7 +18,11 @@ install:
    - arduino --install-library "OneWire","DallasTemperature","SparkFun HTU21D Humidity and Temperature Sensor Breakout"
  
 script:
-   - build_main_platforms
+#   - build_main_platforms
+    - build_platform uno
+    - build_platform leonardo
+    - build_platform zero
+    - build_platform esp8266
  
 # Generate and deploy documentation
 after_success:
