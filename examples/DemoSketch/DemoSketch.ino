@@ -70,7 +70,7 @@ int laststate = false;
 #include <Wire.h>
 
 // Example for 24AA02E64 I2C EEPROM
-int readMemory(int index) {
+byte readMemory(int index) {
     byte rdata = 0xFF;
 
     Wire.beginTransmission(0x50);
@@ -86,7 +86,7 @@ int readMemory(int index) {
     return rdata;
 }
 
-void writeMemory(int index, int val) {
+void writeMemory(int index, byte val) {
     Wire.beginTransmission(0x50);
     Wire.write((int) (index));
     Wire.write(val);
@@ -95,7 +95,7 @@ void writeMemory(int index, int val) {
     delay(5); //is it needed?!
 }
 
-void updateMemory(int index, int val) {
+void updateMemory(int index, byte val) {
     if (readMemory(index) != val) {
         writeMemory(index, val);
     }
