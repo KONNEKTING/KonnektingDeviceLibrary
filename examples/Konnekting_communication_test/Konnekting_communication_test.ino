@@ -14,6 +14,8 @@
 #elif ESP8266
 // ESP8266 use the 2nd serial port with TX only
 #define DEBUGSERIAL Serial1
+#elif __SAMD21G18A__
+#define DEBUGSERIAL SerialUSB
 #else
 // All other, (ATmega328P f.i.) use software serial
 #include <SoftwareSerial.h>
