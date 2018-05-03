@@ -72,7 +72,7 @@ const byte KnxDevice::_numberOfComObjects = sizeof (_comObjectsList) / sizeof (K
 byte KonnektingDevice::_paramSizeList[] = {
     /* Param Index 0 */ PARAM_UINT16
 };
-const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
+const int KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
 unsigned long blinkDelay = 2500;
 unsigned long lastmillis = millis(); 
