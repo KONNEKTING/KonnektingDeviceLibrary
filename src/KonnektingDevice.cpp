@@ -104,49 +104,22 @@ void konnektingKnxEvents(byte index) {
 
 /**************************************************************************/
 KonnektingDevice::KonnektingDevice() {
-
     DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
-
-#if defined(ESP8266)
-    //DEBUG_PRINT(F("Setup ESP8266 ... "));
-
-    // disable WIFI per default
-//    WiFi.mode(WIFI_OFF);
-//    WiFi.forceSleepBegin();
-//    delay(100);
-
-    // enable 1k EEPROM on ESP8266 platform
-    EEPROM.begin(1024);
-
-    DEBUG_PRINTLN(F("*DONE*"));
-#endif    
-
 }
 
 /**************************************************************************/
 /*!
- *  @brief   Starts KNX KonnektingDevice, as well as KNX Device
- *  @param  serial 
- *          serial port reference, f.i. "Serial" or "Serial1"
- *  @param  setProgLedFunc
- *          function pointer to the function to toggle programming mode
- *  @param  manufacturerID
- *          The ID of manufacturer
- *  @param  deviceID
- *          The ID of the device
- *  @param  revisionID
- *          The device's revision
+ *  @brief  Internal init function
  *  @return void
  */
 
 /**************************************************************************/
 
-void KonnektingDevice::init(HardwareSerial& serial,
-        void (*func)(bool),
+
+void KonnektingDevice::internalInit(HardwareSerial& serial,
         word manufacturerID,
         byte deviceID,
-        byte revisionID
-        ) {
+        byte revisionID){
 
     DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
 
@@ -157,8 +130,6 @@ void KonnektingDevice::init(HardwareSerial& serial,
     _manufacturerID = manufacturerID;
     _deviceID = deviceID;
     _revisionID = revisionID;
-
-    setProgLedFunc = func;
 
     _lastProgbtn = 0;
     _progbtnCount = 0;
@@ -217,6 +188,38 @@ void KonnektingDevice::init(HardwareSerial& serial,
         delay(500);
         reboot();
     }
+
+#if defined(ESP8266) || defined(ESP32)
+    EEPROM.begin(8192);
+#endif
+}
+/**************************************************************************/
+/*!
+ *  @brief  Starts KNX KonnektingDevice, as well as KNX Device
+ *  @param  serial 
+ *          serial port reference, f.i. "Serial" or "Serial1"
+ *  @param  func
+ *          function pointer to the function to toggle programming mode
+ *  @param  manufacturerID
+ *          The ID of manufacturer
+ *  @param  deviceID
+ *          The ID of the device
+ *  @param  revisionID
+ *          The device's revision
+ *  @return void
+ */
+
+/**************************************************************************/
+
+void KonnektingDevice::init(HardwareSerial& serial,
+        void (*func)(bool),
+        word manufacturerID,
+        byte deviceID,
+        byte revisionID
+        ) {
+    _progIndicatorFunc = func;
+
+    internalInit(serial,manufacturerID,deviceID,revisionID);
 }
 
 /**************************************************************************/
@@ -246,83 +249,13 @@ void KonnektingDevice::init(HardwareSerial& serial,
         byte revisionID
         ) {
 
-    DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
-
-    DEBUG_PRINTLN("15/7/255 = 0x%04x", G_ADDR(15, 7, 255));
-
-    _initialized = true;
-
-    _manufacturerID = manufacturerID;
-    _deviceID = deviceID;
-    _revisionID = revisionID;
-
     _progLED = progLedPin;
     _progButton = progButtonPin;
-
-    _lastProgbtn = 0;
-    _progbtnCount = 0;
 
     pinMode(_progLED, OUTPUT);
     pinMode(_progButton, INPUT);
 
-    setProgState(false);
-
-    attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
-
-    // hardcoded stuff
-    DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
-
-    DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
-
-    // calc  of parameter table in eeprom --> depends on number of com objects
-    _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
-
-    _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
-
-    DEBUG_PRINTLN(F("_deviceFlags: "BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-
-    _individualAddress = P_ADDR(1, 1, 254);
-    if (!isFactorySetting()) {
-        DEBUG_PRINTLN(F("->EEPROM"));
-        /*
-         * Read eeprom stuff
-         */
-
-        // PA
-        byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
-        byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
-        _individualAddress = (hiAddr << 8) + (loAddr << 0);
-
-        // ComObjects
-        // at most 254 com objects, 255 is progcomobj
-        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
-            byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
-            byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
-            byte settings = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
-            word comObjAddr = (hi << 8) + (lo << 0);
-
-            bool active = ((settings & 0x80) == 0x80);
-            Knx.setComObjectAddress(i, comObjAddr, active);
-
-            DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x setting=0x%02x active=%d"), i, hi, lo, comObjAddr, settings, active);
-        }
-
-    } else {
-        DEBUG_PRINTLN(F("->FACTORY"));
-    }
-    DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
-    e_KnxDeviceStatus status;
-    status = Knx.begin(serial, _individualAddress);
-    DEBUG_PRINTLN(F("KnxDevice startup status: 0x%02x"), status);
-
-    if (status != KNX_DEVICE_OK) {
-        DEBUG_PRINTLN(F("Knx init ERROR. Retry after reboot!!"));
-        delay(500);
-        reboot();
-    }
-#ifdef ESP32
-    EEPROM.begin(1024);
-#endif
+    internalInit(serial,manufacturerID,deviceID,revisionID);
 }
 
 /**************************************************************************/
@@ -493,7 +426,7 @@ void KonnektingDevice::setProgState(bool state) {
     _progState = state;
     setProgLed(state);
     DEBUG_PRINTLN(F("PrgState %d"),state);
-    if (*setProgLedFunc == NULL) {
+    if (*_progIndicatorFunc == NULL) {
         digitalWrite(_progLED, state);
     }
 }
@@ -508,8 +441,8 @@ void KonnektingDevice::setProgState(bool state) {
 
 /**************************************************************************/
 void KonnektingDevice::setProgLed(bool state) {
-    if (*setProgLedFunc != NULL) {
-        setProgLedFunc(state);
+    if (*_progIndicatorFunc != NULL) {
+        _progIndicatorFunc(state);
     }else{
         digitalWrite(_progLED, state);
     }
@@ -957,9 +890,9 @@ int KonnektingDevice::memoryRead(int index) {
     DEBUG_PRINT(F("memRead: index=0x%02x"), index);
     byte d = 0xFF;
 
-    if (*eepromReadFunc != NULL) {
+    if (*_eepromReadFunc != NULL) {
         DEBUG_PRINT(F(" using fctptr"));
-        d = eepromReadFunc(index);
+        d = _eepromReadFunc(index);
     } else {
 #ifdef ARDUINO_ARCH_SAMD
         DEBUG_PRINTLN(F("memRead: EEPROM NOT SUPPORTED. USE FCTPTR!"));
@@ -974,9 +907,9 @@ int KonnektingDevice::memoryRead(int index) {
 void KonnektingDevice::memoryWrite(int index, byte data) {
 
     DEBUG_PRINT(F("memWrite: index=0x%02x data=0x%02x"), index, data);
-    if (*eepromWriteFunc != NULL) {
+    if (*_eepromWriteFunc != NULL) {
         DEBUG_PRINTLN(F(" using fctptr"));
-        eepromWriteFunc(index, data);
+        _eepromWriteFunc(index, data);
     } else {
         DEBUG_PRINTLN(F(""));
 #ifdef ARDUINO_ARCH_SAMD
@@ -993,9 +926,9 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
 
     DEBUG_PRINT(F("memUpdate: index=0x%02x data=0x%02x"), index, data);
 
-    if (*eepromUpdateFunc != NULL) {
+    if (*_eepromUpdateFunc != NULL) {
         DEBUG_PRINTLN(F(" using fctptr"));
-        eepromUpdateFunc(index, data);
+        _eepromUpdateFunc(index, data);
     } else {
         DEBUG_PRINTLN(F(""));
 #if defined(ESP8266) || defined(ESP32)
@@ -1016,9 +949,9 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
 }
 
 void KonnektingDevice::memoryCommit() {
-    if (*eepromCommitFunc != NULL) {
+    if (*_eepromCommitFunc != NULL) {
         DEBUG_PRINTLN(F("memCommit: using fctptr"));
-        eepromCommitFunc();
+        _eepromCommitFunc();
     }
 }
 
@@ -1211,7 +1144,7 @@ int KonnektingDevice::getFreeEepromOffset() {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryReadFunc(byte(*func)(int)) {
-    eepromReadFunc = func;
+    _eepromReadFunc = func;
 }
 
 /**************************************************************************/
@@ -1223,7 +1156,7 @@ void KonnektingDevice::setMemoryReadFunc(byte(*func)(int)) {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
-    eepromWriteFunc = func;
+    _eepromWriteFunc = func;
 }
 
 /**************************************************************************/
@@ -1235,7 +1168,7 @@ void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
-    eepromUpdateFunc = func;
+    _eepromUpdateFunc = func;
 }
 
 /**************************************************************************/
@@ -1247,5 +1180,5 @@ void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
-    eepromCommitFunc = func;
+    _eepromCommitFunc = func;
 }

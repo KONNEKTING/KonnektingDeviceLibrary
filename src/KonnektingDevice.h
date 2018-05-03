@@ -28,7 +28,7 @@
 #include <KnxDevice.h>
 #include <KnxDptConstants.h>
 
-// AVR, ESP8266 and STM32 use EEPROM (SAMD21 not ...)
+// AVR, ESP8266 and STM32 uses EEPROM (SAMD21 not ...)
 #if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(ARDUINO_ARCH_STM32)
 #include <EEPROM.h>
 #ifdef ARDUINO_ARCH_AVR
@@ -97,11 +97,11 @@ class KonnektingDevice {
     static byte _paramSizeList[];
     static const int _numberOfParams;
 
-    byte (*eepromReadFunc)(int);
-    void (*eepromWriteFunc)(int, byte);
-    void (*eepromUpdateFunc)(int, byte);
-    void (*eepromCommitFunc)(void);
-    void (*setProgLedFunc)(bool);
+    byte (*_eepromReadFunc)(int);
+    void (*_eepromWriteFunc)(int, byte);
+    void (*_eepromUpdateFunc)(int, byte);
+    void (*_eepromCommitFunc)(void);
+    void (*_progIndicatorFunc)(bool);
 
     // Constructor, Destructor
     KonnektingDevice(); // private constructor (singleton design pattern)
@@ -169,8 +169,9 @@ private:
 
     bool _rebootRequired = false;
     bool _initialized = false;
-
+#ifdef REBOOT_BUTTON
     byte _progbtnCount = 0;
+#endif
     long _lastProgbtn = 0;
 
     word _individualAddress;
@@ -189,6 +190,11 @@ private:
 
     bool _progState;
 
+    void internalInit(HardwareSerial& serial,
+            word manufacturerID,
+            byte deviceID,
+            byte revisionID
+            );
     int calcParamSkipBytes(int index);
 
     bool isMatchingIA(byte hi, byte lo);
