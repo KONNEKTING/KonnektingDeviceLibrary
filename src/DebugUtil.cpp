@@ -24,7 +24,7 @@ int DebugUtil::freeRam() {
 #endif
 }
 
-void DebugUtil::print(char *format, ...) {
+void DebugUtil::print(const char *format, ...) {
     if (_printstream) {
         char buf[128]; // limit to 128chars
         va_list args;
@@ -54,7 +54,7 @@ void DebugUtil::print(const __FlashStringHelper *format, ...) {
     }
 }
 
-void DebugUtil::println(char *format, ...) {
+void DebugUtil::println(const char *format, ...) {
     if (_printstream) {
 
         char buf[128]; // limit to 128chars

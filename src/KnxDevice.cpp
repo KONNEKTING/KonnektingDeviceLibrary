@@ -43,17 +43,18 @@ KnxDevice& Knx = KnxDevice::Knx;
 
 // Constructor
 
-KnxDevice::KnxDevice() {
-    _state = INIT;
-    _tpuart = NULL;
-    _txActionList = ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE>();
-    _initCompleted = false;
-    _initIndex = 0;
-    _rxTelegram = NULL;
+KnxDevice::KnxDevice(): 
+    _state(INIT),
+    _tpuart(0),
+    _txActionList( ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE>() ),
+    _initCompleted(false),
+    _initIndex(0),
+    _rxTelegram(0)
 #if defined(KNXDEVICE_DEBUG_INFO)
-    _nbOfInits = 0;
-    _debugStrPtr = NULL;
+    , _nbOfInits(0)
+    , _debugStrPtr(0)
 #endif
+{	
     //AC
     _progComObj.SetAddr(G_ADDR(15, 7, 255));
     _progComObj.setActive(true);
@@ -69,6 +70,7 @@ int KnxDevice::getNumberOfComObjects() {
 // else return KNX_DEVICE_OK
 
 e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
+    delete _tpuart; // always safe to delete null ptr
     _tpuart = new KnxTpUart(serial, physicalAddr, NORMAL);
     _rxTelegram = &_tpuart->GetReceivedTelegram();
     //delay(10000); // Workaround for init issue with bus-powered arduino
@@ -87,7 +89,8 @@ e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     _state = IDLE;
     DEBUG_PRINTLN(F("Init successful"));
     _lastInitTimeMillis = millis();
-    _lastTXTimeMicros = _lastTXTimeMicros = micros();
+    _lastRXTimeMicros = micros();
+    _lastTXTimeMicros = _lastRXTimeMicros;
 #if defined(KNXDEVICE_DEBUG_INFO)
     _nbOfInits = 0;
 #endif
@@ -336,8 +339,7 @@ template e_KnxDeviceStatus KnxDevice::write <double>(byte objectIndex, double va
  */
 e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     type_tx_action action;
-    type_tx_action action2;
-    byte *dptValue;
+    //type_tx_action action2;
     
     // get length of comobj for copying value into tx-action struct
     KnxComObject* comObj = (objectIndex == 255 ? &_progComObj : &_comObjectsList[objectIndex]);    
@@ -357,7 +359,7 @@ e_KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
         action.index = objectIndex;
         
         // allocate the memory for long value
-        dptValue = (byte *) malloc(length - 1); 
+        byte *dptValue = (byte *) malloc(length - 1); 
         
         for (byte i = 0; i < length - 1; i++) {
             dptValue[i] = valuePtr[i]; // copy value
@@ -499,7 +501,11 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
 // Static TxTelegramAck() function called by the KnxTpUart layer (callback)
 
-void KnxDevice::TxTelegramAck(e_TpUartTxAck value) {
+void KnxDevice::TxTelegramAck(e_TpUartTxAck 
+#ifdef KNXDevice_DEBUG // ifdef to suppress compiler warning about unused variable when not in debug mode
+		value
+#endif // KNXDevice_DEBUG
+		) {
     Knx._state = IDLE;
 #ifdef KNXDevice_DEBUG
     if (value != ACK_RESPONSE) {
@@ -558,7 +564,7 @@ template <typename T> e_KnxDeviceStatus ConvertFromDpt(const byte dptOriginValue
             return KNX_DEVICE_NOT_IMPLEMENTED;
             break;
 
-        default: KNX_DEVICE_ERROR;
+        default: return KNX_DEVICE_ERROR;
     }
 }
 
@@ -628,7 +634,7 @@ template <typename T> e_KnxDeviceStatus ConvertToDpt(T originValue, byte dptDest
             return KNX_DEVICE_NOT_IMPLEMENTED;
             break;
 
-        default: KNX_DEVICE_ERROR;
+        default: return KNX_DEVICE_ERROR;
     }
 }
 

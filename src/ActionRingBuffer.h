@@ -53,16 +53,16 @@ class ActionRingBuffer {
   public : 
 
     // Constructor
-    ActionRingBuffer()
-    {
-      _head = 0;
-      _tail = 0;
-      _elementsCurrentNb = 0;
-      _size = size;
+    ActionRingBuffer():
+      _head(0),
+      _tail(0),
+      _size(size),
+      _elementsCurrentNb(0)
     #ifdef ACTIONRINGBUFFER_STAT
-      _elementsMaxNb = 0; // MAX nb of elements
-      _lostElementsNb = 0;    // nb of lost elements
+      , _elementsMaxNb(0) // MAX nb of elements
+      , _lostElementsNb(0)    // nb of lost elements
     #endif
+    {
     };
 
 

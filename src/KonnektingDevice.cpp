@@ -148,7 +148,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
     _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
 
-    DEBUG_PRINTLN(F("_deviceFlags: "BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+    DEBUG_PRINTLN(F("_deviceFlags: " BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
 
     _individualAddress = P_ADDR(1, 1, 254);
     if (!isFactorySetting()) {
@@ -364,7 +364,7 @@ bool KonnektingDevice::internalComObject(byte index) {
             Knx.read(PROGCOMOBJ_INDEX, buffer);
 #ifdef DEBUG_PROTOCOL
             for (int i = 0; i < 14; i++) {
-                DEBUG_PRINTLN(F("buffer[%d]\thex=0x%02x bin="BYTETOBINARYPATTERN), i, buffer[i], BYTETOBINARY(buffer[i]));
+                DEBUG_PRINTLN(F("buffer[%d]\thex=0x%02x bin=" BYTETOBINARYPATTERN), i, buffer[i], BYTETOBINARY(buffer[i]));
             }
 #endif
 
@@ -514,7 +514,8 @@ void KonnektingDevice::handleMsgWriteProgrammingMode(byte msg[]) {
     }
 }
 
-void KonnektingDevice::handleMsgReadProgrammingMode(byte msg[]) {
+void KonnektingDevice::handleMsgReadProgrammingMode(byte /*msg*/[]) {
+    // to suppress compiler warning about unused variable, "msg" has been commented out
     DEBUG_PRINTLN(F("handleMsgReadProgrammingMode"));
     if (_progState) {
         byte response[14];
@@ -554,7 +555,8 @@ void KonnektingDevice::handleMsgWriteIndividualAddress(byte msg[]) {
     sendAck(0x00, 0x00);
 }
 
-void KonnektingDevice::handleMsgReadIndividualAddress(byte msg[]) {
+void KonnektingDevice::handleMsgReadIndividualAddress(byte /*msg*/[]) {
+    // to suppress compiler warning about unused variable, "msg" has been commented out
     DEBUG_PRINTLN(F("handleMsgReadIndividualAddress"));
     byte response[14];
     response[0] = PROTOCOLVERSION;
