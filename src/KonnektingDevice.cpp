@@ -262,6 +262,7 @@ void KonnektingDevice::init(HardwareSerial& serial,
 
     pinMode(_progLED, OUTPUT);
     pinMode(_progButton, INPUT);
+    attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
 
     internalInit(serial,manufacturerID,deviceID,revisionID);
 }

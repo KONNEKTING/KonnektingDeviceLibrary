@@ -67,7 +67,44 @@ int laststate = false;
 // so we can use an external I2C EEPROM.
 // For that we need to include Arduino's Wire.h
 #ifdef __SAMD21G18A__
-#include "EEPROM_24AA256.h"
+#include <Wire.h>
+
+// Example for 24AA02E64 I2C EEPROM
+byte readMemory(int index) {
+    byte rdata = 0xFF;
+
+    Wire.beginTransmission(0x50);
+    Wire.write((int) (index));
+    Wire.endTransmission();
+
+    Wire.requestFrom(0x50, 1);
+
+    if (Wire.available()) {
+        rdata = Wire.read();
+    }
+
+    return rdata;
+}
+
+void writeMemory(int index, byte val) {
+    Wire.beginTransmission(0x50);
+    Wire.write((int) (index));
+    Wire.write(val);
+    Wire.endTransmission();
+
+    delay(5); //is it needed?!
+}
+
+void updateMemory(int index, byte val) {
+    if (readMemory(index) != val) {
+        writeMemory(index, val);
+    }
+}
+
+void commitMemory() {
+    // this is useful if using flash memory to reduce write cycles
+    // EEPROM needs no commit, so this function is intentionally left blank 
+}
 #endif
 
 
@@ -81,7 +118,7 @@ void setup() {
 #ifdef KDEBUG
 
     // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(115200);
+    DEBUGSERIAL.begin(9600);
 
 #if defined(__AVR_ATmega32U4__) || defined(__SAMD21G18A__)
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro/Zero only

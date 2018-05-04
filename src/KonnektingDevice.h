@@ -171,9 +171,8 @@ private:
     bool _initialized = false;
 #ifdef REBOOT_BUTTON
     byte _progbtnCount = 0;
-#endif
     long _lastProgbtn = 0;
-
+#endif
     word _individualAddress;
 
     byte _deviceFlags;
