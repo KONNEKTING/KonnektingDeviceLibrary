@@ -26,6 +26,7 @@ setMemoryReadFunc	KEYWORD2
 setMemoryWriteFunc	KEYWORD2
 setMemoryUpdateFunc	KEYWORD2
 setMemoryCommitFunc	KEYWORD2
+setProgLedFunc	KEYWORD2
 init	KEYWORD2
 kinit	KEYWORD2
 isActive	KEYWORD2

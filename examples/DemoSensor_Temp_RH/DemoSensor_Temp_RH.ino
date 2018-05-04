@@ -27,7 +27,7 @@ SoftwareSerial softserial(11, 10); // RX, TX
 #endif
 
 #include <Wire.h>
-#include "SparkFunHTU21D.h" //https://github.com/sparkfun/SparkFun_HTU21D_Breakout_Arduino_Library
+#include "SparkFunHTU21D.h" //http://librarymanager/All#SparkFun_HTU21D
 
 // ################################################
 // ### KONNEKTING Configuration
@@ -102,8 +102,8 @@ void setup() {
     // debug related stuff
 #ifdef KDEBUG
 
-    // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(9600);
+    // Start debug serial with 115200 bauds
+    DEBUGSERIAL.begin(115200);
 
 #ifdef __AVR_ATmega32U4__
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only

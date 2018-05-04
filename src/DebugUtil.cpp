@@ -1,6 +1,6 @@
 #include "DebugUtil.h"
 
-#if defined(ARDUINO_ARCH_SAMD) || defined(STM32)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32)
     extern "C" char* sbrk(int incr);
     extern char *__brkval;
 #endif
@@ -27,18 +27,17 @@ DebugUtil::DebugUtil() {
 
 void DebugUtil::setPrintStream(Stream* printstream) {
     _printstream = printstream;
-    print(F("DEBUG! free ram: %d\n"), freeRam());
+    print(F("DEBUG! free ram: %d bytes \n"), freeRam());
 }
 
 int DebugUtil::freeRam() {
 #if defined(ESP8266) || defined(ESP32)
     return ESP.getFreeHeap();
-#elif defined(__AVR_ATmega328P__) || (__AVR_ATmega32U4__)
-#elif __AVR_ATmega328P__ || __AVR_ATmega32U4__
+#elif defined(ARDUINO_ARCH_AVR)
     extern int __heap_start, *__brkval;
     int v;
     return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-#elif defined(ARDUINO_ARCH_SAMD) || defined(STM32)
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32)
     char top;
     return &top - reinterpret_cast<char*>(sbrk(0));
 #else
@@ -53,7 +52,6 @@ void DebugUtil::print(char *format, ...) {
         va_start(args, format);
         vsnprintf(buf, 128, format, args);
         va_end(args);
-        //Serial.print(buf);)
         _printstream->print(buf);
     }
 
@@ -65,7 +63,7 @@ void DebugUtil::print(const __FlashStringHelper *format, ...) {
         va_list args;
         va_start(args, format);
 
-#if defined(__AVR__) || defined(ESP8266)   
+#if defined(__AVR__) || defined(ESP8266) || defined(ARDUINO_ARCH_STM32)
         vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR and ESP8266
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args);   // for rest of the world
@@ -96,7 +94,7 @@ void DebugUtil::println(const __FlashStringHelper *format, ...) {
         va_list args;
         va_start(args, format);
 
-#if defined(__AVR__) || defined(ESP8266)   
+#if defined(__AVR__) || defined(ESP8266) || defined(ARDUINO_ARCH_STM32)
         vsnprintf_P(buf, sizeof (buf), (const char *) format, args); // progmem for AVR and ESP8266
 #else
         vsnprintf(buf, sizeof (buf), (const char *) format, args); // for rest of the world

@@ -58,9 +58,9 @@
 #include "KnxDataPointTypes.h"
 #include "KonnektingDevice.h"
 
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#endif
+//#ifdef ESP8266
+//#include <ESP8266WiFi.h>
+//#endif
 
 #define PROGCOMOBJ_INDEX 255
 
@@ -104,35 +104,14 @@ void konnektingKnxEvents(byte index) {
 
 /**************************************************************************/
 KonnektingDevice::KonnektingDevice() {
-
     DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
-
-#ifdef ESP8266
-    //DEBUG_PRINT(F("Setup ESP8266 ... "));
-
-    // disable WIFI per default
-    WiFi.mode(WIFI_OFF);
-    WiFi.forceSleepBegin();
-    delay(100);
-
-    // enable 1k EEPROM on ESP8266 platform
-    EEPROM.begin(1024);
-
-    DEBUG_PRINTLN(F("*DONE*"));
-#endif    
-
 }
-
 
 /**************************************************************************/
 /*!
- *  @brief   Starts KNX KonnektingDevice, as well as KNX Device
+ *  @brief  Internal init function
  *  @param  serial 
  *          serial port reference, f.i. "Serial" or "Serial1"
- *  @param  progButtonPin 
- *          pin which drives LED when in programming mode
- *  @param  progLedPin 
- *          pin which toggles programming mode, needs an interrupt capable pin!
  *  @param  manufacturerID
  *          The ID of manufacturer
  *  @param  deviceID
@@ -143,13 +122,12 @@ KonnektingDevice::KonnektingDevice() {
  */
 
 /**************************************************************************/
-void KonnektingDevice::init(HardwareSerial& serial,
-        int progButtonPin,
-        int progLedPin,
+
+
+void KonnektingDevice::internalInit(HardwareSerial& serial,
         word manufacturerID,
         byte deviceID,
-        byte revisionID
-        ) {
+        byte revisionID){
 
     DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
 
@@ -161,24 +139,11 @@ void KonnektingDevice::init(HardwareSerial& serial,
     _deviceID = deviceID;
     _revisionID = revisionID;
 
-    _progLED = progLedPin;
-    _progButton = progButtonPin;
-
     _lastProgbtn = 0;
     _progbtnCount = 0;
 
-    pinMode(_progLED, OUTPUT);
-    pinMode(_progButton, INPUT);
-    //digitalWrite(_progButton, HIGH); //PULLUP
+    setProgState(false);
 
-    digitalWrite(_progLED, LOW);
-
-#ifdef ARDUINO_ARCH_SAMD
-    // sollte eigtl. auch mit "digitalPinToInterrupt" funktionieren, tut es mit dem zero aber irgendwie nicht?!
-    attachInterrupt(_progButton, KonnektingProgButtonPressed, RISING);
-#else    
-    attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
-#endif    
 
     // hardcoded stuff
     DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
@@ -231,6 +196,75 @@ void KonnektingDevice::init(HardwareSerial& serial,
         delay(500);
         reboot();
     }
+
+#if defined(ESP8266) || defined(ESP32)
+    EEPROM.begin(8192);
+#endif
+}
+/**************************************************************************/
+/*!
+ *  @brief  Starts KNX KonnektingDevice, as well as KNX Device
+ *  @param  serial 
+ *          serial port reference, f.i. "Serial" or "Serial1"
+ *  @param  func
+ *          function pointer to the function to toggle programming mode
+ *  @param  manufacturerID
+ *          The ID of manufacturer
+ *  @param  deviceID
+ *          The ID of the device
+ *  @param  revisionID
+ *          The device's revision
+ *  @return void
+ */
+
+/**************************************************************************/
+
+void KonnektingDevice::init(HardwareSerial& serial,
+        void (*func)(bool),
+        word manufacturerID,
+        byte deviceID,
+        byte revisionID
+        ) {
+    _progIndicatorFunc = func;
+
+    internalInit(serial,manufacturerID,deviceID,revisionID);
+}
+
+/**************************************************************************/
+/*!
+ *  @brief  Starts KNX KonnektingDevice, as well as KNX Device
+ *  @param  serial 
+ *          serial port reference, f.i. "Serial" or "Serial1"
+ *  @param  progButtonPin 
+ *          pin which toggles programming mode, needs an interrupt capable pin!
+ *  @param  progLedPin 
+ *          pin which drives LED when in programming mode
+ *  @param  manufacturerID
+ *          The ID of manufacturer
+ *  @param  deviceID
+ *          The ID of the device
+ *  @param  revisionID
+ *          The device's revision
+ *  @return void
+ */
+
+/**************************************************************************/
+void KonnektingDevice::init(HardwareSerial& serial,
+        int progButtonPin,
+        int progLedPin,
+        word manufacturerID,
+        byte deviceID,
+        byte revisionID
+        ) {
+
+    _progLED = progLedPin;
+    _progButton = progButtonPin;
+
+    pinMode(_progLED, OUTPUT);
+    pinMode(_progButton, INPUT);
+    attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
+
+    internalInit(serial,manufacturerID,deviceID,revisionID);
 }
 
 /**************************************************************************/
@@ -343,7 +377,7 @@ void KonnektingProgButtonPressed() {
 /**************************************************************************/
 void KonnektingDevice::toggleProgState() {
 
-#ifdef REBOOT_BUTTON    
+#ifdef REBOOT_BUTTON
     if (millis() - _lastProgbtn < 300) {
         _progbtnCount++;
 
@@ -355,10 +389,9 @@ void KonnektingDevice::toggleProgState() {
         _progbtnCount = 1;
     }
     _lastProgbtn = millis();
-#endif    
+#endif
 
-    _progState = !_progState; // toggle
-    setProgState(_progState); // set
+    setProgState(!_progState); // toggle and set
     if (_rebootRequired) {
         DEBUG_PRINTLN(F("found rebootRequired flag, triggering reboot"));
         reboot();
@@ -391,23 +424,38 @@ bool KonnektingDevice::isReadyForApplication() {
 
 /**************************************************************************/
 /*!
- *  @brief  Sets thep prog state to given boolean value
+ *  @brief  Sets the prog state to given boolean value
  *  @param  state 
  *          new prog state
- *  @return true if it's safe to run application logic
+ *  @return void
  */
 
 /**************************************************************************/
 void KonnektingDevice::setProgState(bool state) {
-    if (state == true) {
-        _progState = true;
-        digitalWrite(_progLED, HIGH);
-        DEBUG_PRINTLN(F("PrgBtn 1"));
-    } else if (state == false) {
-        _progState = false;
-        digitalWrite(_progLED, LOW);
-        DEBUG_PRINTLN(F("PrgBtn 0"));
+    _progState = state;
+    setProgLed(state);
+    DEBUG_PRINTLN(F("PrgState %d"),state);
+    if (*_progIndicatorFunc == NULL) {
+        digitalWrite(_progLED, state);
     }
+}
+
+/**************************************************************************/
+/*!
+ *  @brief  Sets the prog LED to given boolean value
+ *  @param  state 
+ *          new prog state
+ *  @return void
+ */
+
+/**************************************************************************/
+void KonnektingDevice::setProgLed(bool state) {
+    if (*_progIndicatorFunc != NULL) {
+        _progIndicatorFunc(state);
+    }else{
+        digitalWrite(_progLED, state);
+    }
+    DEBUG_PRINTLN(F("PrgLed %d"),state);
 }
 
 /**************************************************************************/
@@ -453,11 +501,12 @@ KnxComObject KonnektingDevice::createProgComObject() {
 void KonnektingDevice::reboot() {
     Knx.end();
 
-#ifdef ESP8266 
-    DEBUG_PRINTLN(F("ESP8266 restart"));
+#if defined(ESP8266) || defined(ESP32) 
+    DEBUG_PRINTLN(F("ESP restart"));
     ESP.restart();
 #elif ARDUINO_ARCH_SAMD
     // do reset of arduino zero, inspired by http://forum.arduino.cc/index.php?topic=366836.0
+    DEBUG_PRINTLN(F("SAMD SystemReset"));
     WDT->CTRL.reg = 0; // disable watchdog
     while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
     WDT->CONFIG.reg = 0; // see Table 17-5 Timeout Period (valid values 0-11)
@@ -465,17 +514,21 @@ void KonnektingDevice::reboot() {
     while (WDT->STATUS.bit.SYNCBUSY == 1); //Just wait till WDT is free
     while (1) {
     }
-#elif __AVR_ATmega328P__
+#elif ARDUINO_ARCH_STM32
+    DEBUG_PRINTLN(F("STM32 SystemReset"));
+    delay(100);
+    NVIC_SystemReset();
+#elif __AVR_ATmega32U4__
+    DEBUG_PRINTLN(F("WDT reset NOW"));
+    wdt_enable(WDTO_500MS);
+    while (1) {
+    }
+#else     
     // to overcome WDT infinite reboot-loop issue
     // see: https://github.com/arduino/Arduino/issues/4492
     DEBUG_PRINTLN(F("software reset NOW"));
     delay(500);
     asm volatile ("  jmp 0");
-#else     
-    DEBUG_PRINTLN(F("WDT reset NOW"));
-    wdt_enable(WDTO_500MS);
-    while (1) {
-    }
 #endif    
 
 }
@@ -646,10 +699,10 @@ void KonnektingDevice::handleMsgWriteProgrammingMode(byte msg[]) {
         setProgState(msg[4] == 0x01);
         sendAck(0x00, 0x00);
 
-#ifdef ESP8266
-        // ESP8266 uses own EEPROM implementation which requires commit() call
+#if defined(ESP8266) || defined(ESP32)
+        // ESP8266/ESP32 uses own EEPROM implementation which requires commit() call
         if (msg[4] == 0x00) {
-            DEBUG_PRINTLN(F("ESP8266: EEPROM.commit()"));
+            DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.commit()"));
             EEPROM.commit();
         }
 #else
@@ -846,9 +899,9 @@ int KonnektingDevice::memoryRead(int index) {
     DEBUG_PRINT(F("memRead: index=0x%02x"), index);
     byte d = 0xFF;
 
-    if (*eepromReadFunc != NULL) {
+    if (*_eepromReadFunc != NULL) {
         DEBUG_PRINT(F(" using fctptr"));
-        d = eepromReadFunc(index);
+        d = _eepromReadFunc(index);
     } else {
 #ifdef ARDUINO_ARCH_SAMD
         DEBUG_PRINTLN(F("memRead: EEPROM NOT SUPPORTED. USE FCTPTR!"));
@@ -863,22 +916,17 @@ int KonnektingDevice::memoryRead(int index) {
 void KonnektingDevice::memoryWrite(int index, byte data) {
 
     DEBUG_PRINT(F("memWrite: index=0x%02x data=0x%02x"), index, data);
-    if (*eepromWriteFunc != NULL) {
+    if (*_eepromWriteFunc != NULL) {
         DEBUG_PRINTLN(F(" using fctptr"));
-        eepromWriteFunc(index, data);
+        _eepromWriteFunc(index, data);
     } else {
         DEBUG_PRINTLN(F(""));
 #ifdef ARDUINO_ARCH_SAMD
         DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
-#elif ESP8266    
-        DEBUG_PRINTLN(F("ESP8266: EEPROM.write"));
-        EEPROM.write(index, data);
 #else
         EEPROM.write(index, data);
-        //    delay(10); // really required?
 #endif 
     }
-
     // EEPROM has been changed, reboot will be required
     _rebootRequired = true;
 }
@@ -887,22 +935,21 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
 
     DEBUG_PRINT(F("memUpdate: index=0x%02x data=0x%02x"), index, data);
 
-    if (*eepromUpdateFunc != NULL) {
+    if (*_eepromUpdateFunc != NULL) {
         DEBUG_PRINTLN(F(" using fctptr"));
-        eepromUpdateFunc(index, data);
+        _eepromUpdateFunc(index, data);
     } else {
         DEBUG_PRINTLN(F(""));
-#ifdef ARDUINO_ARCH_SAMD   
-        DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
-#elif ESP8266    
-        DEBUG_PRINTLN(F("ESP8266: EEPROM.update"));
+#if defined(ESP8266) || defined(ESP32)
+        DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.update"));
         byte d = EEPROM.read(index);
         if (d != data) {
             EEPROM.write(index, data);
         }
+#elif ARDUINO_ARCH_SAMD   
+        DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #else
         EEPROM.update(index, data);
-        //    delay(10); // really required?
 #endif
     }
     // EEPROM has been changed, reboot will be required
@@ -911,9 +958,9 @@ void KonnektingDevice::memoryUpdate(int index, byte data) {
 }
 
 void KonnektingDevice::memoryCommit() {
-    if (*eepromCommitFunc != NULL) {
+    if (*_eepromCommitFunc != NULL) {
         DEBUG_PRINTLN(F("memCommit: using fctptr"));
-        eepromCommitFunc();
+        _eepromCommitFunc();
     }
 }
 
@@ -1106,7 +1153,7 @@ int KonnektingDevice::getFreeEepromOffset() {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryReadFunc(byte(*func)(int)) {
-    eepromReadFunc = func;
+    _eepromReadFunc = func;
 }
 
 /**************************************************************************/
@@ -1118,7 +1165,7 @@ void KonnektingDevice::setMemoryReadFunc(byte(*func)(int)) {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
-    eepromWriteFunc = func;
+    _eepromWriteFunc = func;
 }
 
 /**************************************************************************/
@@ -1130,7 +1177,7 @@ void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
-    eepromUpdateFunc = func;
+    _eepromUpdateFunc = func;
 }
 
 /**************************************************************************/
@@ -1142,5 +1189,5 @@ void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
  */
 /**************************************************************************/
 void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
-    eepromCommitFunc = func;
+    _eepromCommitFunc = func;
 }
