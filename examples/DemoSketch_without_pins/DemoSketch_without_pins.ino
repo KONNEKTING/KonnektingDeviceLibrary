@@ -11,15 +11,19 @@
 #include <DebugUtil.h>
 
 // Get correct serial port for debugging
+
 #ifdef __AVR_ATmega32U4__
-// Leonardo/Micro/ProMicro use the USB serial port
+// Leonardo/Micro/ProMicro: USB serial port
 #define DEBUGSERIAL Serial
+
+#elif ARDUINO_ARCH_STM32
+// STM32 NUCLEO Boards: USB port
+#define DEBUGSERIAL Serial
+
 #elif __SAMD21G18A__ 
-// Zero use native USB port
+// Zero: native USB port
 #define DEBUGSERIAL SerialUSB
-#elif ESP8266
-// ESP8266 use the 2nd serial port with TX only
-#define DEBUGSERIAL Serial1
+
 #else
 // All other, (ATmega328P f.i.) use software serial
 #include <SoftwareSerial.h>
@@ -34,11 +38,16 @@ SoftwareSerial softserial(11, 10); // RX, TX
 // ### KONNEKTING Configuration
 // ################################################
 #ifdef __AVR_ATmega328P__
-#define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
-#elif ESP8266
-#define KNX_SERIAL Serial // ESP8266 use Serial
+// Uno/Nano/ProMini: use Serial D0=RX/D1=TX
+#define KNX_SERIAL Serial
+
+#elif ARDUINO_ARCH_STM32
+//STM32 NUCLEO-64 with Arduino-Header: D8(PA9)=TX, D2(PA10)=RX
+#define KNX_SERIAL Serial1
+
 #else
-#define KNX_SERIAL Serial1 // Leonardo/Micro/Zero etc. use Serial1
+// Leonardo/Micro/Zero etc.: Serial1 D0=RX/D1=TX
+#define KNX_SERIAL Serial1
 #endif
 
 // ################################################
@@ -73,6 +82,8 @@ int laststate = false;
 // ################################################
 // ### set ProgLED status
 // ################################################
+//this function is used to indicate programming mode.
+//you can use LED, LCD display or what ever you want...
 void progLed (bool state){ 
     digitalWrite(LED_1_PIN, state);
 }
@@ -135,6 +146,7 @@ void setup() {
     Debug.println(F("Toggle LED every %d ms."), blinkDelay);
     Debug.println(F("Setup is ready. go to loop..."));
     
+    //this is an example, how you can set programming mode
     if (Konnekting.isFactorySetting()) {
         Debug.println(F("Device is in factory mode. Starting programming mode..."));
         Konnekting.setProgState(true);
@@ -180,9 +192,7 @@ void loop() {
 // ################################################
 
 void knxEvents(byte index) {
-    // nothing to do in this sketch
     switch (index) {
-
         case COMOBJ_ledOnOff: // object index has been updated
 
             if (Knx.read(COMOBJ_ledOnOff)) {

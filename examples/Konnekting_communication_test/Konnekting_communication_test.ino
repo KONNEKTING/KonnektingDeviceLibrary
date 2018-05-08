@@ -1,8 +1,15 @@
+#include <KonnektingDevice.h>
+
 #ifdef __SAMD21G18A__
-#error Arduino Zero not yet supported
+#include <FlashAsEEPROM.h> // http://librarymanager/All#FlashStorage
 #endif
 
-#include <KonnektingDevice.h>
+// ################################################
+// ### KNX DEVICE CONFIGURATION
+// ################################################
+word individualAddress  = P_ADDR(1,1,199);
+word groupAddressInput  = G_ADDR(7,7,7);
+word groupAddressOutput = G_ADDR(7,7,8);
 
 // ################################################
 // ### DEBUG CONFIGURATION
@@ -12,14 +19,23 @@
 #include <DebugUtil.h>
 
 // Get correct serial port for debugging
+
 #ifdef __AVR_ATmega32U4__
-// Leonardo/Micro/ProMicro use the USB serial port
+// Leonardo/Micro/ProMicro: USB serial port
 #define DEBUGSERIAL Serial
-#elif ESP8266
-// ESP8266 use the 2nd serial port with TX only
-#define DEBUGSERIAL Serial1
-#elif __SAMD21G18A__
+
+#elif ARDUINO_ARCH_STM32
+// STM32 NUCLEO Boards: USB port
+#define DEBUGSERIAL Serial
+
+#elif __SAMD21G18A__ 
+// Zero: native USB port
 #define DEBUGSERIAL SerialUSB
+
+#elif ESP8266
+// ESP8266 uses the 2nd serial port with TX only (GPIO2)
+#define DEBUGSERIAL Serial1
+
 #else
 // All other, (ATmega328P f.i.) use software serial
 #include <SoftwareSerial.h>
@@ -32,29 +48,15 @@ SoftwareSerial softserial(11, 10); // RX, TX
 // ################################################
 // ### IO Configuration
 // ################################################
-#define LED_PIN LED_BUILTIN
-
-// defaults to on-board LED for AVR Arduinos
+#ifdef ESP8266
+//LED_BUILTIN on ESP8266 cannot be used, because this pin is allready used for Debug-Serial
+#define TEST_LED 16
+#else
+// default on-board LED on most Arduinos
 #define TEST_LED LED_BUILTIN //or change it to another pin
 
-// ################################################
-// ### set LED status
-// ################################################
-void progLed (bool state){ 
-    digitalWrite(LED_PIN, state);
-}
 
-//(use knx_address_calculator.html to calculate your own address/GA)
-//define hardcoded address 1.1.199 
-byte hiAddr = 0x11;
-byte loAddr = 0xc7;
-//define hardcoded listen GA 7/7/7 for LED toggle
-byte hiGA1 = 0x3F;
-byte loGA1 = 0x07;
-//define hardcoded GA 7/7/8 for sending true/false with delay
-byte hiGA2 = 0x3F;
-byte loGA2 = 0x08;
-
+#endif
 
 // Define KONNEKTING Device related IDs
 #define MANUFACTURER_ID 57005
@@ -65,11 +67,20 @@ byte loGA2 = 0x08;
 // ### KONNEKTING Configuration
 // ################################################
 #ifdef __AVR_ATmega328P__
-#define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
+// Uno/Nano/ProMini: use Serial D0=RX/D1=TX
+#define KNX_SERIAL Serial
+
+#elif ARDUINO_ARCH_STM32
+//STM32 NUCLEO-64 with Arduino-Header: D8(PA9)=TX, D2(PA10)=RX
+#define KNX_SERIAL Serial1
+
 #elif ESP8266
-#define KNX_SERIAL Serial // ESP8266 use Serial
+// ESP8266: swaped Serial on GPIO13=RX, GPIO15=TX
+#define KNX_SERIAL Serial
+
 #else
-#define KNX_SERIAL Serial1 // Leonardo/Micro etc. use Serial1
+// Leonardo/Micro/Zero etc.: Serial1 D0=RX/D1=TX
+#define KNX_SERIAL Serial1
 #endif
 
 // Definition of the Communication Objects attached to the device
@@ -85,9 +96,15 @@ byte KonnektingDevice::_paramSizeList[] = {
 };
 const int KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do no change this code
 
-unsigned long blinkDelay = 2500;
+//we do not need a ProgLED, but this function muss be defined
+void progLed (bool state){ 
+    //nothing to do here
+    Debug.println(F("Toggle ProgLED, actual state: %d"),state);
+}
+
+unsigned long sendDelay = 2000;
 unsigned long lastmillis = millis(); 
-int laststate = false;
+bool laststate = false;
 
 
 // ################################################
@@ -95,17 +112,16 @@ int laststate = false;
 // ################################################
 
 void knxEvents(byte index) {
-    // nothing to do in this sketch
     switch (index) {
 
         case 0: // object index has been updated
 
             if (Knx.read(0)) {
-                digitalWrite(LED_PIN, HIGH);
-                Debug.println(F("Toggle LED: on"));
+                digitalWrite(TEST_LED, HIGH);
+                Debug.println(F("Received new state, turning LED ON"));
             } else {
-                digitalWrite(LED_PIN, LOW);
-                Debug.println(F("Toggle LED: off"));
+                digitalWrite(TEST_LED, LOW);
+                Debug.println(F("Received new state, turning LED OFF"));
             }
             break;
 
@@ -114,18 +130,44 @@ void knxEvents(byte index) {
     }
 }
 
+byte readMemory(int index){
+    return EEPROM.read(index);
+}
+
+void writeMemory(int index, byte val) {
+    EEPROM.write(index,val);
+}
+
+void updateMemory(int index, byte val) {
+    if (readMemory(index) != val) {
+        writeMemory(index, val);
+    }
+}
+
+void commitMemory() {
+#if defined(ESP8266) || defined(__SAMD21G18A__)
+    EEPROM.commit();
+#endif
+}
+
 void setup() {
 
-//write hardcoded PA and GAs
-EEPROM.write(0, 0x00);   //Set "not factory" flag
-EEPROM.write(1, hiAddr); //hiAddr
-EEPROM.write(2, loAddr); //loAddr
-EEPROM.write(10, hiGA1); //hi GA1
-EEPROM.write(11, loGA1); //lo GA1
-EEPROM.write(12, 0x80);  //activate GA1
-EEPROM.write(13, hiGA2); //hi GA2
-EEPROM.write(14, loGA2); //lo GA2
-EEPROM.write(15, 0x80);  //activate GA2
+    Konnekting.setMemoryReadFunc(&readMemory);
+    Konnekting.setMemoryWriteFunc(&writeMemory);
+    Konnekting.setMemoryUpdateFunc(&updateMemory);
+    Konnekting.setMemoryCommitFunc(&commitMemory);
+
+    //simulating allready programmed Konnekting device:
+    //write hardcoded PA and GAs
+    writeMemory(0,  0x7F);  //Set "not factory" flag
+    writeMemory(1,  (byte)(individualAddress >> 8));
+    writeMemory(2,  (byte)(individualAddress));
+    writeMemory(10, (byte)(groupAddressInput >> 8));
+    writeMemory(11, (byte)(groupAddressInput));
+    writeMemory(12, 0x80);  //activate InputGA
+    writeMemory(13, (byte)(groupAddressOutput >> 8));
+    writeMemory(14, (byte)(groupAddressOutput));
+    writeMemory(15, 0x80);  //activate OutputGA
 
 
     // debug related stuff
@@ -134,15 +176,14 @@ EEPROM.write(15, 0x80);  //activate GA2
     // Start debug serial with 115200 bauds
     DEBUGSERIAL.begin(115200);
 
-#ifdef __AVR_ATmega32U4__
-    // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
-    while (!DEBUGSERIAL)
-#endif
+    //waiting 3 seconds, so you have enough time to start serial monitor
+    delay(3000);
 
     // make debug serial port known to debug class
     // Means: KONNEKTING will sue the same serial port for console debugging
     Debug.setPrintStream(&DEBUGSERIAL);
 #endif
+
     // Initialize KNX enabled Arduino Board
     Konnekting.init(KNX_SERIAL,
             &progLed,
@@ -150,8 +191,11 @@ EEPROM.write(15, 0x80);  //activate GA2
             DEVICE_ID,
             REVISION);
 
-    Debug.println(F("Toggle LED every %d ms."), blinkDelay);
-    Debug.println(F("Setup is ready. go to loop..."));
+    pinMode(TEST_LED,OUTPUT);
+    
+    Debug.println(F("Toggle LED every %d ms."), sendDelay);
+    digitalWrite(TEST_LED,HIGH);
+    Debug.println(F("Setup is ready. Turning LED on and going to loop..."));
 
 }
 
@@ -169,15 +213,13 @@ void loop() {
      */
     if (Konnekting.isReadyForApplication()) {
 
-        if (currentmillis - lastmillis >= blinkDelay) {
+        if (currentmillis - lastmillis >= sendDelay) {
 
-            Debug.println(F("Actual state: %d"), laststate);
+            Debug.println(F("Sending: %d"), laststate);
             Knx.write(1, laststate);
             laststate = !laststate;
             lastmillis = currentmillis;
-
-            digitalWrite(LED_PIN, HIGH);
-            Debug.println(F("DONE"));
+            Debug.println(F("DONE\n"));
 
         }
 

@@ -11,15 +11,19 @@
 #include <DebugUtil.h>
 
 // Get correct serial port for debugging
+
 #ifdef __AVR_ATmega32U4__
-// Leonardo/Micro/ProMicro use the USB serial port
+// Leonardo/Micro/ProMicro: USB serial port
 #define DEBUGSERIAL Serial
+
+#elif ARDUINO_ARCH_STM32
+// STM32 NUCLEO Boards: USB port
+#define DEBUGSERIAL Serial
+
 #elif __SAMD21G18A__ 
-// Zero use native USB port
+// Zero: native USB port
 #define DEBUGSERIAL SerialUSB
-#elif ESP8266
-// ESP8266 use the 2nd serial port with TX only
-#define DEBUGSERIAL Serial1
+
 #else
 // All other, (ATmega328P f.i.) use software serial
 #include <SoftwareSerial.h>
@@ -34,18 +38,23 @@ SoftwareSerial softserial(11, 10); // RX, TX
 // ### KONNEKTING Configuration
 // ################################################
 #ifdef __AVR_ATmega328P__
-#define KNX_SERIAL Serial // Nano/ProMini etc. use Serial
-#elif ESP8266
-#define KNX_SERIAL Serial // ESP8266 use Serial
+// Uno/Nano/ProMini: use Serial D0=RX/D1=TX
+#define KNX_SERIAL Serial
+
+#elif ARDUINO_ARCH_STM32
+//STM32 NUCLEO-64 with Arduino-Header: D8(PA9)=TX, D2(PA10)=RX
+#define KNX_SERIAL Serial1
+
 #else
-#define KNX_SERIAL Serial1 // Leonardo/Micro/Zero etc. use Serial1
+// Leonardo/Micro/Zero etc.: Serial1 D0=RX/D1=TX
+#define KNX_SERIAL Serial1
 #endif
 
 // ################################################
 // ### IO Configuration
 // ################################################
 #define PROG_LED_PIN 9
-#define PROG_BUTTON_PIN 3
+#define PROG_BUTTON_PIN 3 //pin with interrupt
 #define TEST_LED 5 //or change it to another pin
 
 
@@ -67,44 +76,7 @@ int laststate = false;
 // so we can use an external I2C EEPROM.
 // For that we need to include Arduino's Wire.h
 #ifdef __SAMD21G18A__
-#include <Wire.h>
-
-// Example for 24AA02E64 I2C EEPROM
-byte readMemory(int index) {
-    byte rdata = 0xFF;
-
-    Wire.beginTransmission(0x50);
-    Wire.write((int) (index));
-    Wire.endTransmission();
-
-    Wire.requestFrom(0x50, 1);
-
-    if (Wire.available()) {
-        rdata = Wire.read();
-    }
-
-    return rdata;
-}
-
-void writeMemory(int index, byte val) {
-    Wire.beginTransmission(0x50);
-    Wire.write((int) (index));
-    Wire.write(val);
-    Wire.endTransmission();
-
-    delay(5); //is it needed?!
-}
-
-void updateMemory(int index, byte val) {
-    if (readMemory(index) != val) {
-        writeMemory(index, val);
-    }
-}
-
-void commitMemory() {
-    // this is useful if using flash memory to reduce write cycles
-    // EEPROM needs no commit, so this function is intentionally left blank 
-}
+#include "EEPROM_24AA256.h"
 #endif
 
 
@@ -117,8 +89,8 @@ void setup() {
     // debug related stuff
 #ifdef KDEBUG
 
-    // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(9600);
+    // Start debug serial with 115200 bauds
+    DEBUGSERIAL.begin(115200);
 
 #if defined(__AVR_ATmega32U4__) || defined(__SAMD21G18A__)
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro/Zero only
@@ -206,7 +178,6 @@ void loop() {
 // ################################################
 
 void knxEvents(byte index) {
-    // nothing to do in this sketch
     switch (index) {
 
         case COMOBJ_ledOnOff: // object index has been updated
