@@ -23,6 +23,9 @@
 #ifndef KONNEKTING_h
 #define KONNEKTING_h
 
+#define KONNEKTING_DEVICE_LIBRARY_VERSION 10000
+//#define KONNEKTING_DEVICE_LIBRARY_SNAPSHOT
+
 #include <Arduino.h>
 #include <DebugUtil.h>
 #include <KnxDevice.h>
