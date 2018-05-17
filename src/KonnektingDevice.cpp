@@ -58,9 +58,9 @@
 #include "KnxDataPointTypes.h"
 #include "KonnektingDevice.h"
 
-//#ifdef ESP8266
-//#include <ESP8266WiFi.h>
-//#endif
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#endif
 
 #define PROGCOMOBJ_INDEX 255
 
@@ -206,7 +206,7 @@ void KonnektingDevice::internalInit(HardwareSerial& serial,
  *  @brief  Starts KNX KonnektingDevice, as well as KNX Device
  *  @param  serial 
  *          serial port reference, f.i. "Serial" or "Serial1"
- *  @param  func
+ *  @param  progIndicatorFunc
  *          function pointer to the function to toggle programming mode
  *  @param  manufacturerID
  *          The ID of manufacturer
@@ -219,12 +219,12 @@ void KonnektingDevice::internalInit(HardwareSerial& serial,
 /**************************************************************************/
 
 void KonnektingDevice::init(HardwareSerial& serial,
-        void (*func)(bool),
+        void (*progIndicatorFunc)(bool),
         word manufacturerID,
         byte deviceID,
         byte revisionID
         ) {
-    _progIndicatorFunc = func;
+    _progIndicatorFunc = progIndicatorFunc;
 
     internalInit(serial,manufacturerID,deviceID,revisionID);
 }

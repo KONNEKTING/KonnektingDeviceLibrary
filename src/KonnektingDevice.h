@@ -24,7 +24,8 @@
 #define KONNEKTING_h
 
 #define KONNEKTING_DEVICE_LIBRARY_VERSION 10000
-//#define KONNEKTING_DEVICE_LIBRARY_SNAPSHOT
+#define KONNEKTING_DEVICE_LIBRARY_SNAPSHOT 
+#define KONNEKTING_1.0.0_beta5
 
 #include <Arduino.h>
 #include <DebugUtil.h>
@@ -121,12 +122,12 @@ public:
     void setMemoryUpdateFunc(void (*func)(int, byte));
     void setMemoryCommitFunc(void (*func)(void));
 
-    void init(HardwareSerial& serial,
-            void (*func)(bool),
-            word manufacturerID,
-            byte deviceID,
-            byte revisionID
-            );
+    void init(HardwareSerial& serial, 
+                void (*progIndicatorFunc)(bool), 
+                word manufacturerID, 
+                byte deviceID, 
+                byte revisionID
+                );
 
     void init(HardwareSerial& serial,
             int progButtonPin,
