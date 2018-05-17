@@ -1,4 +1,8 @@
-/*
+/*!
+ * @file KonnektingDevice.h
+ *
+ * This is part of KONNEKTING Device Library for the Arduino platform.  
+ *
  *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights reserved.
  *    This file is part of KONNEKTING Knx Device Library.
  *
@@ -16,40 +20,36 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Knx Programming via GroupWrite-telegram
- * 
- * @author Alexander Christian <info(at)root1.de>
- * @since 2015-11-06
- * @license GPLv3
- */
-
 #ifndef KONNEKTING_h
 #define KONNEKTING_h
 
-#include <Arduino.h> 
+#define KONNEKTING_DEVICE_LIBRARY_VERSION 10000
+//#define KONNEKTING_DEVICE_LIBRARY_SNAPSHOT
+
+#include <Arduino.h>
 #include <DebugUtil.h>
 #include <KnxDevice.h>
+#include <KnxDptConstants.h>
 
-
-#ifndef __SAMD21G18A__
+// AVR, ESP8266 and STM32 uses EEPROM (SAMD21 not ...)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(ARDUINO_ARCH_STM32)
 #include <EEPROM.h>
-#ifndef ESP8266
+#ifdef ARDUINO_ARCH_AVR
 #include <avr/wdt.h>
 #endif
 #endif
 
-#define EEPROM_DEVICE_FLAGS          0
-#define EEPROM_INDIVIDUALADDRESS_HI  1
-#define EEPROM_INDIVIDUALADDRESS_LO  2
-#define EEPROM_COMOBJECTTABLE_START 10
+#define EEPROM_DEVICE_FLAGS          0  ///< EEPROM index for device flags
+#define EEPROM_INDIVIDUALADDRESS_HI  1  ///< EEPROM index for IA, high byte
+#define EEPROM_INDIVIDUALADDRESS_LO  2  ///< EEPROM index for IA, low byte
+#define EEPROM_COMOBJECTTABLE_START 10  ///< EEPROM index start of comobj table
 
 #define PROTOCOLVERSION 0
 
-#define MSGTYPE_ACK                         0 // 0x00
-#define MSGTYPE_READ_DEVICE_INFO            1 // 0x01
-#define MSGTYPE_ANSWER_DEVICE_INFO          2 // 0x02
-#define MSGTYPE_RESTART                     9 // 0x09
+#define MSGTYPE_ACK                         0 ///< Message Type: ACK 0x00
+#define MSGTYPE_READ_DEVICE_INFO            1 ///< Message Type: Read Device Information 0x01
+#define MSGTYPE_ANSWER_DEVICE_INFO          2 ///< Message Type: Answer Device Information 0x02
+#define MSGTYPE_RESTART                     9 ///< Message Type: Restart 0x09
 
 #define MSGTYPE_WRITE_PROGRAMMING_MODE      10 // 0x0A
 #define MSGTYPE_READ_PROGRAMMING_MODE       11 // 0x0B
@@ -90,15 +90,22 @@
 // process intercepted knxEvents-calls with this method
 extern void konnektingKnxEvents(byte index);
 
+/**************************************************************************/
+/*! 
+ *  @brief  Main class provides KONNEKTING Device API
+ */
+
+/**************************************************************************/
 class KonnektingDevice {
     static byte _paramSizeList[];
-    static const byte _numberOfParams;                // Nb of attached Parameters
-    
-    int (*eepromReadFunc)(int);
-    void (*eepromWriteFunc)(int, int);
-    void (*eepromUpdateFunc)(int, int);
-    void (*eepromCommitFunc)(void);
-    
+    static const int _numberOfParams;
+
+    byte (*_eepromReadFunc)(int);
+    void (*_eepromWriteFunc)(int, byte);
+    void (*_eepromUpdateFunc)(int, byte);
+    void (*_eepromCommitFunc)(void);
+    void (*_progIndicatorFunc)(bool);
+
     // Constructor, Destructor
     KonnektingDevice(); // private constructor (singleton design pattern)
 
@@ -108,75 +115,68 @@ class KonnektingDevice {
 
 public:
     static KonnektingDevice Konnekting;
-    
-    void setMemoryReadFunc(int (*func)(int));
-    void setMemoryWriteFunc(void (*func)(int, int));
-    void setMemoryUpdateFunc(void (*func)(int, int));
+
+    void setMemoryReadFunc(byte(*func)(int));
+    void setMemoryWriteFunc(void (*func)(int, byte));
+    void setMemoryUpdateFunc(void (*func)(int, byte));
     void setMemoryCommitFunc(void (*func)(void));
 
-    void init(HardwareSerial& serial, 
-                int progButtonPin, 
-                int progLedPin, 
-                word manufacturerID, 
-                byte deviceID, 
-                byte revisionID
-                );
+    void init(HardwareSerial& serial,
+            void (*func)(bool),
+            word manufacturerID,
+            byte deviceID,
+            byte revisionID
+            );
 
-    /**
-     * needs to be called in "void konnektingKnxEvents(byte index)" to check if ComObject is
-     * an internal ComObject which is not needed to be handled by developer
-     * f.i. ComObject 0 --> for programming purpose
-     * @param index index of KnxComObject
-     * @return if provided comobject index is an internal comobject (true) or not (false)
-     */
-    bool internalComObject(byte index);
-    
-    // must be public to be accessible from KonnektingProgButtonPressed())
+    void init(HardwareSerial& serial,
+            int progButtonPin,
+            int progLedPin,
+            word manufacturerID,
+            byte deviceID,
+            byte revisionID
+            );
+
+    // needs to be public too, due to ISR handler mechanism :-(
+    bool internalKnxEvents(byte index);
+
+    // must be public to be accessible from KonnektingProgButtonPressed()
     void toggleProgState();
 
-    KnxComObject createProgComObject();
+    
 
-    byte getParamSize(byte index);
+    byte getParamSize(int index);
     void getParamValue(int index, byte* value);
-    
-    uint8_t getUINT8Param(byte index);
-    int8_t getINT8Param(byte index);
-    
-    uint16_t getUINT16Param(byte index);
-    int16_t getINT16Param(byte index);
-    
-    uint32_t getUINT32Param(byte index);
-    int32_t getINT32Param(byte index);
-    
-    String getSTRING11Param(byte index);
 
-    /**
-     * Check whether the Knx KonnektingDevice is initialized (Konnekting.init(...)) and therefore active or not
-     * @return true, if tools are initialized and active, false if not
-     */
+    uint8_t getUINT8Param(int index);
+    int8_t getINT8Param(int index);
+
+    uint16_t getUINT16Param(int index);
+    int16_t getINT16Param(int index);
+
+    uint32_t getUINT32Param(int index);
+    int32_t getINT32Param(int index);
+
+    String getSTRING11Param(int index);
+
     bool isActive();
     bool isFactorySetting();
-    
-    /**
-     * Gets programming state
-     * @return true, if programming is active, false if not
-     */
+
     bool isProgState();
-    
-    /**
-     * Check whether Konnekting is ready for application logic. 
-     * (Means: no busy with programming-mode and not running with factory settings)
-     * @return true if it's safe to run application logic
-     */
+
     bool isReadyForApplication();
 
+    void setProgState(bool state);
+
     int getFreeEepromOffset();
-    
+
 private:
 
     bool _rebootRequired = false;
     bool _initialized = false;
-
+#ifdef REBOOT_BUTTON
+    byte _progbtnCount = 0;
+    long _lastProgbtn = 0;
+#endif
     word _individualAddress;
 
     byte _deviceFlags;
@@ -187,22 +187,27 @@ private:
     int _paramTableStartindex;
 
 
-    int _progLED; // default pin D8
-    int _progButton; // default pin D3 (->interrupt)
+    int _progLED;
+    int _progButton; // (->interrupt)
+    void setProgLed(bool state);
 
     bool _progState;
-
-    int calcParamSkipBytes(byte index);
-
-    void setProgState(bool state);
     
-    
+    KnxComObject createProgComObject();
+
+    void internalInit(HardwareSerial& serial,
+            word manufacturerID,
+            byte deviceID,
+            byte revisionID
+            );
+    int calcParamSkipBytes(int index);
+
     bool isMatchingIA(byte hi, byte lo);
 
     void reboot();
 
     // prog methods    
-    void sendAck(byte errorcode, byte indexinformation);
+    void sendAck(byte errorcode, int indexinformation);
     void handleMsgReadDeviceInfo(byte* msg);
     void handleMsgRestart(byte* msg);
     void handleMsgWriteProgrammingMode(byte* msg);
@@ -213,11 +218,11 @@ private:
     void handleMsgReadParameter(byte* msg);
     void handleMsgWriteComObject(byte* msg);
     void handleMsgReadComObject(byte* msg);
-    
+
     int memoryRead(int index);
-    void memoryWrite(int index, byte date);        
-    void memoryUpdate(int index, byte date);        
-    void memoryCommit();        
+    void memoryWrite(int index, byte date);
+    void memoryUpdate(int index, byte date);
+    void memoryCommit();
 
 };
 

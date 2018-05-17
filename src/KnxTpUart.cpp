@@ -23,13 +23,19 @@
 // File : KnxTpUart.cpp
 // Author : Franck Marini
 // Modified: Alexander Christian <info(at)root1.de>
+//           Eugen Burkowski <eugenius707(at)gmail.com>
+
 // Description : Communication with TPUART
 // Module dependencies : HardwareSerial, KnxTelegram, KnxComObject
 
 #include "KnxTpUart.h"
 
-#ifndef ESP8266 
-#include <avr/pgmspace.h>
+#ifndef ESP8266            //ESP8266 does't need pgmspace.h
+#ifdef ESP32               
+#include <pgmspace.h>      //ESP32
+#else
+#include <avr/pgmspace.h>  //rest of the world 
+#endif
 #endif
 
 /*
@@ -108,7 +114,9 @@ byte KnxTpUart::Reset(void) {
     }
     // CONFIGURATION OF THE ARDUINO USART WITH CORRECT FRAME FORMAT (19200, 8 bits, parity even, 1 stop bit)
     _serial.begin(19200, SERIAL_8E1);
-    
+#ifdef ESP8266
+    _serial.swap();
+#endif
     while (attempts--) { // we send a RESET REQUEST and wait for the reset indication answer
         
         DEBUG_PRINTLN(F("Reset attempts: %d"), attempts);
@@ -144,8 +152,8 @@ byte KnxTpUart::Reset(void) {
 // The function must be called prior to Init() execution
 
 byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSize) {
-#define IS_COM(index) (comObjectsList[index].GetIndicator() & KNX_COM_OBJ_C_INDICATOR)
-#define ADDR(index) (comObjectsList[index].GetAddr())
+#define IS_COM(index) (comObjectsList[index].getIndicator() & KNX_COM_OBJ_C_INDICATOR)
+#define ADDR(index) (comObjectsList[index].getAddr())
 
     if ((_rx.state != RX_INIT) || (_tx.state != TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
 
@@ -229,8 +237,9 @@ byte KnxTpUart::Init(void) {
         if (_comObjectsList == NULL) DEBUG_PRINTLN(F("Init : warning : empty object list!\n"));
         if (_evtCallbackFct == NULL) return KNX_TPUART_ERROR_NULL_EVT_CALLBACK_FCT;
         if (_tx.ackFctPtr == NULL) return KNX_TPUART_ERROR_NULL_ACK_CALLBACK_FCT;
-
+/*
         // Set Physical address. This allows to activate address evaluation by the TPUART
+/*      we don't need it anymore. it fixes also bug with PA 1.1.1 on NCN5120
         tpuartCmd[0] = TPUART_SET_ADDR_REQ;
         tpuartCmd[1] = (byte) (_physicalAddr >> 8);
         tpuartCmd[2] = (byte) _physicalAddr;
@@ -238,7 +247,7 @@ byte KnxTpUart::Init(void) {
 
         // Call U_State.request-Service in order to have the field _stateIndication up-to-date
         _serial.write(TPUART_STATE_REQ);
-
+*/
         _rx.state = RX_IDLE_WAITING_FOR_CTRL_FIELD;
         _tx.state = TX_IDLE;
         DEBUG_PRINTLN(F("Init : Normal mode started\n"));
@@ -577,14 +586,14 @@ boolean KnxTpUart::IsAddressAssigned(word addr, byte &index) const {
     // reduce the address range if needed
     while (divisionCounter) {
         searchIndexRange >>= 1; // Divide range width by 2
-        if (addr >= _comObjectsList[_orderedIndexTable[searchIndexStart + searchIndexRange]].GetAddr())
+        if (addr >= _comObjectsList[_orderedIndexTable[searchIndexStart + searchIndexRange]].getAddr())
             searchIndexStart += searchIndexRange;
         else searchIndexStop -= searchIndexRange;
         divisionCounter--;
     }
 
     // search the address value and index in the reduced range
-    for (i = searchIndexStart; ((_comObjectsList[_orderedIndexTable[i]].GetAddr() != addr) && (i <= searchIndexStop)); i++);
+    for (i = searchIndexStart; ((_comObjectsList[_orderedIndexTable[i]].getAddr() != addr) && (i <= searchIndexStop)); i++);
     
     if (i > searchIndexStop) {
         return false; // Address is NOT part of the assigned addresses

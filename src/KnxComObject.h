@@ -30,15 +30,12 @@
 #define KNXCOMOBJECT_H
 
 #include "KnxTelegram.h"
-#include "KnxDPT.h"
+#include "KnxDataPointTypes.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
-// By default, all the objects have NORMAL priority, other priorities are not supported
-// turn KNX_COM_OBJ_SUPPORT_ALL_PRIORITIES flag on to allow support of all the priorities
-// #define KNX_COM_OBJ_SUPPORT_ALL_PRIORITIES
 
-// Definition of com obj indicator values
-// See "knx.org" for com obj indicators specification
+// Definition of comobject indicator values
+// See "knx.org" for comobject indicators specification
 // See: https://redaktion.knx-user-forum.de/lexikon/flags/
 // INDICATOR field : B7  B6  B5  B4  B3  B2  B1  B0
 //                   xx  xx   C   R   W   T   U   I  
@@ -70,32 +67,41 @@
 
 class KnxComObject {
     
-    // true: CO can be used, false: CO is "offline"
+    /**
+     * true: CO can be used, false: CO is "offline"
+     */
     bool _active;
     
-    // Group Address value
+    /**
+     *  Group Address value
+     */
     word _addr; 
 
-    byte _dptId; // Datapoint type
+    /**
+     * DPT
+     */
+    byte _dptId; 
 
-    byte _indicator; // C/R/W/T/U/I indicators
+    /**
+     * C/R/W/T/U/I indicators
+     */
+    byte _indicator; 
 
-    // Com object data length is calculated in the same way as telegram payload length
-    // (See "knx.org" telegram specification for more details)
-    byte _length;
+    /** 
+     * Com object data length is calculated in the same way as telegram payload length
+     * (See "knx.org" telegram specification for more details)
+     */
+    byte _dataLength;
 
-#ifdef KNX_COM_OBJ_SUPPORT_ALL_PRIORITIES
-    const e_KnxPriority _prio; // priority
-#endif
-
-    // _validity is used for "InitRead" typed com objs :
-    // it remains "false" till the object value is updated
-    // NB : the objects not typed "InitRead" get "true" validity value
-    boolean _validity;
+    /**
+     * _validated: used for "InitRead" typed comobjects:
+     *  "false" until the object value is updated
+     *  Other typed comobjects get "true" value immediately
+     */
+    bool _validated;
 
     union {
         // field used in case of short value (1 byte max width, i.e. length <= 2)
-
         struct {
             byte _value;
             byte _notUSed;
@@ -107,11 +113,8 @@ class KnxComObject {
 
 public:
     // Constructor :
-#ifdef KNX_COM_OBJ_SUPPORT_ALL_PRIORITIES	
-    KnxComObject(word addr, e_KnxDPT_ID dptId, e_KnxPriority prio, byte indicator);
-#else
-    KnxComObject(e_KnxDPT_ID dptId, byte indicator);
-#endif
+    KnxComObject(KnxDpt dptId, byte indicator);
+
     // Destructor
     ~KnxComObject();
     
@@ -119,106 +122,121 @@ public:
     void setActive(bool flag);
 
     // INLINED functions (see definitions later in this file)
-    word GetAddr(void) const;
+    word getAddr(void) const;
 
-    // Overwrite address value defined at construction
-    // The function is used in case of programming
-    void SetAddr(word);
+    /**
+     * Overwrite address value defined at construction
+     * The function is used in case of programming
+     * @param the GA to set
+     */
+    void setAddr(word);
 
-    byte GetDptId(void) const;
+    byte getDptId(void) const;
 
-    e_KnxPriority GetPriority(void) const;
+    e_KnxPriority getPriority(void) const;
 
-    byte GetIndicator(void) const;
+    byte getIndicator(void) const;
 
-    boolean GetValidity(void) const;
+    boolean getValidity(void) const;
 
-    byte GetLength(void) const;
+    byte getLength(void) const;
 
-    // Return the com obj value (short value case only)
-    byte GetValue(void) const;
+    /**
+     * Return the com obj value (short value case only)
+     * @return 
+     */
+    byte getValue(void) const;
 
-    // Update the com obj value (short value case only)
-    // Return ERROR if the com obj is long value (invalid use case), else return OK
-    byte UpdateValue(byte newVal);
+    /**
+     * Update the com obj value (short value case only)
+     * @param newVal
+     * @return ERROR if the com obj is long value (invalid use case), else return OK
+     */
+    byte updateValue(byte newVal);
 
-    // Toggle the binary value (for com objs with "B1" format)
-    // NB : the function does not change the validity.
-    void ToggleValue(void);
+    /**
+     * Toggle the binary value (for com objs with "B1" format)
+     */
+    void toggleValue(void);
 
     // functions NOT INLINED :
 
-    // Get the com obj value (short and long value cases)
-    void GetValue(byte dest[]) const;
+    /**
+     * Get the com obj value (short and long value cases)
+     * @param dest
+     */
+    void getValue(byte dest[]) const;
 
-    // Update the com obj value (short and long value cases)
-    void UpdateValue(const byte ori[]);
+    /**
+     * Update the com obj value (short and long value cases)
+     * @param ori
+     */
+    void updateValue(const byte ori[]);
 
-    // Update the com obj value with a telegram payload content
-    // Return ERROR if the telegram payload length differs from com obj one, else return OK
-    byte UpdateValue(const KnxTelegram& ori);
+    /**
+     * Update the com obj value with a telegram payload content
+     * @param ori
+     * @return ERROR if the telegram payload length differs from com obj one, else return OK
+     */
+    byte updateValue(const KnxTelegram& ori);
 
-    // Copy the com obj attributes (addr, prio, length) into a telegram object
-    void CopyAttributes(KnxTelegram& dest) const;
+    /**
+     * Copy the com obj attributes (addr, prio, length) into a telegram object
+     * @param dest
+     */
+    void copyAttributes(KnxTelegram& dest) const;
 
-    // Copy the com obj value into a telegram object
-    void CopyValue(KnxTelegram& dest) const;
+    /**
+     * Copy the com obj value into a telegram object
+     * @param dest
+     */
+    void copyValue(KnxTelegram& dest) const;
 
-    // DEBUG function
-    void Info(String&) const;
 };
 
 
-// --------------- Definition of the INLINED functions -----------------
+// --------------- Definition of the INLINE functions -----------------
 
-inline word KnxComObject::GetAddr(void) const {
+inline word KnxComObject::getAddr(void) const {
     return _addr;
 }
 
-inline void KnxComObject::SetAddr(word addr) {
+inline void KnxComObject::setAddr(word addr) {
     _addr = addr;
 }
 
-inline byte KnxComObject::GetDptId(void) const {
+inline byte KnxComObject::getDptId(void) const {
     return _dptId;
 }
 
-#ifdef KNX_COM_OBJ_SUPPORT_ALL_PRIORITIES	
-
-inline e_KnxPriority KnxComObject::GetPriority(void) const {
-    return _prio;
-}
-#else
-
-inline e_KnxPriority KnxComObject::GetPriority(void) const {
+inline e_KnxPriority KnxComObject::getPriority(void) const {
     return KNX_PRIORITY_NORMAL_VALUE;
 }
-#endif
 
-inline byte KnxComObject::GetIndicator(void) const {
+inline byte KnxComObject::getIndicator(void) const {
     return _indicator;
 }
 
-inline boolean KnxComObject::GetValidity(void) const {
-    return _validity;
+inline boolean KnxComObject::getValidity(void) const {
+    return _validated;
 }
 
-inline byte KnxComObject::GetLength(void) const {
-    return _length;
+inline byte KnxComObject::getLength(void) const {
+    return _dataLength;
 }
 
-inline byte KnxComObject::GetValue(void) const {
+inline byte KnxComObject::getValue(void) const {
     return _value;
 }
 
-inline byte KnxComObject::UpdateValue(byte newValue) {
-    if (_length > 2) return KNX_COM_OBJECT_ERROR;
+inline byte KnxComObject::updateValue(byte newValue) {
+    if (_dataLength > 2) return KNX_COM_OBJECT_ERROR;
     _value = newValue;
-    _validity = true;
+    _validated = true;
     return KNX_COM_OBJECT_OK;
 }
 
-inline void KnxComObject::ToggleValue(void) {
+inline void KnxComObject::toggleValue(void) {
     _value = !_value;
 }
 

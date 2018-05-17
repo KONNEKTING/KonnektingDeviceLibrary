@@ -25,7 +25,7 @@
 
 
 #include <Arduino.h>
-#ifdef __SAMD21G18A__
+#ifdef ARDUINO_ARCH_SAMD
 #include "stdarg.h"
 #endif
 
@@ -74,6 +74,8 @@ public:
     void print(const __FlashStringHelper *format, ...);
     void println(const char *format, ...);
     void println(const __FlashStringHelper *format, ...);
+    
+    
 };
 
 // Reference to the KnxDevice unique instance

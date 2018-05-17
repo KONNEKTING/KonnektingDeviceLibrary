@@ -51,4 +51,4 @@ byte KonnektingDevice::_paramSizeList[] = {
     /* Index 13 - rhMaxValue */ PARAM_UINT8,
     /* Index 14 - rhMaxLimit */ PARAM_INT16
 };
-const byte KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do not change this code
+const int KonnektingDevice::_numberOfParams = sizeof (_paramSizeList); // do not change this code

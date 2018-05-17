@@ -31,7 +31,7 @@
 #include "Arduino.h"
 #include "KnxTelegram.h"
 #include "KnxComObject.h"
-#include "ActionRingBuffer.h"
+#include "RingBuff.h"
 #include "KnxTpUart.h"
 #include "KonnektingDevice.h"
 
@@ -124,10 +124,10 @@ class KnxDevice {
     KnxTpUart *_tpuart;                             
     
     // Queue of transmit actions to be performed
-    ActionRingBuffer<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; 
+    RingBuff<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; 
     
     // True when all the Com Object with Init attr have been initialized
-    boolean _initCompleted;                         
+    bool _initCompleted;                         
     
     // Index to the last initiated object
     byte _initIndex;                                
@@ -146,12 +146,6 @@ class KnxDevice {
     
     // Reference to the telegram received by the TPUART
     KnxTelegram *_rxTelegram;                       
-    
-#if defined(KNXDEVICE_DEBUG_INFO)
-    byte _nbOfInits;                                // Nb of Initialized Com Objects
-    String *_debugStrPtr;
-    static const char _debugInfoText[];
-#endif
     
     // Constructor, Destructor
     // private constructor (singleton design pattern)
@@ -227,8 +221,12 @@ class KnxDevice {
      */
     void update(byte objectIndex);
 
-    // The function returns true if there is rx/tx activity ongoing, else false
-    boolean isActive(void) const;
+    
+    /**
+     * TODO document me
+     * @return 
+     */ 
+    bool isActive(void) const;
     
     /*
      * Overwrite the address of an attache Com Object
@@ -242,12 +240,6 @@ class KnxDevice {
      */
     word getComObjectAddress(byte index);
     
-    // Inline Debug function (definition later in this file)
-    // Set the string used for debug traces
-#if defined(KNXDEVICE_DEBUG_INFO)
-    void SetDebugString(String *strPtr);
-#endif
-
   private:
     /*
      * Static GetTpUartEvents() function called by the KnxTpUart layer (callback)
@@ -258,30 +250,8 @@ class KnxDevice {
      * Static TxTelegramAck() function called by the KnxTpUart layer (callback)
      */
     static void TxTelegramAck(e_TpUartTxAck);
-
-    /* 
-     * Inline Debug function (definition later in this file)
-     */
-    void DebugInfo(const char[]) const;
     
 };
-
-#if defined(KNXDEVICE_DEBUG_INFO)
-// Set the string used for debug traces
-inline void KnxDevice::SetDebugString(String *strPtr) {_debugStrPtr = strPtr;}
-#endif
-
-
-inline void KnxDevice::DebugInfo(const char
-#if defined(KNXDEVICE_DEBUG_INFO) // ifdef to suppress compiler warning about unused variable when not in debug mode
-	       comment
-#endif
-	       []) const
-{
-#if defined(KNXDEVICE_DEBUG_INFO)
-	if (_debugStrPtr != NULL) *_debugStrPtr += String(_debugInfoText) + String(comment);
-#endif
-}
 
 // Reference to the KnxDevice unique instance
 extern KnxDevice& Knx;

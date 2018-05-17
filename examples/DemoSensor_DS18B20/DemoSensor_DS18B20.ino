@@ -21,6 +21,8 @@
 #elif ESP8266
 // ESP8266 use the 2nd serial port with TX only
 #define DEBUGSERIAL Serial1
+#elif __SAMD21G18A__
+#define DEBUGSERIAL SerialUSB
 #else
 // All other, (ATmega328P f.i.) use software serial
 #include <SoftwareSerial.h>
@@ -88,15 +90,63 @@ void limitReached(float comVal, float comValMin, float comValMax, int minObj, in
     }
 };
 
+#ifdef __SAMD21G18A__
+// add missing dtostrf function for zero platform
+char *dtostrf(double value, int width, unsigned int precision, char *result)
+{
+  int decpt, sign, reqd, pad;
+  const char *s, *e;
+  char *p;
+  s = fcvt(value, precision, &decpt, &sign);
+  if (precision == 0 && decpt == 0) {
+    s = (*s < '5') ? "0" : "1";
+    reqd = 1;
+  } else {
+    reqd = strlen(s);
+    if (reqd > decpt) reqd++;
+    if (decpt == 0) reqd++;
+  }
+  if (sign) reqd++;
+  p = result;
+  e = p + reqd;
+  pad = width - reqd;
+  if (pad > 0) {
+    e += pad;
+    while (pad-- > 0) *p++ = ' ';
+  }
+  if (sign) *p++ = '-';
+  if (decpt <= 0 && precision > 0) {
+    *p++ = '0';
+    *p++ = '.';
+    e++;
+    while ( decpt < 0 ) {
+      decpt++;
+      *p++ = '0';
+    }
+  }
+  while (p < e) {
+    *p++ = *s++;
+    if (p == e) break;
+    if (--decpt == 0) *p++ = '.';
+  }
+  if (width < 0) {
+    pad = (reqd + width) * -1;
+    while (pad-- > 0) *p++ = ' ';
+  }
+  *p = 0;
+  return result;
+}
+#endif
+
 void setup() {
   
     // debug related stuff
 #ifdef KDEBUG
 
-    // Start debug serial with 9600 bauds
-    DEBUGSERIAL.begin(9600);
+    // Start debug serial with 115200 bauds
+    DEBUGSERIAL.begin(115200);
 
-#ifdef __AVR_ATmega32U4__
+#if defined(__AVR_ATmega32U4__) || defined(__SAMD21G18A__)
     // wait for serial port to connect. Needed for Leonardo/Micro/ProMicro only
     while (!DEBUGSERIAL)
 #endif
