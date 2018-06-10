@@ -1,9 +1,5 @@
 #include <KonnektingDevice.h>
 
-#ifdef __SAMD21G18A__
-#include <FlashAsEEPROM.h> // http://librarymanager/All#FlashStorage
-#endif
-
 // ################################################
 // ### KNX DEVICE CONFIGURATION
 // ################################################
@@ -105,6 +101,7 @@ void progLed (bool state){
 unsigned long sendDelay = 2000;
 unsigned long lastmillis = millis(); 
 bool laststate = false;
+byte virtualEEPROM[16];
 
 
 // ################################################
@@ -131,11 +128,11 @@ void knxEvents(byte index) {
 }
 
 byte readMemory(int index){
-    return EEPROM.read(index);
+    return virtualEEPROM[index];
 }
 
 void writeMemory(int index, byte val) {
-    EEPROM.write(index,val);
+    virtualEEPROM[index] = val;
 }
 
 void updateMemory(int index, byte val) {
@@ -145,13 +142,11 @@ void updateMemory(int index, byte val) {
 }
 
 void commitMemory() {
-#if defined(ESP8266) || defined(__SAMD21G18A__)
-    EEPROM.commit();
-#endif
+
 }
 
 void setup() {
-
+    memset(virtualEEPROM,0xFF,16);
     Konnekting.setMemoryReadFunc(&readMemory);
     Konnekting.setMemoryWriteFunc(&writeMemory);
     Konnekting.setMemoryUpdateFunc(&updateMemory);
