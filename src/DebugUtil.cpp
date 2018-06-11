@@ -1,15 +1,9 @@
 #include "DebugUtil.h"
+#include "wiring_private.h"
 
 #if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32)
     extern "C" char* sbrk(int incr);
     extern char *__brkval;
-#endif
-
-//workaround for va_start & va_end for STM32
-#if defined(ARDUINO_ARCH_STM32)
-#include <stdarg.h>
-#define va_start(v,l)	__builtin_va_start(v,l)
-#define va_end(v)	__builtin_va_end(v)
 #endif
 
 // DebugUtil unique instance creation
