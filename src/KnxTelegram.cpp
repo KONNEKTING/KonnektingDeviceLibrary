@@ -23,6 +23,7 @@
 // File : KnxTelegram.h
 // Author : Franck Marini
 // Modified: Alexander Christian <info(at)root1.de>
+// Modified: Eugen Burkowski <eugenius707(at)gmail.com>
 // Description : Handling of the KNX Telegrams
 // Module dependencies : none
 
@@ -36,8 +37,9 @@ void KnxTelegram::ClearTelegram(void)
 // clear telegram with default values :
 // std FF, no repeat, normal prio, empty payload
 // multicast, routing counter = 6, payload length = 1
-  for (byte i =0; i < KNX_TELEGRAM_MAX_SIZE; i++) _telegram[i] = 0; 
-  _controlField = CONTROL_FIELD_DEFAULT_VALUE ; _routing= ROUTING_FIELD_DEFAULT_VALUE;
+  memset(_telegram,0,KNX_TELEGRAM_MAX_SIZE);
+  _controlField = CONTROL_FIELD_DEFAULT_VALUE ; 
+  _routing= ROUTING_FIELD_DEFAULT_VALUE;
 }
 
    
@@ -50,14 +52,14 @@ void KnxTelegram::SetLongPayload(const byte origin[], byte nbOfBytes)
 
 void KnxTelegram::ClearLongPayload(void)
 {
-  for(byte i=0; i < KNX_TELEGRAM_PAYLOAD_MAX_SIZE-1; i++) _payloadChecksum[i] = 0;
+  memset(_payloadChecksum,0,KNX_TELEGRAM_PAYLOAD_MAX_SIZE-1);
 }
 
 
 void KnxTelegram::GetLongPayload(byte destination[], byte nbOfBytes) const
 {
   if (nbOfBytes > KNX_TELEGRAM_PAYLOAD_MAX_SIZE-2) nbOfBytes = KNX_TELEGRAM_PAYLOAD_MAX_SIZE-2 ;
-  for(byte i=0; i < nbOfBytes; i++) destination[i] = _payloadChecksum[i];
+  memcpy(destination, _payloadChecksum, nbOfBytes);
 };
     
 
@@ -82,13 +84,13 @@ void KnxTelegram::UpdateChecksum(void)
 void KnxTelegram::Copy(KnxTelegram& dest) const
 {
   byte length = GetTelegramLength();
-  for (byte i=0; i<length ; i++)  dest._telegram[i] = _telegram[i];
+  memcpy(dest._telegram, _telegram, length);
 }
 
 
 void KnxTelegram::CopyHeader(KnxTelegram& dest) const
 {
-  for(byte i=0; i < KNX_TELEGRAM_HEADER_SIZE; i++) dest._telegram[i] = _telegram[i];
+  memcpy(dest._telegram, _telegram, KNX_TELEGRAM_HEADER_SIZE);
 }
 
 
