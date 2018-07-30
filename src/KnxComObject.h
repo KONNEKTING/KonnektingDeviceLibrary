@@ -137,7 +137,9 @@ public:
 
     byte getIndicator(void) const;
 
-    boolean getValidity(void) const;
+    bool getValidity(void) const;
+
+    void setValidity(void);
 
     byte getLength(void) const;
 
@@ -217,8 +219,12 @@ inline byte KnxComObject::getIndicator(void) const {
     return _indicator;
 }
 
-inline boolean KnxComObject::getValidity(void) const {
+inline bool KnxComObject::getValidity(void) const {
     return _validated;
+}
+
+inline void KnxComObject::setValidity(void) {
+    _validated = true;
 }
 
 inline byte KnxComObject::getLength(void) const {

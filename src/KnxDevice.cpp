@@ -129,6 +129,9 @@ void KnxDevice::task(void) {
                 action.command = KNX_READ_REQUEST;
                 action.index = _initIndex;
                 _txActionList.append(action);
+		//normally, _validated flag will be set after response from KNX bus
+		//we set it manually with setValidity() after one try to avoid infinity loop if nobody answers  
+                _comObjectsList[_initIndex].setValidity();
                 _lastInitTimeMillis = millis(); // Update the timer
             }
         }
