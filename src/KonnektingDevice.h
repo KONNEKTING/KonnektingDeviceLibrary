@@ -45,28 +45,24 @@
 #define EEPROM_INDIVIDUALADDRESS_LO  2  ///< EEPROM index for IA, low byte
 #define EEPROM_COMOBJECTTABLE_START 10  ///< EEPROM index start of comobj table
 
-#define PROTOCOLVERSION 0
+#define PROTOCOLVERSION 1
 
-#define MSGTYPE_ACK                         0 ///< Message Type: ACK 0x00
-#define MSGTYPE_READ_DEVICE_INFO            1 ///< Message Type: Read Device Information 0x01
-#define MSGTYPE_ANSWER_DEVICE_INFO          2 ///< Message Type: Answer Device Information 0x02
-#define MSGTYPE_RESTART                     9 ///< Message Type: Restart 0x09
+#define MSGTYPE_ACK                          0 ///< Message Type: ACK 0x00
+#define MSGTYPE_PROPERTY_PAGE_READ           1 ///< Message Type: Property Page Read 0x01
+#define MSGTYPE_ANSWER_DEVICE_INFO           2 ///< Message Type: Property Page Response 0x02
+#define MSGTYPE_RESTART                      9 ///< Message Type: Restart 0x09
 
-#define MSGTYPE_WRITE_PROGRAMMING_MODE      10 // 0x0A
-#define MSGTYPE_READ_PROGRAMMING_MODE       11 // 0x0B
-#define MSGTYPE_ANSWER_PROGRAMMING_MODE     12 // 0x0C
+#define MSGTYPE_PROGRAMMING_MODE_READ       10 ///< Message Type: Programming Mode Read 0x0A
+#define MSGTYPE_PROGRAMMING_MODE_RESPONSE   11 ///< Message Type: Programming Mode Response 0x0B
+#define MSGTYPE_PROGRAMMING_MODE_WRITE      12 ///< Message Type: Programming Mode Write 0x0C
 
-#define MSGTYPE_WRITE_INDIVIDUAL_ADDRESS    20 // 0x14
-#define MSGTYPE_READ_INDIVIDUAL_ADDRESS     21 // 0x15
-#define MSGTYPE_ANSWER_INDIVIDUAL_ADDRESS   22 // 0x16
+#define MSGTYPE_MEMORY_WRITE                30 ///< Message Type: Memory Write 0x1E
+#define MSGTYPE_MEMORY_READ                 31 ///< Message Type: Memory Read 0x1F
+#define MSGTYPE_MEMORY_RESPONSE             32 ///< Message Type: Memory Response 0x20
 
-#define MSGTYPE_WRITE_PARAMETER             30 // 0x1E
-#define MSGTYPE_READ_PARAMETER              31 // 0x1F
-#define MSGTYPE_ANSWER_PARAMETER            32 // 0x20
-
-#define MSGTYPE_WRITE_COM_OBJECT            40 // 0x28
-#define MSGTYPE_READ_COM_OBJECT             41 // 0x29
-#define MSGTYPE_ANSWER_COM_OBJECT           42 // 0x2A
+#define MSGTYPE_DATA_PREPARE                40 ///< Message Type: Data Prepare 0x1E
+#define MSGTYPE_DATA_WRITE                  41 ///< Message Type: Data Write 0x1F
+#define MSGTYPE_DATA_FINISH                 42 ///< Message Type: Data Finish 0x20
 
 #define PARAM_INT8 1
 #define PARAM_UINT8 1
