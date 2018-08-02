@@ -47,9 +47,13 @@
 
 #define PROTOCOLVERSION 1
 
+#define SYSTEM_TYPE_DEFAULT 0
+#define SYSTEM_TYPE_SIMPLE 1
+#define SYSTEM_TYPE_EXTENDED 2 // DRAFT!
+
 #define MSGTYPE_ACK                          0 ///< Message Type: ACK 0x00
 #define MSGTYPE_PROPERTY_PAGE_READ           1 ///< Message Type: Property Page Read 0x01
-#define MSGTYPE_ANSWER_DEVICE_INFO           2 ///< Message Type: Property Page Response 0x02
+#define MSGTYPE_PROPERTY_PAGE_RESPONSE       2 ///< Message Type: Property Page Response 0x02
 #define MSGTYPE_RESTART                      9 ///< Message Type: Restart 0x09
 
 #define MSGTYPE_PROGRAMMING_MODE_READ       10 ///< Message Type: Programming Mode Read 0x0A
@@ -207,14 +211,11 @@ private:
     void sendAck(byte errorcode, int indexinformation);
     void handleMsgReadDeviceInfo(byte* msg);
     void handleMsgRestart(byte* msg);
-    void handleMsgWriteProgrammingMode(byte* msg);
-    void handleMsgReadProgrammingMode(byte* msg);
-    void handleMsgWriteIndividualAddress(byte* msg);
-    void handleMsgReadIndividualAddress(byte* msg);
-    void handleMsgWriteParameter(byte* msg);
-    void handleMsgReadParameter(byte* msg);
-    void handleMsgWriteComObject(byte* msg);
-    void handleMsgReadComObject(byte* msg);
+    void handleMsgProgrammingModeWrite(byte* msg);
+    void handleMsgProgrammingModeRead(byte* msg);
+    void handleMsgPropertyPageRead(byte* msg);
+    void handleMsgMemoryWrite(byte* msg);
+    void handleMsgMemoryRead(byte* msg);
 
     int memoryRead(int index);
     void memoryWrite(int index, byte date);
