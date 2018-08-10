@@ -47,6 +47,10 @@
 
 #define PROTOCOLVERSION 1
 
+#define ACK 0x00
+#define NACK 0xFF
+#define ERR_CODE_OK 0x00
+
 #define SYSTEM_TYPE_DEFAULT 0
 #define SYSTEM_TYPE_SIMPLE 1
 #define SYSTEM_TYPE_EXTENDED 2 // DRAFT!
@@ -208,7 +212,7 @@ private:
     void reboot();
 
     // prog methods    
-    void sendAck(byte errorcode, int indexinformation);
+    void sendAck(byte ackType, byte errorCode);
     void handleMsgReadDeviceInfo(byte* msg);
     void handleMsgRestart(byte* msg);
     void handleMsgProgrammingModeWrite(byte* msg);
@@ -217,9 +221,9 @@ private:
     void handleMsgMemoryWrite(byte* msg);
     void handleMsgMemoryRead(byte* msg);
 
-    int memoryRead(int index);
-    void memoryWrite(int index, byte date);
-    void memoryUpdate(int index, byte date);
+    byte memoryRead(int index);
+    void memoryWrite(int index, byte data);
+    void memoryUpdate(int index, byte data);
     void memoryCommit();
 
 };

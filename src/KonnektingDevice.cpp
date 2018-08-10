@@ -21,13 +21,13 @@
  *
  * @section license License
  *
- *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights reserved.
- *    This file is part of KONNEKTING Knx Device Library.
- * 
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation, either version 3 of the License, or
- *    (at your option) any later version.
+ *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights
+ * reserved. This file is part of KONNEKTING Knx Device Library.
+ *
+ *    The KONNEKTING Knx Device Library is free software: you can redistribute
+ * it and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  *    This program is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -41,8 +41,9 @@
 
 /*
  * !!!!! IMPORTANT !!!!!
- * if "#define DEBUG" is set, you must run your KONNEKTING Suite with "-Dde.root1.slicknx.konnekting.debug=true" 
- * A release-version of your development MUST NOT contain "#define DEBUG" ...
+ * if "#define DEBUG" is set, you must run your KONNEKTING Suite with
+ * "-Dde.root1.slicknx.konnekting.debug=true" A release-version of your
+ * development MUST NOT contain "#define DEBUG" ...
  */
 
 #define DEBUG_PROTOCOL
@@ -50,12 +51,12 @@
 // reboot feature via progbutton
 #define REBOOT_BUTTON
 
+#include "KonnektingDevice.h"
 #include "Arduino.h"
 #include "DebugUtil.h"
-#include "KnxDevice.h"
 #include "KnxComObject.h"
 #include "KnxDataPointTypes.h"
-#include "KonnektingDevice.h"
+#include "KnxDevice.h"
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
@@ -80,16 +81,14 @@ KonnektingDevice &Konnekting = KonnektingDevice::Konnekting;
  */
 
 /**************************************************************************/
-void konnektingKnxEvents(byte index)
-{
+void konnektingKnxEvents(byte index) {
 
-    DEBUG_PRINTLN(F("\n\nkonnektingKnxEvents index=%d"), index);
+  DEBUG_PRINTLN(F("\n\nkonnektingKnxEvents index=%d"), index);
 
-    // if it's not a internal com object, route back to knxEvents()
-    if (!Konnekting.internalKnxEvents(index))
-    {
-        knxEvents(index);
-    }
+  // if it's not a internal com object, route back to knxEvents()
+  if (!Konnekting.internalKnxEvents(index)) {
+    knxEvents(index);
+  }
 }
 
 /***************************************************************************
@@ -102,15 +101,14 @@ void konnektingKnxEvents(byte index)
  */
 
 /**************************************************************************/
-KonnektingDevice::KonnektingDevice()
-{
-    DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
+KonnektingDevice::KonnektingDevice() {
+  DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
 }
 
 /**************************************************************************/
 /*!
  *  @brief  Internal init function, called by outer init
- *  @param  serial 
+ *  @param  serial
  *          serial port reference, f.i. "Serial" or "Serial1"
  *  @param  manufacturerID
  *          The ID of manufacturer
@@ -120,94 +118,93 @@ KonnektingDevice::KonnektingDevice()
  *          The device's revision
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::internalInit(HardwareSerial &serial,
-                                    word manufacturerID,
-                                    byte deviceID,
-                                    byte revisionID)
-{
+void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
+                                    byte deviceID, byte revisionID) {
 
-    DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
+  DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
 
-    DEBUG_PRINTLN("15/7/255 = 0x%04x", G_ADDR(15, 7, 255));
+  DEBUG_PRINTLN("15/7/255 = 0x%04x", G_ADDR(15, 7, 255));
 
-    _initialized = true;
+  _initialized = true;
 
-    _manufacturerID = manufacturerID;
-    _deviceID = deviceID;
-    _revisionID = revisionID;
+  _manufacturerID = manufacturerID;
+  _deviceID = deviceID;
+  _revisionID = revisionID;
 
-    _lastProgbtn = 0;
-    _progbtnCount = 0;
+  _lastProgbtn = 0;
+  _progbtnCount = 0;
 
-    setProgState(false);
+  setProgState(false);
 
-    // hardcoded stuff
-    DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
+  // hardcoded stuff
+  DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"),
+                _manufacturerID, _deviceID, _revisionID);
 
-    DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
+  DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
 
-    // calc  of parameter table in eeprom --> depends on number of com objects
-    _paramTableStartindex = EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
+  // calc  of parameter table in eeprom --> depends on number of com objects
+  _paramTableStartindex =
+      EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
 
-    _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
+  _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
 
-    DEBUG_PRINTLN(F("_deviceFlags: " BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+  DEBUG_PRINTLN(F("_deviceFlags: " BYTETOBINARYPATTERN),
+                BYTETOBINARY(_deviceFlags));
 
-    _individualAddress = P_ADDR(1, 1, 254);
-    if (!isFactorySetting())
-    {
-        DEBUG_PRINTLN(F("->EEPROM"));
-        /*
-         * Read eeprom stuff
-         */
+  _individualAddress = P_ADDR(1, 1, 254);
+  if (!isFactorySetting()) {
+    DEBUG_PRINTLN(F("->EEPROM"));
+    /*
+     * Read eeprom stuff
+     */
 
-        // PA
-        byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
-        byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
-        _individualAddress = (hiAddr << 8) + (loAddr << 0);
+    // PA
+    byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
+    byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
+    _individualAddress = (hiAddr << 8) + (loAddr << 0);
 
-        // ComObjects
-        // at most 254 com objects, 255 is progcomobj
-        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++)
-        {
-            byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
-            byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
-            byte settings = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
-            word comObjAddr = (hi << 8) + (lo << 0);
+    // ComObjects
+    // at most 254 com objects, 255 is progcomobj
+    for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
+      byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
+      byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
+      byte settings = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
+      word comObjAddr = (hi << 8) + (lo << 0);
 
-            bool active = ((settings & 0x80) == 0x80);
-            Knx.setComObjectAddress(i, comObjAddr, active);
+      bool active = ((settings & 0x80) == 0x80);
+      Knx.setComObjectAddress(i, comObjAddr, active);
 
-            DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x setting=0x%02x active=%d"), i, hi, lo, comObjAddr, settings, active);
-        }
+      DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x "
+                      "setting=0x%02x active=%d"),
+                    i, hi, lo, comObjAddr, settings, active);
     }
-    else
-    {
-        DEBUG_PRINTLN(F("->FACTORY"));
-    }
-    DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
-    e_KnxDeviceStatus status;
-    status = Knx.begin(serial, _individualAddress);
-    DEBUG_PRINTLN(F("KnxDevice startup status: 0x%02x"), status);
+  } else {
+    DEBUG_PRINTLN(F("->FACTORY"));
+  }
+  DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
+  e_KnxDeviceStatus status;
+  status = Knx.begin(serial, _individualAddress);
+  DEBUG_PRINTLN(F("KnxDevice startup status: 0x%02x"), status);
 
-    if (status != KNX_DEVICE_OK)
-    {
-        DEBUG_PRINTLN(F("Knx init ERROR. Retry after reboot!!"));
-        delay(500);
-        reboot();
-    }
+  if (status != KNX_DEVICE_OK) {
+    DEBUG_PRINTLN(F("Knx init ERROR. Retry after reboot!!"));
+    delay(500);
+    reboot();
+  }
 
 #if defined(ESP8266) || defined(ESP32)
-    // ESP has no EEPROM, but flash and needs to init the EEPROM emulator with an initial size. We create 8k EEPROM
-    EEPROM.begin(8192);
+  // ESP has no EEPROM, but flash and needs to init the EEPROM emulator with an
+  // initial size. We create 8k EEPROM
+  EEPROM.begin(8192);
 #endif
 }
 
 /**************************************************************************/
 /*!
  *  @brief  Starts KNX KonnektingDevice, as well as KNX Device
- *  @param  serial 
+ *  @param  serial
  *          serial port reference, f.i. "Serial" or "Serial1"
  *  @param  progIndicatorFunc
  *          function pointer to the function to toggle programming mode
@@ -219,27 +216,26 @@ void KonnektingDevice::internalInit(HardwareSerial &serial,
  *          The device's revision
  *  @return void
  */
+
 /**************************************************************************/
 
 void KonnektingDevice::init(HardwareSerial &serial,
                             void (*progIndicatorFunc)(bool),
-                            word manufacturerID,
-                            byte deviceID,
-                            byte revisionID)
-{
-    _progIndicatorFunc = progIndicatorFunc;
+                            word manufacturerID, byte deviceID,
+                            byte revisionID) {
+  _progIndicatorFunc = progIndicatorFunc;
 
-    internalInit(serial, manufacturerID, deviceID, revisionID);
+  internalInit(serial, manufacturerID, deviceID, revisionID);
 }
 
 /**************************************************************************/
 /*!
  *  @brief  Starts KNX KonnektingDevice, as well as KNX Device
- *  @param  serial 
+ *  @param  serial
  *          serial port reference, f.i. "Serial" or "Serial1"
- *  @param  progButtonPin 
+ *  @param  progButtonPin
  *          pin which toggles programming mode, needs an interrupt capable pin!
- *  @param  progLedPin 
+ *  @param  progLedPin
  *          pin which drives LED when in programming mode
  *  @param  manufacturerID
  *          The ID of manufacturer
@@ -249,47 +245,45 @@ void KonnektingDevice::init(HardwareSerial &serial,
  *          The device's revision
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::init(HardwareSerial &serial,
-                            int progButtonPin,
-                            int progLedPin,
-                            word manufacturerID,
-                            byte deviceID,
-                            byte revisionID)
-{
+void KonnektingDevice::init(HardwareSerial &serial, int progButtonPin,
+                            int progLedPin, word manufacturerID, byte deviceID,
+                            byte revisionID) {
 
-    _progLED = progLedPin;
-    _progButton = progButtonPin;
+  _progLED = progLedPin;
+  _progButton = progButtonPin;
 
-    pinMode(_progLED, OUTPUT);
-    pinMode(_progButton, INPUT);
-    attachInterrupt(digitalPinToInterrupt(_progButton), KonnektingProgButtonPressed, RISING);
+  pinMode(_progLED, OUTPUT);
+  pinMode(_progButton, INPUT);
+  attachInterrupt(digitalPinToInterrupt(_progButton),
+                  KonnektingProgButtonPressed, RISING);
 
-    internalInit(serial, manufacturerID, deviceID, revisionID);
+  internalInit(serial, manufacturerID, deviceID, revisionID);
 }
 
 /**************************************************************************/
 /*!
  *  @brief  checks if the device is already initialized and active.
- *  @return True if the device has been initialized (by calling one of the init() functions).
+ *  @return True if the device has been initialized (by calling one of the
+ * init() functions).
  */
+
 /**************************************************************************/
-bool KonnektingDevice::isActive()
-{
-    return _initialized;
-}
+bool KonnektingDevice::isActive() { return _initialized; }
 
 /**************************************************************************/
 /*!
- *  @brief  checks if the device is in factory settings mode, means: has not been programmed so far.
+ *  @brief  checks if the device is in factory settings mode, means: has not
+ * been programmed so far.
  *  @return True if factory settings are active
  */
+
 /**************************************************************************/
-bool KonnektingDevice::isFactorySetting()
-{
-    bool isFactory = (_deviceFlags == 0xff);
-    //    DEBUG_PRINTLN(F("isFactorySetting: %d"), isFactory);
-    return isFactory;
+bool KonnektingDevice::isFactorySetting() {
+  bool isFactory = (_deviceFlags == 0xff);
+  //    DEBUG_PRINTLN(F("isFactorySetting: %d"), isFactory);
+  return isFactory;
 }
 
 /**************************************************************************/
@@ -301,18 +295,15 @@ bool KonnektingDevice::isFactorySetting()
  */
 
 /**************************************************************************/
-int KonnektingDevice::calcParamSkipBytes(int index)
-{
-    // calc bytes to skip
-    int skipBytes = 0;
-    if (index > 0)
-    {
-        for (int i = 0; i < index; i++)
-        {
-            skipBytes += getParamSize(i);
-        }
+int KonnektingDevice::calcParamSkipBytes(int index) {
+  // calc bytes to skip
+  int skipBytes = 0;
+  if (index > 0) {
+    for (int i = 0; i < index; i++) {
+      skipBytes += getParamSize(i);
     }
-    return skipBytes;
+  }
+  return skipBytes;
 }
 
 /**************************************************************************/
@@ -324,10 +315,7 @@ int KonnektingDevice::calcParamSkipBytes(int index)
  */
 
 /**************************************************************************/
-byte KonnektingDevice::getParamSize(int index)
-{
-    return _paramSizeList[index];
-}
+byte KonnektingDevice::getParamSize(int index) { return _paramSizeList[index]; }
 
 /**************************************************************************/
 /*!
@@ -340,79 +328,73 @@ byte KonnektingDevice::getParamSize(int index)
  */
 
 /**************************************************************************/
-void KonnektingDevice::getParamValue(int index, byte value[])
-{
+void KonnektingDevice::getParamValue(int index, byte value[]) {
 
-    if (index > _numberOfParams - 1)
-    {
-        return;
-    }
+  if (index > _numberOfParams - 1) {
+    return;
+  }
 
-    int skipBytes = calcParamSkipBytes(index);
-    int paramLen = getParamSize(index);
+  int skipBytes = calcParamSkipBytes(index);
+  int paramLen = getParamSize(index);
 
-    DEBUG_PRINTLN(F("getParamValue: index=%d _paramTableStartindex=%d skipbytes=%d paremLen=%d"), index, _paramTableStartindex, skipBytes, paramLen);
+  DEBUG_PRINTLN(F("getParamValue: index=%d _paramTableStartindex=%d "
+                  "skipbytes=%d paremLen=%d"),
+                index, _paramTableStartindex, skipBytes, paramLen);
 
-    // read byte by byte
-    for (int i = 0; i < paramLen; i++)
-    {
+  // read byte by byte
+  for (int i = 0; i < paramLen; i++) {
 
-        int addr = _paramTableStartindex + skipBytes + i;
+    int addr = _paramTableStartindex + skipBytes + i;
 
-        value[i] = memoryRead(addr);
-        DEBUG_PRINTLN(F(" val[%d]@%d -> 0x%02x"), i, addr, value[i]);
-    }
+    value[i] = memoryRead(addr);
+    DEBUG_PRINTLN(F(" val[%d]@%d -> 0x%02x"), i, addr, value[i]);
+  }
 }
 
 /**************************************************************************/
 /*!
  *  @brief  Interrupt Service Routines for the prog-button
- *          Used when actually using the built-int prog-button-feature that requires an interrupt enabled pin.
- *          Although this function is "public", it's NOT part of the API and should not be called by users.
+ *          Used when actually using the built-int prog-button-feature that
+ * requires an interrupt enabled pin. Although this function is "public", it's
+ * NOT part of the API and should not be called by users.
  *  @return void
  */
 
 /**************************************************************************/
-void KonnektingProgButtonPressed()
-{
-    DEBUG_PRINTLN(F("PrgBtn toggle"));
-    Konnekting.toggleProgState();
+void KonnektingProgButtonPressed() {
+  DEBUG_PRINTLN(F("PrgBtn toggle"));
+  Konnekting.toggleProgState();
 }
 
 /**************************************************************************/
 /*!
- *  @brief  Toggle the "programming mode" state. 
+ *  @brief  Toggle the "programming mode" state.
  *          This is typically called by prog-button-implementation.
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::toggleProgState()
-{
+void KonnektingDevice::toggleProgState() {
 
 #ifdef REBOOT_BUTTON
-    if (millis() - _lastProgbtn < 300)
-    {
-        _progbtnCount++;
+  if (millis() - _lastProgbtn < 300) {
+    _progbtnCount++;
 
-        if (_progbtnCount == 3)
-        {
-            DEBUG_PRINTLN(F("Forced-Reboot-Request detected"));
-            reboot();
-        }
+    if (_progbtnCount == 3) {
+      DEBUG_PRINTLN(F("Forced-Reboot-Request detected"));
+      reboot();
     }
-    else
-    {
-        _progbtnCount = 1;
-    }
-    _lastProgbtn = millis();
+  } else {
+    _progbtnCount = 1;
+  }
+  _lastProgbtn = millis();
 #endif
 
-    setProgState(!_progState); // toggle and set
-    if (_rebootRequired)
-    {
-        DEBUG_PRINTLN(F("found rebootRequired flag, triggering reboot"));
-        reboot();
-    }
+  setProgState(!_progState); // toggle and set
+  if (_rebootRequired) {
+    DEBUG_PRINTLN(F("found rebootRequired flag, triggering reboot"));
+    reboot();
+  }
 }
 
 /**************************************************************************/
@@ -422,65 +404,56 @@ void KonnektingDevice::toggleProgState()
  */
 
 /**************************************************************************/
-bool KonnektingDevice::isProgState()
-{
-    return _progState;
-}
+bool KonnektingDevice::isProgState() { return _progState; }
 
 /**************************************************************************/
 /*!
- *  @brief  Check whether Konnekting is ready for application logic. 
- *          Means: not busy with programming-mode and not running with factory settings
+ *  @brief  Check whether Konnekting is ready for application logic.
+ *          Means: not busy with programming-mode and not running with factory
+ * settings
  *  @return true if it's safe to run application logic
  */
 
 /**************************************************************************/
-bool KonnektingDevice::isReadyForApplication()
-{
-    bool isReady = (!isProgState() && !isFactorySetting());
-    return isReady;
+bool KonnektingDevice::isReadyForApplication() {
+  bool isReady = (!isProgState() && !isFactorySetting());
+  return isReady;
 }
 
 /**************************************************************************/
 /*!
  *  @brief  Sets the prog state to given boolean value
- *  @param  state 
+ *  @param  state
  *          new prog state
  *  @return void
  */
 
 /**************************************************************************/
-void KonnektingDevice::setProgState(bool state)
-{
-    _progState = state;
-    setProgLed(state);
-    DEBUG_PRINTLN(F("PrgState %d"), state);
-    if (*_progIndicatorFunc == NULL)
-    {
-        digitalWrite(_progLED, state);
-    }
+void KonnektingDevice::setProgState(bool state) {
+  _progState = state;
+  setProgLed(state);
+  DEBUG_PRINTLN(F("PrgState %d"), state);
+  if (*_progIndicatorFunc == NULL) {
+    digitalWrite(_progLED, state);
+  }
 }
 
 /**************************************************************************/
 /*!
  *  @brief  Sets the prog LED to given boolean value
- *  @param  state 
+ *  @param  state
  *          new prog state
  *  @return void
  */
 
 /**************************************************************************/
-void KonnektingDevice::setProgLed(bool state)
-{
-    if (*_progIndicatorFunc != NULL)
-    {
-        _progIndicatorFunc(state);
-    }
-    else
-    {
-        digitalWrite(_progLED, state);
-    }
-    DEBUG_PRINTLN(F("PrgLed %d"), state);
+void KonnektingDevice::setProgLed(bool state) {
+  if (*_progIndicatorFunc != NULL) {
+    _progIndicatorFunc(state);
+  } else {
+    digitalWrite(_progLED, state);
+  }
+  DEBUG_PRINTLN(F("PrgLed %d"), state);
 }
 
 /**************************************************************************/
@@ -494,12 +467,11 @@ void KonnektingDevice::setProgLed(bool state)
  */
 
 /**************************************************************************/
-bool KonnektingDevice::isMatchingIA(byte hi, byte lo)
-{
-    byte iaHi = (_individualAddress >> 8) & 0xff;
-    byte iaLo = (_individualAddress >> 0) & 0xff;
+bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
+  byte iaHi = (_individualAddress >> 8) & 0xff;
+  byte iaLo = (_individualAddress >> 0) & 0xff;
 
-    return (hi == iaHi && lo == iaLo);
+  return (hi == iaHi && lo == iaLo);
 }
 
 /**************************************************************************/
@@ -507,14 +479,17 @@ bool KonnektingDevice::isMatchingIA(byte hi, byte lo)
  *  @brief  Creates internal programming ComObj
  *  @return KnxComObject
  */
+
 /**************************************************************************/
-KnxComObject KonnektingDevice::createProgComObject()
-{
-    DEBUG_PRINTLN(F("createProgComObject"));
-    KnxComObject p = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
-    p.setAddr(G_ADDR(15, 7, 255));
-    p.setActive(true);
-    return /* Index 0 */ p;
+KnxComObject KonnektingDevice::createProgComObject() {
+  DEBUG_PRINTLN(F("createProgComObject"));
+  KnxComObject p =
+      KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */,
+                   KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR
+                                                      PROGRAMMING PURPOSE */
+  p.setAddr(G_ADDR(15, 7, 255));
+  p.setActive(true);
+  return /* Index 0 */ p;
 }
 
 /**************************************************************************/
@@ -524,123 +499,120 @@ KnxComObject KonnektingDevice::createProgComObject()
  *          to get the device back in a well-known state with new settings
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::reboot()
-{
-    Knx.end();
+void KonnektingDevice::reboot() {
+  Knx.end();
 
 #if defined(ESP8266) || defined(ESP32)
-    DEBUG_PRINTLN(F("ESP restart"));
-    ESP.restart();
+  DEBUG_PRINTLN(F("ESP restart"));
+  ESP.restart();
 #elif ARDUINO_ARCH_SAMD
-    // do reset of arduino zero, inspired by http://forum.arduino.cc/index.php?topic=366836.0
-    DEBUG_PRINTLN(F("SAMD SystemReset"));
-    WDT->CTRL.reg = 0; // disable watchdog
-    while (WDT->STATUS.bit.SYNCBUSY == 1)
-        ;                            //Just wait till WDT is free
-    WDT->CONFIG.reg = 0;             // see Table 17-5 Timeout Period (valid values 0-11)
-    WDT->CTRL.reg = WDT_CTRL_ENABLE; //enable watchdog
-    while (WDT->STATUS.bit.SYNCBUSY == 1)
-        ; //Just wait till WDT is free
-    while (1)
-    {
-    }
+  // do reset of arduino zero, inspired by
+  // http://forum.arduino.cc/index.php?topic=366836.0
+  DEBUG_PRINTLN(F("SAMD SystemReset"));
+  WDT->CTRL.reg = 0; // disable watchdog
+  while (WDT->STATUS.bit.SYNCBUSY == 1)
+    ;                  // Just wait till WDT is free
+  WDT->CONFIG.reg = 0; // see Table 17-5 Timeout Period (valid values 0-11)
+  WDT->CTRL.reg = WDT_CTRL_ENABLE; // enable watchdog
+  while (WDT->STATUS.bit.SYNCBUSY == 1)
+    ; // Just wait till WDT is free
+  while (1) {
+  }
 #elif ARDUINO_ARCH_STM32
-    DEBUG_PRINTLN(F("STM32 SystemReset"));
-    delay(100);
-    NVIC_SystemReset();
+  DEBUG_PRINTLN(F("STM32 SystemReset"));
+  delay(100);
+  NVIC_SystemReset();
 #elif __AVR_ATmega32U4__
-    DEBUG_PRINTLN(F("WDT reset NOW"));
-    wdt_enable(WDTO_500MS);
-    while (1)
-    {
-    }
+  DEBUG_PRINTLN(F("WDT reset NOW"));
+  wdt_enable(WDTO_500MS);
+  while (1) {
+  }
 #else
-    // to overcome WDT infinite reboot-loop issue
-    // see: https://github.com/arduino/Arduino/issues/4492
-    DEBUG_PRINTLN(F("software reset NOW"));
-    delay(500);
-    asm volatile("  jmp 0");
+  // to overcome WDT infinite reboot-loop issue
+  // see: https://github.com/arduino/Arduino/issues/4492
+  DEBUG_PRINTLN(F("software reset NOW"));
+  delay(500);
+  asm volatile("  jmp 0");
 #endif
 }
 
 /**************************************************************************/
 /*!
  *  @brief  processes internal comobj for programming purpose.
- *          This method is feed with _all_ comobj events. If it's internal comobj, it's handled and return value is true.
- *          If it's a user defined comobj, all processing is skipped and false is returned.
+ *          This method is feed with _all_ comobj events. If it's internal
+ * comobj, it's handled and return value is true. If it's a user defined comobj,
+ * all processing is skipped and false is returned.
  *  @param  index
  *          index of incoming comobj
- *  @return true, if index was internal comobject and has been handled, false if not
+ *  @return true, if index was internal comobject and has been handled, false if
+ * not
  */
+
 /**************************************************************************/
-bool KonnektingDevice::internalKnxEvents(byte index)
-{
+bool KonnektingDevice::internalKnxEvents(byte index) {
 
-    DEBUG_PRINTLN(F("internalKnxEvents index=%d"), index);
-    bool consumed = false;
-    switch (index)
-    {
-    case 255: // prog com object index 255 has been updated
+  DEBUG_PRINTLN(F("internalKnxEvents index=%d"), index);
+  bool consumed = false;
+  switch (index) {
+  case 255: // prog com object index 255 has been updated
 
-        byte buffer[14];
-        Knx.read(PROGCOMOBJ_INDEX, buffer);
+    byte buffer[14];
+    Knx.read(PROGCOMOBJ_INDEX, buffer);
 #ifdef DEBUG_PROTOCOL
-        for (int i = 0; i < 14; i++)
-        {
-            DEBUG_PRINTLN(F("buffer[%d]\thex=0x%02x bin=" BYTETOBINARYPATTERN), i, buffer[i], BYTETOBINARY(buffer[i]));
-        }
+    for (int i = 0; i < 14; i++) {
+      DEBUG_PRINTLN(F("buffer[%d]\thex=0x%02x bin=" BYTETOBINARYPATTERN), i,
+                    buffer[i], BYTETOBINARY(buffer[i]));
+    }
 #endif
 
-        byte protocolversion = buffer[0];
-        byte msgType = buffer[1];
+    byte protocolversion = buffer[0];
+    byte msgType = buffer[1];
 
-        DEBUG_PRINTLN(F("protocolversion=0x%02x"), protocolversion);
+    DEBUG_PRINTLN(F("protocolversion=0x%02x"), protocolversion);
 
-        DEBUG_PRINTLN(F("msgType=0x%02x"), msgType);
+    DEBUG_PRINTLN(F("msgType=0x%02x"), msgType);
 
-        if (protocolversion != PROTOCOLVERSION)
-        {
-            DEBUG_PRINTLN(F("Unsupported protocol version. Using: %d Got: %d !"), PROTOCOLVERSION, protocolversion);
-        }
-        else
-        {
+    if (protocolversion != PROTOCOLVERSION) {
+      DEBUG_PRINTLN(F("Unsupported protocol version. Using: %d Got: %d !"),
+                    PROTOCOLVERSION, protocolversion);
+    } else {
 
-            switch (msgType)
-            {
-            case MSGTYPE_ACK:
-                DEBUG_PRINTLN(F("Will not handle received ACK. Skipping message."));
-                break;
-            case MSGTYPE_PROPERTY_PAGE_READ:
-                handleMsgPropertyPageRead(buffer);
-                break;
-            case MSGTYPE_RESTART:
-                handleMsgRestart(buffer);
-                break;
-            case MSGTYPE_PROGRAMMING_MODE_WRITE:
-                handleMsgProgrammingModeWrite(buffer);
-                break;
-            case MSGTYPE_PROGRAMMING_MODE_READ:
-                handleMsgProgrammingModeRead(buffer);
-                break;
-            case MSGTYPE_MEMORY_WRITE:
-                if (_progState)
-                    handleMsgMemoryWrite(buffer);
-                break;
-            case MSGTYPE_MEMORY_READ:
-                if (_progState)
-                    handleMsgMemoryRead(buffer);
-                break;
-            default:
-                DEBUG_PRINTLN(F("Unsupported msgtype: 0x%02x"), msgType);
-                DEBUG_PRINTLN(F(" !!! Skipping message."));
-                break;
-            }
-        }
-        consumed = true;
+      switch (msgType) {
+      case MSGTYPE_ACK:
+        DEBUG_PRINTLN(F("Will not handle received ACK. Skipping message."));
         break;
+      case MSGTYPE_PROPERTY_PAGE_READ:
+        handleMsgPropertyPageRead(buffer);
+        break;
+      case MSGTYPE_RESTART:
+        handleMsgRestart(buffer);
+        break;
+      case MSGTYPE_PROGRAMMING_MODE_WRITE:
+        handleMsgProgrammingModeWrite(buffer);
+        break;
+      case MSGTYPE_PROGRAMMING_MODE_READ:
+        handleMsgProgrammingModeRead(buffer);
+        break;
+      case MSGTYPE_MEMORY_WRITE:
+        if (_progState)
+          handleMsgMemoryWrite(buffer);
+        break;
+      case MSGTYPE_MEMORY_READ:
+        if (_progState)
+          handleMsgMemoryRead(buffer);
+        break;
+      default:
+        DEBUG_PRINTLN(F("Unsupported msgtype: 0x%02x"), msgType);
+        DEBUG_PRINTLN(F(" !!! Skipping message."));
+        break;
+      }
     }
-    return consumed;
+    consumed = true;
+    break;
+  }
+  return consumed;
 }
 
 /**************************************************************************/
@@ -649,159 +621,113 @@ bool KonnektingDevice::internalKnxEvents(byte index)
  *  @param  errorcode
  *          error code, if any
  *  @param  indexinformation
- *          indexinformation, if error is related to an index 
+ *          indexinformation, if error is related to an index
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::sendAck(byte errorcode, int indexinformation)
-{
-    DEBUG_PRINTLN(F("sendAck errorcode=0x%02x indexInformation=0x%04x"), errorcode, indexinformation);
+void KonnektingDevice::sendAck(byte ackType, byte errorCode) {
+  DEBUG_PRINTLN(F("sendAck ackType=0x%02x errorCode=0x%02x"), ackType,
+                errorCode);
+  byte response[14];
+  response[0] = PROTOCOLVERSION;
+  response[1] = MSGTYPE_ACK;
+  response[2] = ackType;
+  response[3] = errorCode;
+  for (byte i = 4; i < 14; i++) {
+    response[i] = 0xFF;
+  }
+  Knx.write(PROGCOMOBJ_INDEX, response);
+}
+
+void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
+  DEBUG_PRINTLN(F("handleMsgPropertyPageRead"));
+
+  if (isMatchingIA(msg[2], msg[3])) {
+
     byte response[14];
-    response[0] = PROTOCOLVERSION;
-    response[1] = MSGTYPE_ACK;
-    response[2] = (errorcode == 0x00 ? 0x00 : 0xFF);
-    response[3] = errorcode;
-    response[4] = (indexinformation >> 8) & 0xff;
-    response[5] = (indexinformation >> 0) & 0xff;
-    for (byte i = 6; i < 14; i++)
-    {
-        response[i] = 0x00;
+
+    switch (msg[4]) {
+    case 0x00: // Device Info
+      response[0] = PROTOCOLVERSION;
+      response[1] = MSGTYPE_PROPERTY_PAGE_RESPONSE;
+      response[2] = (_manufacturerID >> 0) & 0xff;
+      response[3] = (_manufacturerID >> 8) & 0xff;
+      response[4] = _deviceID;
+      response[5] = _revisionID;
+      response[6] = _deviceFlags;
+      response[7] = SYSTEM_TYPE_DEFAULT;
+      response[8] = 0xff;
+      response[9] = 0xff;
+      response[10] = 0xff;
+      response[11] = 0xff;
+      response[12] = 0xff;
+      response[13] = 0xff;
+      break;
+    default:
+      break;
     }
+
     Knx.write(PROGCOMOBJ_INDEX, response);
+  } else {
+#ifdef DEBUG_PROTOCOL
+    DEBUG_PRINTLN(F("no matching IA"));
+#endif
+  }
 }
 
-void KonnektingDevice::handleMsgPropertyPageRead(byte msg[])
-{
-    DEBUG_PRINTLN(F("handleMsgPropertyPageRead"));
+void KonnektingDevice::handleMsgRestart(byte msg[]) {
+  DEBUG_PRINTLN(F("handleMsgRestart"));
 
-    if (isMatchingIA(msg[2], msg[3]))
-    {
-
-        byte response[14];
-
-        switch (msg[4])
-        {
-        case 0x00: // Device Info
-            response[0] = PROTOCOLVERSION;
-            response[1] = MSGTYPE_PROPERTY_PAGE_RESPONSE;
-            response[2] = (_manufacturerID >> 0) & 0xff;
-            response[3] = (_manufacturerID >> 8) & 0xff;
-            response[4] = _deviceID;
-            response[5] = _revisionID;
-            response[6] = _deviceFlags;
-            response[7] = SYSTEM_TYPE_DEFAULT;
-            response[8] = 0xff;
-            response[9] = 0xff;
-            response[10] = 0xff;
-            response[11] = 0xff;
-            response[12] = 0xff;
-            response[13] = 0xff;
-            break;
-        default:
-            break;
-        }
-
-        Knx.write(PROGCOMOBJ_INDEX, response);
-    }
-    else
-    {
+  if (isMatchingIA(msg[2], msg[3])) {
 #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("no matching IA"));
+    DEBUG_PRINTLN(F("matching IA"));
 #endif
-    }
+    // trigger restart
+    reboot();
+  } else {
+#ifdef DEBUG_PROTOCOL
+    DEBUG_PRINTLN(F("no matching IA"));
+#endif
+  }
 }
 
-void KonnektingDevice::handleMsgRestart(byte msg[])
-{
-    DEBUG_PRINTLN(F("handleMsgRestart"));
+void KonnektingDevice::handleMsgProgrammingModeWrite(byte msg[]) {
+  DEBUG_PRINTLN(F("handleMsgProgrammingModeWrite"));
+  // word addr = (msg[2] << 8) + (msg[3] << 0);
 
-    if (isMatchingIA(msg[2], msg[3]))
-    {
+  if (isMatchingIA(msg[2], msg[3])) {
 #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("matching IA"));
+    DEBUG_PRINTLN(F("matching IA"));
 #endif
-        // trigger restart
-        reboot();
-    }
-    else
-    {
-#ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("no matching IA"));
-#endif
-    }
-}
-
-void KonnektingDevice::handleMsgProgrammingModeWrite(byte msg[])
-{
-    DEBUG_PRINTLN(F("handleMsgProgrammingModeWrite"));
-    //word addr = (msg[2] << 8) + (msg[3] << 0);
-
-    if (isMatchingIA(msg[2], msg[3]))
-    {
-#ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("matching IA"));
-#endif
-        setProgState(msg[4] == 0x01);
-        sendAck(0x00, 0x00);
+    setProgState(msg[4] == 0x01);
+    sendAck(ACK, ERR_CODE_OK);
 
 #if defined(ESP8266) || defined(ESP32)
-        // ESP8266/ESP32 uses own EEPROM implementation which requires commit() call
-        if (msg[4] == 0x00)
-        {
-            DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.commit()"));
-            EEPROM.commit();
-        }
+    // ESP8266/ESP32 uses own EEPROM implementation which requires commit() call
+    if (msg[4] == 0x00) {
+      DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.commit()"));
+      EEPROM.commit();
+    }
 #else
-        // commit memory changes
-        memoryCommit();
+    // commit memory changes
+    memoryCommit();
 #endif
-    }
-    else
-    {
-        DEBUG_PRINTLN(F("no matching IA"));
-    }
+  } else {
+    DEBUG_PRINTLN(F("no matching IA"));
+  }
 }
 
-void KonnektingDevice::handleMsgProgrammingModeRead(byte /*msg*/[])
-{
-    // to suppress compiler warning about unused variable, "msg" has been commented out
-    DEBUG_PRINTLN(F("handleMsgProgrammingModeRead"));
-    if (_progState)
-    {
-        byte response[14];
-        response[0] = PROTOCOLVERSION;
-        response[1] = MSGTYPE_PROGRAMMING_MODE_RESPONSE;
-        response[3] = (_individualAddress >> 0) & 0xff;
-        response[2] = (_individualAddress >> 8) & 0xff;
-        response[4] = 0xff;
-        response[5] = 0xff;
-        response[6] = 0xff;
-        response[7] = 0xff;
-        response[8] = 0xff;
-        response[9] = 0xff;
-        response[10] = 0xff;
-        response[11] = 0xff;
-        response[12] = 0xff;
-        response[13] = 0xff;
-        Knx.write(PROGCOMOBJ_INDEX, response);
-    }
-}
-
-void KonnektingDevice::handleMsgMemoryWrite(byte msg[])
-{
-    DEBUG_PRINTLN(F("handleMsgMemoryWrite"));
-// TODO
-    sendAck(0x00, 0x00);
-}
-
-void KonnektingDevice::handleMsgMemoryRead(byte msg[])
-{
-    DEBUG_PRINTLN(F("handleMsgMemoryRead"));
+void KonnektingDevice::handleMsgProgrammingModeRead(byte /*msg*/[]) {
+  // to suppress compiler warning about unused variable, "msg" has been
+  // commented out
+  DEBUG_PRINTLN(F("handleMsgProgrammingModeRead"));
+  if (_progState) {
     byte response[14];
     response[0] = PROTOCOLVERSION;
-    response[1] = MSGTYPE_MEMORY_RESPONSE;
-    response[2] = 0xff;
-    response[3] = 0xff;
+    response[1] = MSGTYPE_PROGRAMMING_MODE_RESPONSE;
+    response[3] = (_individualAddress >> 0) & 0xff;
+    response[2] = (_individualAddress >> 8) & 0xff;
     response[4] = 0xff;
     response[5] = 0xff;
     response[6] = 0xff;
@@ -813,89 +739,121 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[])
     response[12] = 0xff;
     response[13] = 0xff;
     Knx.write(PROGCOMOBJ_INDEX, response);
+  }
 }
 
-int KonnektingDevice::memoryRead(int index)
-{
-    DEBUG_PRINT(F("memRead: index=0x%02x"), index);
-    byte d = 0xFF;
+void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
+  DEBUG_PRINTLN(F("handleMsgMemoryWrite"));
 
-    if (*_eepromReadFunc != NULL)
-    {
-        DEBUG_PRINT(F(" using fctptr"));
-        d = _eepromReadFunc(index);
-    }
-    else
-    {
+  uint8_t count = msg[2];
+  uint16_t startAddr = (msg[3] << 8) + (msg[4] << 0);
+  DEBUG_PRINTLN(F("  count=%d startAddr=0x%04x"), count, startAddr);
+
+  for (uint8_t i = 0; i < count; i++) {
+
+    uint16_t addr = startAddr + i;
+    byte data = msg[5] + i;
+
+    memoryWrite(addr, data);
+  }
+  sendAck(ACK, ERR_CODE_OK);
+}
+
+void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
+  DEBUG_PRINTLN(F("handleMsgMemoryRead"));
+
+  uint8_t count = msg[2];
+  uint16_t startAddr = (msg[3] << 8) + (msg[4] << 0);
+
+  byte response[14];
+  response[0] = PROTOCOLVERSION;
+  response[1] = MSGTYPE_MEMORY_RESPONSE;
+  response[2] = count;
+  response[3] = (_individualAddress >> 0) & 0xff;
+  response[2] = (_individualAddress >> 8) & 0xff;
+
+  // read data from eeprom and put into answer message
+  for (uint8_t i = 0; i < count; i++) {
+
+    int addr = startAddr + i;
+
+    response[5 + i] = memoryRead(addr);
+  }
+
+  // fill remaining bytes with 0xFF
+  for (uint8_t i = 5 + count; i < 14; i++) {
+    response[i] = 0xFF;
+  }
+
+  Knx.write(PROGCOMOBJ_INDEX, response);
+}
+
+byte KonnektingDevice::memoryRead(int index) {
+  DEBUG_PRINT(F("memRead: index=0x%04x"), index);
+  byte d = 0xFF;
+
+  if (*_eepromReadFunc != NULL) {
+    DEBUG_PRINT(F(" using fctptr"));
+    d = _eepromReadFunc(index);
+  } else {
 #ifdef ARDUINO_ARCH_SAMD
-        DEBUG_PRINTLN(F("memRead: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+    DEBUG_PRINTLN(F("memRead: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #else
-        d = EEPROM.read(index);
+    d = EEPROM.read(index);
 #endif
-    }
-    DEBUG_PRINTLN(F(" data=0x%02x"), d);
-    return d;
+  }
+  DEBUG_PRINTLN(F(" data=0x%02x"), d);
+  return d;
 }
 
-void KonnektingDevice::memoryWrite(int index, byte data)
-{
+void KonnektingDevice::memoryWrite(int index, byte data) {
 
-    DEBUG_PRINT(F("memWrite: index=0x%02x data=0x%02x"), index, data);
-    if (*_eepromWriteFunc != NULL)
-    {
-        DEBUG_PRINTLN(F(" using fctptr"));
-        _eepromWriteFunc(index, data);
-    }
-    else
-    {
-        DEBUG_PRINTLN(F(""));
+  DEBUG_PRINT(F("memWrite: index=0x%04x data=0x%02x"), index, data);
+  if (*_eepromWriteFunc != NULL) {
+    DEBUG_PRINTLN(F(" using fctptr"));
+    _eepromWriteFunc(index, data);
+  } else {
+    DEBUG_PRINTLN(F(""));
 #ifdef ARDUINO_ARCH_SAMD
-        DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+    DEBUG_PRINTLN(F("memoryWrite: EEPROM NOT SUPPORTED. USE FCTPTR!"));
 #else
-        EEPROM.write(index, data);
+    EEPROM.write(index, data);
 #endif
-    }
-    // EEPROM has been changed, reboot will be required
-    _rebootRequired = true;
+  }
+  // EEPROM has been changed, reboot will be required
+  _rebootRequired = true;
 }
 
-void KonnektingDevice::memoryUpdate(int index, byte data)
-{
+void KonnektingDevice::memoryUpdate(int index, byte data) {
 
-    DEBUG_PRINT(F("memUpdate: index=0x%02x data=0x%02x"), index, data);
+  DEBUG_PRINT(F("memUpdate: index=0x%02x data=0x%02x"), index, data);
 
-    if (*_eepromUpdateFunc != NULL)
-    {
-        DEBUG_PRINTLN(F(" using fctptr"));
-        _eepromUpdateFunc(index, data);
-    }
-    else
-    {
-        DEBUG_PRINTLN(F(""));
+  if (*_eepromUpdateFunc != NULL) {
+    DEBUG_PRINTLN(F(" using fctptr"));
+    _eepromUpdateFunc(index, data);
+  } else {
+    DEBUG_PRINTLN(F(""));
 #if defined(ESP8266) || defined(ESP32)
-        DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.update"));
-        byte d = EEPROM.read(index);
-        if (d != data)
-        {
-            EEPROM.write(index, data);
-        }
-#elif ARDUINO_ARCH_SAMD
-        DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
-#else
-        EEPROM.update(index, data);
-#endif
+    DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.update"));
+    byte d = EEPROM.read(index);
+    if (d != data) {
+      EEPROM.write(index, data);
     }
-    // EEPROM has been changed, reboot will be required
-    _rebootRequired = true;
+#elif ARDUINO_ARCH_SAMD
+    DEBUG_PRINTLN(F("memoryUpdate: EEPROM NOT SUPPORTED. USE FCTPTR!"));
+#else
+    EEPROM.update(index, data);
+#endif
+  }
+  // EEPROM has been changed, reboot will be required
+  _rebootRequired = true;
 }
 
-void KonnektingDevice::memoryCommit()
-{
-    if (*_eepromCommitFunc != NULL)
-    {
-        DEBUG_PRINTLN(F("memCommit: using fctptr"));
-        _eepromCommitFunc();
-    }
+void KonnektingDevice::memoryCommit() {
+  if (*_eepromCommitFunc != NULL) {
+    DEBUG_PRINTLN(F("memCommit: using fctptr"));
+    _eepromCommitFunc();
+  }
 }
 
 /**************************************************************************/
@@ -905,19 +863,20 @@ void KonnektingDevice::memoryCommit()
  *          index of parameter
  *  @return uint8 value of parameter
  */
+
 /**************************************************************************/
-uint8_t KonnektingDevice::getUINT8Param(int index)
-{
-    if (getParamSize(index) != PARAM_UINT8)
-    {
-        DEBUG_PRINTLN(F("Requested UINT8 param for index %d but param has different length! Will Return 0."), index);
-        return 0;
-    }
+uint8_t KonnektingDevice::getUINT8Param(int index) {
+  if (getParamSize(index) != PARAM_UINT8) {
+    DEBUG_PRINTLN(F("Requested UINT8 param for index %d but param has "
+                    "different length! Will Return 0."),
+                  index);
+    return 0;
+  }
 
-    byte paramValue[1];
-    getParamValue(index, paramValue);
+  byte paramValue[1];
+  getParamValue(index, paramValue);
 
-    return paramValue[0];
+  return paramValue[0];
 }
 
 /**************************************************************************/
@@ -927,19 +886,20 @@ uint8_t KonnektingDevice::getUINT8Param(int index)
  *          index of parameter
  *  @return int8 value of parameter
  */
+
 /**************************************************************************/
-int8_t KonnektingDevice::getINT8Param(int index)
-{
-    if (getParamSize(index) != PARAM_INT8)
-    {
-        DEBUG_PRINTLN(F("Requested INT8 param for index %d but param has different length! Will Return 0."), index);
-        return 0;
-    }
+int8_t KonnektingDevice::getINT8Param(int index) {
+  if (getParamSize(index) != PARAM_INT8) {
+    DEBUG_PRINTLN(F("Requested INT8 param for index %d but param has different "
+                    "length! Will Return 0."),
+                  index);
+    return 0;
+  }
 
-    byte paramValue[1];
-    getParamValue(index, paramValue);
+  byte paramValue[1];
+  getParamValue(index, paramValue);
 
-    return paramValue[0];
+  return paramValue[0];
 }
 
 /**************************************************************************/
@@ -949,21 +909,22 @@ int8_t KonnektingDevice::getINT8Param(int index)
  *          index of parameter
  *  @return uint16 value of parameter
  */
+
 /**************************************************************************/
-uint16_t KonnektingDevice::getUINT16Param(int index)
-{
-    if (getParamSize(index) != PARAM_UINT16)
-    {
-        DEBUG_PRINTLN(F("Requested UINT16 param for index %d but param has different length! Will Return 0."), index);
-        return 0;
-    }
+uint16_t KonnektingDevice::getUINT16Param(int index) {
+  if (getParamSize(index) != PARAM_UINT16) {
+    DEBUG_PRINTLN(F("Requested UINT16 param for index %d but param has "
+                    "different length! Will Return 0."),
+                  index);
+    return 0;
+  }
 
-    byte paramValue[2];
-    getParamValue(index, paramValue);
+  byte paramValue[2];
+  getParamValue(index, paramValue);
 
-    uint16_t val = (paramValue[0] << 8) + (paramValue[1] << 0);
+  uint16_t val = (paramValue[0] << 8) + (paramValue[1] << 0);
 
-    return val;
+  return val;
 }
 
 /**************************************************************************/
@@ -973,26 +934,27 @@ uint16_t KonnektingDevice::getUINT16Param(int index)
  *          index of parameter
  *  @return int16 value of parameter
  */
+
 /**************************************************************************/
-int16_t KonnektingDevice::getINT16Param(int index)
-{
-    if (getParamSize(index) != PARAM_INT16)
-    {
-        DEBUG_PRINTLN(F("Requested INT16 param for index %d but param has different length! Will Return 0."), index);
-        return 0;
-    }
+int16_t KonnektingDevice::getINT16Param(int index) {
+  if (getParamSize(index) != PARAM_INT16) {
+    DEBUG_PRINTLN(F("Requested INT16 param for index %d but param has "
+                    "different length! Will Return 0."),
+                  index);
+    return 0;
+  }
 
-    byte paramValue[2];
-    getParamValue(index, paramValue);
+  byte paramValue[2];
+  getParamValue(index, paramValue);
 
-    //    //DEBUG_PRINT((F(" int16: [1]=0x"));
-    //    //DEBUG_PRINT2(paramValue[0], HEX);
-    //    //DEBUG_PRINT((F(" [0]=0x"));
-    //    DEBUG_PRINTLN2(paramValue[1], HEX);
+  //    //DEBUG_PRINT((F(" int16: [1]=0x"));
+  //    //DEBUG_PRINT2(paramValue[0], HEX);
+  //    //DEBUG_PRINT((F(" [0]=0x"));
+  //    DEBUG_PRINTLN2(paramValue[1], HEX);
 
-    int16_t val = (paramValue[0] << 8) + (paramValue[1] << 0);
+  int16_t val = (paramValue[0] << 8) + (paramValue[1] << 0);
 
-    return val;
+  return val;
 }
 
 /**************************************************************************/
@@ -1002,21 +964,24 @@ int16_t KonnektingDevice::getINT16Param(int index)
  *          index of parameter
  *  @return uint32 value of parameter
  */
+
 /**************************************************************************/
-uint32_t KonnektingDevice::getUINT32Param(int index)
-{
-    if (getParamSize(index) != PARAM_UINT32)
-    {
-        DEBUG_PRINTLN(F("Requested UINT32 param for index %d but param has different length! Will Return 0."), index);
-        return 0;
-    }
+uint32_t KonnektingDevice::getUINT32Param(int index) {
+  if (getParamSize(index) != PARAM_UINT32) {
+    DEBUG_PRINTLN(F("Requested UINT32 param for index %d but param has "
+                    "different length! Will Return 0."),
+                  index);
+    return 0;
+  }
 
-    byte paramValue[4];
-    getParamValue(index, paramValue);
+  byte paramValue[4];
+  getParamValue(index, paramValue);
 
-    uint32_t val = ((uint32_t)paramValue[0] << 24) + ((uint32_t)paramValue[1] << 16) + ((uint32_t)paramValue[2] << 8) + ((uint32_t)paramValue[3] << 0);
+  uint32_t val =
+      ((uint32_t)paramValue[0] << 24) + ((uint32_t)paramValue[1] << 16) +
+      ((uint32_t)paramValue[2] << 8) + ((uint32_t)paramValue[3] << 0);
 
-    return val;
+  return val;
 }
 
 /**************************************************************************/
@@ -1026,21 +991,24 @@ uint32_t KonnektingDevice::getUINT32Param(int index)
  *          index of parameter
  *  @return int32 value of parameter
  */
+
 /**************************************************************************/
-int32_t KonnektingDevice::getINT32Param(int index)
-{
-    if (getParamSize(index) != PARAM_INT32)
-    {
-        DEBUG_PRINTLN(F("Requested INT32 param for index %d but param has different length! Will Return 0."), index);
-        return 0;
-    }
+int32_t KonnektingDevice::getINT32Param(int index) {
+  if (getParamSize(index) != PARAM_INT32) {
+    DEBUG_PRINTLN(F("Requested INT32 param for index %d but param has "
+                    "different length! Will Return 0."),
+                  index);
+    return 0;
+  }
 
-    byte paramValue[4];
-    getParamValue(index, paramValue);
+  byte paramValue[4];
+  getParamValue(index, paramValue);
 
-    int32_t val = ((uint32_t)paramValue[0] << 24) + ((uint32_t)paramValue[1] << 16) + ((uint32_t)paramValue[2] << 8) + ((uint32_t)paramValue[3] << 0);
+  int32_t val = ((uint32_t)paramValue[0] << 24) +
+                ((uint32_t)paramValue[1] << 16) +
+                ((uint32_t)paramValue[2] << 8) + ((uint32_t)paramValue[3] << 0);
 
-    return val;
+  return val;
 }
 
 /**************************************************************************/
@@ -1050,52 +1018,49 @@ int32_t KonnektingDevice::getINT32Param(int index)
  *          index of parameter
  *  @return string value of parameter
  */
+
 /**************************************************************************/
-String KonnektingDevice::getSTRING11Param(int index)
-{
-    String ret;
-    if (getParamSize(index) != PARAM_STRING11)
-    {
-        DEBUG_PRINTLN(F("Requested STRING11 param for index %d but param has different length! Will Return \"\""), index);
-        ret = "";
-        return ret;
-    }
-
-    byte paramValue[PARAM_STRING11];
-    getParamValue(index, paramValue);
-
-    // check if string is 0x00 terminated (means <11 chars)
-    for (int i = 0; i < PARAM_STRING11; i++)
-    {
-        if (paramValue[i] == 0x00)
-        {
-            break; // stop at null-termination
-        }
-        else
-        {
-            ret += (char)paramValue[i]; // copy char by char into string
-        }
-    }
-
+String KonnektingDevice::getSTRING11Param(int index) {
+  String ret;
+  if (getParamSize(index) != PARAM_STRING11) {
+    DEBUG_PRINTLN(F("Requested STRING11 param for index %d but param has "
+                    "different length! Will Return \"\""),
+                  index);
+    ret = "";
     return ret;
+  }
+
+  byte paramValue[PARAM_STRING11];
+  getParamValue(index, paramValue);
+
+  // check if string is 0x00 terminated (means <11 chars)
+  for (int i = 0; i < PARAM_STRING11; i++) {
+    if (paramValue[i] == 0x00) {
+      break; // stop at null-termination
+    } else {
+      ret += (char)paramValue[i]; // copy char by char into string
+    }
+  }
+
+  return ret;
 }
 
 /**************************************************************************/
 /*!
  *  @brief  Returns the address at which the "user space" in eeprom starts.
- *          The area in front of this address is used by KONNEKTING and writing to this area is not allowed
+ *          The area in front of this address is used by KONNEKTING and writing
+ * to this area is not allowed
  *  @return eeprom address at which the "user space" starts
  */
-/**************************************************************************/
-int KonnektingDevice::getFreeEepromOffset()
-{
 
-    int offset = _paramTableStartindex;
-    for (int i = 0; i < _numberOfParams; i++)
-    {
-        offset += _paramSizeList[i];
-    }
-    return offset;
+/**************************************************************************/
+int KonnektingDevice::getFreeEepromOffset() {
+
+  int offset = _paramTableStartindex;
+  for (int i = 0; i < _numberOfParams; i++) {
+    offset += _paramSizeList[i];
+  }
+  return offset;
 }
 
 /**************************************************************************/
@@ -1105,10 +1070,10 @@ int KonnektingDevice::getFreeEepromOffset()
  *          function pointer to memory read function
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::setMemoryReadFunc(byte (*func)(int))
-{
-    _eepromReadFunc = func;
+void KonnektingDevice::setMemoryReadFunc(byte (*func)(int)) {
+  _eepromReadFunc = func;
 }
 
 /**************************************************************************/
@@ -1118,10 +1083,10 @@ void KonnektingDevice::setMemoryReadFunc(byte (*func)(int))
  *          function pointer to memory write function
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte))
-{
-    _eepromWriteFunc = func;
+void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
+  _eepromWriteFunc = func;
 }
 
 /**************************************************************************/
@@ -1131,10 +1096,10 @@ void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte))
  *          function pointer to memory update function
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte))
-{
-    _eepromUpdateFunc = func;
+void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
+  _eepromUpdateFunc = func;
 }
 
 /**************************************************************************/
@@ -1144,8 +1109,8 @@ void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte))
  *          function pointer to memory commit function
  *  @return void
  */
+
 /**************************************************************************/
-void KonnektingDevice::setMemoryCommitFunc(void (*func)(void))
-{
-    _eepromCommitFunc = func;
+void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
+  _eepromCommitFunc = func;
 }
