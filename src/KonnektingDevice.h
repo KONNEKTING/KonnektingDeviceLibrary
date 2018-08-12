@@ -25,7 +25,7 @@
 
 #define KONNEKTING_DEVICE_LIBRARY_VERSION 10000
 #define KONNEKTING_DEVICE_LIBRARY_SNAPSHOT 
-#define KONNEKTING_1.0.0_beta5
+#define KONNEKTING_1_0_0_beta5
 
 #include <Arduino.h>
 #include <DebugUtil.h>
@@ -54,6 +54,8 @@
 #define SYSTEM_TYPE_DEFAULT 0
 #define SYSTEM_TYPE_SIMPLE 1
 #define SYSTEM_TYPE_EXTENDED 2 // DRAFT!
+
+#define MSG_LENGTH  14 ///< Message length in bytes
 
 #define MSGTYPE_ACK                          0 ///< Message Type: ACK 0x00
 #define MSGTYPE_PROPERTY_PAGE_READ           1 ///< Message Type: Property Page Read 0x01
@@ -225,6 +227,8 @@ private:
     void memoryWrite(int index, byte data);
     void memoryUpdate(int index, byte data);
     void memoryCommit();
+
+    void fillEmpty(byte* msg, int startIndex);
 
 };
 

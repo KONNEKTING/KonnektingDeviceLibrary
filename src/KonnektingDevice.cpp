@@ -465,7 +465,6 @@ void KonnektingDevice::setProgLed(bool state) {
  *          low byte of IA
  *  @return true if match, false if not
  */
-
 /**************************************************************************/
 bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
   byte iaHi = (_individualAddress >> 8) & 0xff;
@@ -479,7 +478,6 @@ bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
  *  @brief  Creates internal programming ComObj
  *  @return KnxComObject
  */
-
 /**************************************************************************/
 KnxComObject KonnektingDevice::createProgComObject() {
   DEBUG_PRINTLN(F("createProgComObject"));
@@ -489,7 +487,7 @@ KnxComObject KonnektingDevice::createProgComObject() {
                                                       PROGRAMMING PURPOSE */
   p.setAddr(G_ADDR(15, 7, 255));
   p.setActive(true);
-  return /* Index 0 */ p;
+  return p;
 }
 
 /**************************************************************************/
@@ -499,7 +497,6 @@ KnxComObject KonnektingDevice::createProgComObject() {
  *          to get the device back in a well-known state with new settings
  *  @return void
  */
-
 /**************************************************************************/
 void KonnektingDevice::reboot() {
   Knx.end();
@@ -511,15 +508,27 @@ void KonnektingDevice::reboot() {
   // do reset of arduino zero, inspired by
   // http://forum.arduino.cc/index.php?topic=366836.0
   DEBUG_PRINTLN(F("SAMD SystemReset"));
-  WDT->CTRL.reg = 0; // disable watchdog
+
+  // disable watchdog
+  WDT->CTRL.reg = 0;
+
+  // Just wait till WDT is free
   while (WDT->STATUS.bit.SYNCBUSY == 1)
-    ;                  // Just wait till WDT is free
-  WDT->CONFIG.reg = 0; // see Table 17-5 Timeout Period (valid values 0-11)
-  WDT->CTRL.reg = WDT_CTRL_ENABLE; // enable watchdog
+    ;
+
+  // see Table 17-5 Timeout Period (valid values 0-11)
+  WDT->CONFIG.reg = 0;
+
+  // enable watchdog
+  WDT->CTRL.reg = WDT_CTRL_ENABLE;
+
+  // Just wait till WDT is free
   while (WDT->STATUS.bit.SYNCBUSY == 1)
-    ; // Just wait till WDT is free
+    ;
+  // forever loop until WDT fires
   while (1) {
   }
+
 #elif ARDUINO_ARCH_STM32
   DEBUG_PRINTLN(F("STM32 SystemReset"));
   delay(100);
@@ -549,7 +558,6 @@ void KonnektingDevice::reboot() {
  *  @return true, if index was internal comobject and has been handled, false if
  * not
  */
-
 /**************************************************************************/
 bool KonnektingDevice::internalKnxEvents(byte index) {
 
@@ -624,7 +632,6 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
  *          indexinformation, if error is related to an index
  *  @return void
  */
-
 /**************************************************************************/
 void KonnektingDevice::sendAck(byte ackType, byte errorCode) {
   DEBUG_PRINTLN(F("sendAck ackType=0x%02x errorCode=0x%02x"), ackType,
@@ -634,9 +641,8 @@ void KonnektingDevice::sendAck(byte ackType, byte errorCode) {
   response[1] = MSGTYPE_ACK;
   response[2] = ackType;
   response[3] = errorCode;
-  for (byte i = 4; i < 14; i++) {
-    response[i] = 0xFF;
-  }
+  fillEmpty(response, 4);
+
   Knx.write(PROGCOMOBJ_INDEX, response);
 }
 
@@ -651,18 +657,13 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
     case 0x00: // Device Info
       response[0] = PROTOCOLVERSION;
       response[1] = MSGTYPE_PROPERTY_PAGE_RESPONSE;
-      response[2] = (_manufacturerID >> 0) & 0xff;
-      response[3] = (_manufacturerID >> 8) & 0xff;
+      response[2] = (_manufacturerID >> 0) & 0xFF;
+      response[3] = (_manufacturerID >> 8) & 0xFF;
       response[4] = _deviceID;
       response[5] = _revisionID;
       response[6] = _deviceFlags;
       response[7] = SYSTEM_TYPE_DEFAULT;
-      response[8] = 0xff;
-      response[9] = 0xff;
-      response[10] = 0xff;
-      response[11] = 0xff;
-      response[12] = 0xff;
-      response[13] = 0xff;
+      fillEmpty(response, 8);
       break;
     default:
       break;
@@ -726,18 +727,11 @@ void KonnektingDevice::handleMsgProgrammingModeRead(byte /*msg*/[]) {
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_PROGRAMMING_MODE_RESPONSE;
-    response[3] = (_individualAddress >> 0) & 0xff;
-    response[2] = (_individualAddress >> 8) & 0xff;
-    response[4] = 0xff;
-    response[5] = 0xff;
-    response[6] = 0xff;
-    response[7] = 0xff;
-    response[8] = 0xff;
-    response[9] = 0xff;
-    response[10] = 0xff;
-    response[11] = 0xff;
-    response[12] = 0xff;
-    response[13] = 0xff;
+    response[3] = (_individualAddress >> 0) & 0xFF;
+    response[2] = (_individualAddress >> 8) & 0xFF;
+
+    fillEmpty(response, 4);
+
     Knx.write(PROGCOMOBJ_INDEX, response);
   }
 }
@@ -858,12 +852,25 @@ void KonnektingDevice::memoryCommit() {
 
 /**************************************************************************/
 /*!
+ *  @brief  Fills remainig bytes with 0xFF
+ *  @param  index
+ *          index at which to start filling with 0xFF
+ *  @return void
+ */
+/**************************************************************************/
+uint8_t KonnektingDevice::fillEmpty(byte msg[], int index) {
+  for (int = index; i < MSG_LENGTH; i++) {
+    msg[i] = 0xFF;
+  }
+}
+
+/**************************************************************************/
+/*!
  *  @brief  Gets the uint8 value of given parameter
  *  @param  index
  *          index of parameter
  *  @return uint8 value of parameter
  */
-
 /**************************************************************************/
 uint8_t KonnektingDevice::getUINT8Param(int index) {
   if (getParamSize(index) != PARAM_UINT8) {
@@ -886,7 +893,6 @@ uint8_t KonnektingDevice::getUINT8Param(int index) {
  *          index of parameter
  *  @return int8 value of parameter
  */
-
 /**************************************************************************/
 int8_t KonnektingDevice::getINT8Param(int index) {
   if (getParamSize(index) != PARAM_INT8) {
@@ -909,7 +915,6 @@ int8_t KonnektingDevice::getINT8Param(int index) {
  *          index of parameter
  *  @return uint16 value of parameter
  */
-
 /**************************************************************************/
 uint16_t KonnektingDevice::getUINT16Param(int index) {
   if (getParamSize(index) != PARAM_UINT16) {
@@ -934,7 +939,6 @@ uint16_t KonnektingDevice::getUINT16Param(int index) {
  *          index of parameter
  *  @return int16 value of parameter
  */
-
 /**************************************************************************/
 int16_t KonnektingDevice::getINT16Param(int index) {
   if (getParamSize(index) != PARAM_INT16) {
@@ -964,7 +968,6 @@ int16_t KonnektingDevice::getINT16Param(int index) {
  *          index of parameter
  *  @return uint32 value of parameter
  */
-
 /**************************************************************************/
 uint32_t KonnektingDevice::getUINT32Param(int index) {
   if (getParamSize(index) != PARAM_UINT32) {
@@ -991,7 +994,6 @@ uint32_t KonnektingDevice::getUINT32Param(int index) {
  *          index of parameter
  *  @return int32 value of parameter
  */
-
 /**************************************************************************/
 int32_t KonnektingDevice::getINT32Param(int index) {
   if (getParamSize(index) != PARAM_INT32) {
@@ -1018,7 +1020,6 @@ int32_t KonnektingDevice::getINT32Param(int index) {
  *          index of parameter
  *  @return string value of parameter
  */
-
 /**************************************************************************/
 String KonnektingDevice::getSTRING11Param(int index) {
   String ret;
@@ -1052,7 +1053,6 @@ String KonnektingDevice::getSTRING11Param(int index) {
  * to this area is not allowed
  *  @return eeprom address at which the "user space" starts
  */
-
 /**************************************************************************/
 int KonnektingDevice::getFreeEepromOffset() {
 
@@ -1070,7 +1070,6 @@ int KonnektingDevice::getFreeEepromOffset() {
  *          function pointer to memory read function
  *  @return void
  */
-
 /**************************************************************************/
 void KonnektingDevice::setMemoryReadFunc(byte (*func)(int)) {
   _eepromReadFunc = func;
@@ -1083,7 +1082,6 @@ void KonnektingDevice::setMemoryReadFunc(byte (*func)(int)) {
  *          function pointer to memory write function
  *  @return void
  */
-
 /**************************************************************************/
 void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
   _eepromWriteFunc = func;
@@ -1096,7 +1094,6 @@ void KonnektingDevice::setMemoryWriteFunc(void (*func)(int, byte)) {
  *          function pointer to memory update function
  *  @return void
  */
-
 /**************************************************************************/
 void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
   _eepromUpdateFunc = func;
@@ -1109,7 +1106,6 @@ void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
  *          function pointer to memory commit function
  *  @return void
  */
-
 /**************************************************************************/
 void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
   _eepromCommitFunc = func;
