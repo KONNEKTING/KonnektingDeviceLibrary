@@ -56,7 +56,7 @@ inline word P_ADDR(byte area, byte line, byte busdevice)
 inline word G_ADDR(byte maingrp, byte midgrp, byte subgrp)
 { return (word) ( ((maingrp&0x1F)<<11) + ((midgrp&0x7)<<8) + subgrp ); }
 
-inline word G_ADDR(byte maingrp, byte subgrp)
+inline word G_ADDR(byte maingrp, word subgrp)
 { return (word) ( ((maingrp&0x1F)<<11) + subgrp ); }
 
 #define ACTIONS_QUEUE_SIZE 16

@@ -23,7 +23,7 @@ void writeMemory(int index, byte val) {
         Wire.write((int) (index & 0xFF));
         Wire.write(val);
         Wire.endTransmission();
-        delay(5); //is it needed?!
+        delay(5);
     }
 }
 

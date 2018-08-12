@@ -25,14 +25,14 @@
 
 #define KONNEKTING_DEVICE_LIBRARY_VERSION 10000
 #define KONNEKTING_DEVICE_LIBRARY_SNAPSHOT 
-#define KONNEKTING_1.0.0_beta5
+#define KONNEKTING_1_0_0_beta4b
 
 #include <Arduino.h>
 #include <DebugUtil.h>
 #include <KnxDevice.h>
 #include <KnxDptConstants.h>
 
-// AVR, ESP8266 and STM32 uses EEPROM (SAMD21 not ...)
+// AVR, ESP8266, ESP32 and STM32 uses EEPROM (SAMD21 not ...)
 #if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(ARDUINO_ARCH_STM32)
 #include <EEPROM.h>
 #ifdef ARDUINO_ARCH_AVR

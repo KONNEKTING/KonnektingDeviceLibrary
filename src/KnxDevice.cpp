@@ -112,119 +112,114 @@ void KnxDevice::task(void) {
     type_tx_action action;
     word nowTimeMillis, nowTimeMicros;
     
-    // STEP 1 : Initialize Com Objects having Init Read attribute
-    if (!_initCompleted) {
-        nowTimeMillis = millis();
-        // To avoid KNX bus overloading, we wait for 500 ms between each Init read request
-        if (TimeDeltaWord(nowTimeMillis, _lastInitTimeMillis) > 500) {
-            while (
-                    (_initIndex < _numberOfComObjects) && 
-                    (_comObjectsList[_initIndex].getValidity() || !_comObjectsList[_initIndex].isActive()) /* either valid (=init done or not required) or not-active required to jump to next index */
-                  ) _initIndex++;
+    //stay in task() if _tpuart.IsActive()
+    do {
+        // STEP 1 : Initialize Com Objects having Init Read attribute
+        if (!_initCompleted) {
+            nowTimeMillis = millis();
+            // To avoid KNX bus overloading, we wait for 500 ms between each Init read request
+            if (TimeDeltaWord(nowTimeMillis, _lastInitTimeMillis) > 500) {
+                while (
+                        (_initIndex < _numberOfComObjects) && 
+                        (_comObjectsList[_initIndex].getValidity() || !_comObjectsList[_initIndex].isActive()) /* either valid (=init done or not required) or not-active required to jump to next index */
+                    ) _initIndex++;
 
-            if (_initIndex == _numberOfComObjects) {
-                _initCompleted = true; // All the Com Object initialization have been performed
-            } else { // Com Object to be initialised has been found
-                // Add a READ request in the TX action list
-                action.command = KNX_READ_REQUEST;
-                action.index = _initIndex;
-                _txActionList.append(action);
-		//normally, _validated flag will be set after response from KNX bus
-		//we set it manually with setValidity() after one try to avoid infinity loop if nobody answers  
-                _comObjectsList[_initIndex].setValidity();
-                _lastInitTimeMillis = millis(); // Update the timer
+                if (_initIndex == _numberOfComObjects) {
+                    _initCompleted = true; // All the Com Object initialization have been performed
+                } else { // Com Object to be initialised has been found
+                    // Add a READ request in the TX action list
+                    action.command = KNX_READ_REQUEST;
+                    action.index = _initIndex;
+                    _txActionList.append(action);
+                    //normally, _validated flag will be set after response from KNX bus
+                    //we set it manually with setValidity() after one try to avoid infinity loop if nobody answers  
+                    _comObjectsList[_initIndex].setValidity();
+                    _lastInitTimeMillis = millis(); // Update the timer
+                }
             }
         }
-    }
 
-    // STEP 2 : Get new received KNX messages from the TPUART
-    // The TPUART RX task is executed every 400 us
-    nowTimeMicros = micros();
-    if (TimeDeltaWord(nowTimeMicros, _lastRXTimeMicros) > 400) {
-        _lastRXTimeMicros = nowTimeMicros;
-        _tpuart->RXTask();
-        
-        // TODO: check for rx_state in tpuart and call rxtask repeatedly until telegram is received?!
-    }
+        // STEP 2 : Get new received KNX messages from the TPUART
+        // The TPUART RX task is executed every 400 us
+        nowTimeMicros = micros();
+        if (TimeDeltaWord(nowTimeMicros, _lastRXTimeMicros) > 400) {
+            _lastRXTimeMicros = nowTimeMicros;
+            _tpuart->RXTask();
+            
+            // TODO: check for rx_state in tpuart and call rxtask repeatedly until telegram is received?!
+        }
 
-    // STEP 3 : Send KNX messages following TX actions
-    if (_state == IDLE) {
-        if (_txActionList.pop(action)) { // Data to be transmitted
-            
-            //DEBUG_PRINTLN(F("Data to be transmitted index=%d"), action.index);
-            KnxComObject* comObj = (action.index == 255 ? &_progComObj : &_comObjectsList[action.index]);
-            
-            // hier bereits kaputt!
-            /*
-                -> action.valuePtr[0]=0x7d // 0111 1101
-                -> action.valuePtr[1]=0x03 // 0000 0011
-             * statt
-                -> action.valuePtr[0]=0x00 // 0000 0000
-                -> action.valuePtr[1]=0x16 // 0001 0110
-             */
-            //for (byte i = 0; i < comObj.GetLength() - 1; i++) {
-            //    DEBUG_PRINTLN(F("-> action.valuePtr[%d]=0x%02x"), i, action.valuePtr[i]);
-            //}
-            
-            switch (action.command) {
+        // STEP 3 : Send KNX messages following TX actions
+        if (_state == IDLE) {
+            if (_txActionList.pop(action)) { // Data to be transmitted
                 
-                case KNX_READ_REQUEST: // a read operation of a Com Object on the KNX network is required
-                    //_objectsList[action.index].CopyToTelegram(_txTelegram, KNX_COMMAND_VALUE_READ);
-                    comObj->copyAttributes(_txTelegram);
-                    _txTelegram.ClearLongPayload();
-                    _txTelegram.ClearFirstPayloadByte(); // Is it required to have a clean payload ??
-                    _txTelegram.SetCommand(KNX_COMMAND_VALUE_READ);
-                    _txTelegram.UpdateChecksum();
-                    _tpuart->SendTelegram(_txTelegram);
-                    _state = TX_ONGOING;
-                    break;
-
-                case KNX_RESPONSE_REQUEST: // a response operation of a Com Object on the KNX network is required
-                    comObj->copyAttributes(_txTelegram);
-                    comObj->copyValue(_txTelegram);
-                    _txTelegram.SetCommand(KNX_COMMAND_VALUE_RESPONSE);
-                    _txTelegram.UpdateChecksum();
-                    _tpuart->SendTelegram(_txTelegram);
-                    _state = TX_ONGOING;
-                    break;
-
-                case KNX_WRITE_REQUEST: // a write operation of a Com Object on the KNX network is required
-                    // update the com obj value
-                    //DEBUG_PRINTLN(F("KNX_WRITE_REQUEST index=%d"), action.index);
+                //DEBUG_PRINTLN(F("Data to be transmitted index=%d"), action.index);
+                KnxComObject* comObj = (action.index == 255 ? &_progComObj : &_comObjectsList[action.index]);
+                
+                //for (byte i = 0; i < comObj.GetLength() - 1; i++) {
+                //    DEBUG_PRINTLN(F("-> action.valuePtr[%d]=0x%02x"), i, action.valuePtr[i]);
+                //}
+                
+                switch (action.command) {
                     
-                    
-                    if ((comObj->getLength()) <= 2) {
-                        //DEBUG_PRINTLN(F("len <= 2"));
-                        comObj->updateValue(action.byteValue);
-                    } else {
-                        //DEBUG_PRINTLN(F("len > 2"));
-                        comObj->updateValue(action.valuePtr);
-                        free(action.valuePtr);
-                    }
-                    // transmit the value through KNX network only if the Com Object has transmit attribute
-                    if ((comObj->getIndicator()) & KNX_COM_OBJ_T_INDICATOR) {
-                        //DEBUG_PRINTLN(F("set tx ongoing"));
+                    case KNX_READ_REQUEST: // a read operation of a Com Object on the KNX network is required
+                        //_objectsList[action.index].CopyToTelegram(_txTelegram, KNX_COMMAND_VALUE_READ);
                         comObj->copyAttributes(_txTelegram);
-                        comObj->copyValue(_txTelegram);
-                        _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
+                        _txTelegram.ClearLongPayload();
+                        _txTelegram.ClearFirstPayloadByte(); // Is it required to have a clean payload ??
+                        _txTelegram.SetCommand(KNX_COMMAND_VALUE_READ);
                         _txTelegram.UpdateChecksum();
                         _tpuart->SendTelegram(_txTelegram);
                         _state = TX_ONGOING;
-                    }
-                    break;
+                        break;
 
-                default: break;
+                    case KNX_RESPONSE_REQUEST: // a response operation of a Com Object on the KNX network is required
+                        comObj->copyAttributes(_txTelegram);
+                        comObj->copyValue(_txTelegram);
+                        _txTelegram.SetCommand(KNX_COMMAND_VALUE_RESPONSE);
+                        _txTelegram.UpdateChecksum();
+                        _tpuart->SendTelegram(_txTelegram);
+                        _state = TX_ONGOING;
+                        break;
+
+                    case KNX_WRITE_REQUEST: // a write operation of a Com Object on the KNX network is required
+                        // update the com obj value
+                        //DEBUG_PRINTLN(F("KNX_WRITE_REQUEST index=%d"), action.index);
+                        
+                        
+                        if ((comObj->getLength()) <= 2) {
+                            //DEBUG_PRINTLN(F("len <= 2"));
+                            comObj->updateValue(action.byteValue);
+                        } else {
+                            //DEBUG_PRINTLN(F("len > 2"));
+                            comObj->updateValue(action.valuePtr);
+                            free(action.valuePtr);
+                        }
+                        // transmit the value through KNX network only if the Com Object has transmit attribute
+                        if ((comObj->getIndicator()) & KNX_COM_OBJ_T_INDICATOR) {
+                            //DEBUG_PRINTLN(F("set tx ongoing"));
+                            comObj->copyAttributes(_txTelegram);
+                            comObj->copyValue(_txTelegram);
+                            _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
+                            _txTelegram.UpdateChecksum();
+                            _tpuart->SendTelegram(_txTelegram);
+                            _state = TX_ONGOING;
+                        }
+                        break;
+
+                    default: break;
+                }
             }
         }
-    }
 
-    // STEP 4 : LET THE TP-UART TRANSMIT KNX MESSAGES
-    // The TPUART TX task is executed every 800 us
-    nowTimeMicros = micros();
-    if (TimeDeltaWord(nowTimeMicros, _lastTXTimeMicros) > 800) {
-        _lastTXTimeMicros = nowTimeMicros;
-        _tpuart->TXTask();
-    }
+        // STEP 4 : LET THE TP-UART TRANSMIT KNX MESSAGES
+        // The TPUART TX task is executed every 800 us
+        nowTimeMicros = micros();
+        if (TimeDeltaWord(nowTimeMicros, _lastTXTimeMicros) > 800) {
+            _lastTXTimeMicros = nowTimeMicros;
+            _tpuart->TXTask();
+        }
+    } while (_tpuart->IsActive());
 }
 
 
