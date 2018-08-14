@@ -723,7 +723,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
   DEBUG_PRINTLN(F("handleMsgMemoryWrite"));
 
   uint8_t count = msg[2];
-  uint16_t startAddr = (msg[3] << 8) + (msg[4] << 0);
+  uint16_t startAddr = __WORD(msg[3], msg[4]);
   DEBUG_PRINTLN(F("  count=%d startAddr=0x%04x"), count, startAddr);
 
   for (uint8_t i = 0; i < count; i++) {
@@ -740,7 +740,8 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
   DEBUG_PRINTLN(F("handleMsgMemoryRead"));
 
   uint8_t count = msg[2];
-  uint16_t startAddr = (msg[3] << 8) + (msg[4] << 0);
+  uint16_t startAddr = __WORD(msg[3], msg[4]);
+  DEBUG_PRINTLN(F("  count=%d startAddr=0x%04x"), count, startAddr);
 
   byte response[14];
   response[0] = PROTOCOLVERSION;

@@ -65,8 +65,7 @@
   0x02                       ///< Message Type: Property Page Response 0x02
 #define MSGTYPE_RESTART 0x09 ///< Message Type: Restart 0x09
 
-#define MSGTYPE_PROGRAMMING_MODE_WRITE                                         \
-  0x0A ///< Message Type: Programming Mode Write 0x0C
+#define MSGTYPE_PROGRAMMING_MODE_WRITE 0x0A ///< Message Type: Programming Mode Write 0x0C
 #define MSGTYPE_PROGRAMMING_MODE_READ                                          \
   0x0B ///< Message Type: Programming Mode Read 0x0A
 #define MSGTYPE_PROGRAMMING_MODE_RESPONSE                                      \
