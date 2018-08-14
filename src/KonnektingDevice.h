@@ -51,28 +51,29 @@
 #define NACK 0xFF
 #define ERR_CODE_OK 0x00
 
-#define SYSTEM_TYPE_DEFAULT 0
-#define SYSTEM_TYPE_SIMPLE 1
-#define SYSTEM_TYPE_EXTENDED 2 // DRAFT!
+#define SYSTEM_TYPE_SIMPLE 0x00
+#define SYSTEM_TYPE_DEFAULT 0x01
+#define SYSTEM_TYPE_EXTENDED 0x02 // DRAFT!
 
 #define MSG_LENGTH  14 ///< Message length in bytes
 
-#define MSGTYPE_ACK                          0 ///< Message Type: ACK 0x00
-#define MSGTYPE_PROPERTY_PAGE_READ           1 ///< Message Type: Property Page Read 0x01
-#define MSGTYPE_PROPERTY_PAGE_RESPONSE       2 ///< Message Type: Property Page Response 0x02
-#define MSGTYPE_RESTART                      9 ///< Message Type: Restart 0x09
+#define MSGTYPE_ACK                          0x00 ///< Message Type: ACK 0x00
+#define MSGTYPE_PROPERTY_PAGE_READ           0x01 ///< Message Type: Property Page Read 0x01
+#define MSGTYPE_PROPERTY_PAGE_RESPONSE       0x02 ///< Message Type: Property Page Response 0x02
+#define MSGTYPE_RESTART                      0x09 ///< Message Type: Restart 0x09
 
-#define MSGTYPE_PROGRAMMING_MODE_READ       10 ///< Message Type: Programming Mode Read 0x0A
-#define MSGTYPE_PROGRAMMING_MODE_RESPONSE   11 ///< Message Type: Programming Mode Response 0x0B
-#define MSGTYPE_PROGRAMMING_MODE_WRITE      12 ///< Message Type: Programming Mode Write 0x0C
+#define MSGTYPE_PROGRAMMING_MODE_WRITE      0x0A ///< Message Type: Programming Mode Write 0x0C
+#define MSGTYPE_PROGRAMMING_MODE_READ       0x0B ///< Message Type: Programming Mode Read 0x0A
+#define MSGTYPE_PROGRAMMING_MODE_RESPONSE   0x0C ///< Message Type: Programming Mode Response 0x0B
 
-#define MSGTYPE_MEMORY_WRITE                30 ///< Message Type: Memory Write 0x1E
-#define MSGTYPE_MEMORY_READ                 31 ///< Message Type: Memory Read 0x1F
-#define MSGTYPE_MEMORY_RESPONSE             32 ///< Message Type: Memory Response 0x20
+#define MSGTYPE_MEMORY_WRITE                0x1E ///< Message Type: Memory Write 0x1E
+#define MSGTYPE_MEMORY_READ                 0x1F ///< Message Type: Memory Read 0x1F
+#define MSGTYPE_MEMORY_RESPONSE             0x20 ///< Message Type: Memory Response 0x20
 
-#define MSGTYPE_DATA_PREPARE                40 ///< Message Type: Data Prepare 0x1E
-#define MSGTYPE_DATA_WRITE                  41 ///< Message Type: Data Write 0x1F
-#define MSGTYPE_DATA_FINISH                 42 ///< Message Type: Data Finish 0x20
+#define MSGTYPE_DATA_PREPARE                0x28 ///< Message Type: Data Prepare 0x28
+#define MSGTYPE_DATA_WRITE                  0x29 ///< Message Type: Data Write 0x29
+#define MSGTYPE_DATA_FINISH                 0x2A ///< Message Type: Data Finish 0x2A
+#define MSGTYPE_DATA_REMOVE                 0x2B ///< Message Type: Data Finish 0x2B
 
 #define PARAM_INT8 1
 #define PARAM_UINT8 1
@@ -93,6 +94,14 @@
 #define PARAM_RAW11 11
 #define PARAM_STRING11 11
 
+inline byte HI__(word w)
+{ return (w >> 8) & 0xff}
+
+inline byte __LO(word w)
+{ return (w >> 0) & 0xff}
+
+inline word __WORD(byte hi, byte lo)
+{ return (word) (hi << 8) + (lo << 0)}
 
 // process intercepted knxEvents-calls with this method
 extern void konnektingKnxEvents(byte index);
@@ -208,8 +217,6 @@ private:
             byte revisionID
             );
     int calcParamSkipBytes(int index);
-
-    bool isMatchingIA(byte hi, byte lo);
 
     void reboot();
 

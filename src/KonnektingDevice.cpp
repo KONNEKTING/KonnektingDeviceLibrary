@@ -163,7 +163,7 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     // PA
     byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
     byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
-    _individualAddress = (hiAddr << 8) + (loAddr << 0);
+    _individualAddress = __WORD(hiAddr, loAddr);
 
     // ComObjects
     // at most 254 com objects, 255 is progcomobj
@@ -458,23 +458,6 @@ void KonnektingDevice::setProgLed(bool state) {
 
 /**************************************************************************/
 /*!
- *  @brief  Check if given 2byte ID is matching the current set IA
- *  @param  hi
- *          high byte of IA
- *  @param  lo
- *          low byte of IA
- *  @return true if match, false if not
- */
-/**************************************************************************/
-bool KonnektingDevice::isMatchingIA(byte hi, byte lo) {
-  byte iaHi = (_individualAddress >> 8) & 0xff;
-  byte iaLo = (_individualAddress >> 0) & 0xff;
-
-  return (hi == iaHi && lo == iaLo);
-}
-
-/**************************************************************************/
-/*!
  *  @brief  Creates internal programming ComObj
  *  @return KnxComObject
  */
@@ -649,7 +632,7 @@ void KonnektingDevice::sendAck(byte ackType, byte errorCode) {
 void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
   DEBUG_PRINTLN(F("handleMsgPropertyPageRead"));
 
-  if (isMatchingIA(msg[2], msg[3])) {
+  if (_individualAddress==__WORD(msg[2], msg[3])) {
 
     byte response[14];
 
@@ -657,8 +640,8 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
     case 0x00: // Device Info
       response[0] = PROTOCOLVERSION;
       response[1] = MSGTYPE_PROPERTY_PAGE_RESPONSE;
-      response[2] = (_manufacturerID >> 0) & 0xFF;
-      response[3] = (_manufacturerID >> 8) & 0xFF;
+      response[2] = HI__(_manufacturerID);
+      response[3] = __LO(_manufacturerID);
       response[4] = _deviceID;
       response[5] = _revisionID;
       response[6] = _deviceFlags;
@@ -680,7 +663,7 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
 void KonnektingDevice::handleMsgRestart(byte msg[]) {
   DEBUG_PRINTLN(F("handleMsgRestart"));
 
-  if (isMatchingIA(msg[2], msg[3])) {
+  if (_individualAddress==__WORD(msg[2], msg[3])) {
 #ifdef DEBUG_PROTOCOL
     DEBUG_PRINTLN(F("matching IA"));
 #endif
@@ -697,7 +680,7 @@ void KonnektingDevice::handleMsgProgrammingModeWrite(byte msg[]) {
   DEBUG_PRINTLN(F("handleMsgProgrammingModeWrite"));
   // word addr = (msg[2] << 8) + (msg[3] << 0);
 
-  if (isMatchingIA(msg[2], msg[3])) {
+  if (_individualAddress==__WORD(msg[2], msg[3])) {
 #ifdef DEBUG_PROTOCOL
     DEBUG_PRINTLN(F("matching IA"));
 #endif
@@ -727,8 +710,8 @@ void KonnektingDevice::handleMsgProgrammingModeRead(byte /*msg*/[]) {
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_PROGRAMMING_MODE_RESPONSE;
-    response[3] = (_individualAddress >> 0) & 0xFF;
-    response[2] = (_individualAddress >> 8) & 0xFF;
+    response[2] = HI__(_individualAddress);
+    response[3] = __LO(_individualAddress);
 
     fillEmpty(response, 4);
 
@@ -763,8 +746,8 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
   response[0] = PROTOCOLVERSION;
   response[1] = MSGTYPE_MEMORY_RESPONSE;
   response[2] = count;
-  response[3] = (_individualAddress >> 0) & 0xff;
-  response[2] = (_individualAddress >> 8) & 0xff;
+  response[3] = HI__(_individualAddress);
+  response[4] = __LO(_individualAddress);
 
   // read data from eeprom and put into answer message
   for (uint8_t i = 0; i < count; i++) {
@@ -853,13 +836,13 @@ void KonnektingDevice::memoryCommit() {
 /**************************************************************************/
 /*!
  *  @brief  Fills remainig bytes with 0xFF
- *  @param  index
+ *  @param  startIndex
  *          index at which to start filling with 0xFF
  *  @return void
  */
 /**************************************************************************/
-uint8_t KonnektingDevice::fillEmpty(byte msg[], int index) {
-  for (int = index; i < MSG_LENGTH; i++) {
+void KonnektingDevice::fillEmpty(byte msg[], int startIndex) {
+  for (int i = startIndex; i < MSG_LENGTH; i++) {
     msg[i] = 0xFF;
   }
 }
