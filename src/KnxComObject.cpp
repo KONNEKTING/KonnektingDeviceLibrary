@@ -44,9 +44,7 @@ byte calcLength(KnxDpt dptId) {
  */
 KnxComObject::KnxComObject(KnxDpt dptId, byte indicator)
 : _dptId(dptId), _indicator(indicator), _dataLength(calcLength(dptId)) {
-    
-    _active = false;
-    
+        
     if (_indicator & KNX_COM_OBJ_I_INDICATOR) {
         // Object with "InitRead" indicator
         _validated = false; 
@@ -81,15 +79,7 @@ KnxComObject::~KnxComObject() {
  * @return 
  */
 bool KnxComObject::isActive() {
-    return _active;
-}
-
-/**
- * TODO document me
- * @param flag
- */
-void KnxComObject::setActive(bool flag) {
-    _active = flag;
+    return _addrList.getSize()>0;
 }
 
 /**

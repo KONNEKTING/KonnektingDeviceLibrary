@@ -112,8 +112,6 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
                                     byte deviceID, byte revisionID) {
     DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
 
-    DEBUG_PRINTLN("15/7/255 = 0x%04x", G_ADDR(15, 7, 255));
-
     _initialized = true;
 
     _manufacturerID = manufacturerID;
@@ -131,18 +129,36 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
 
     DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
 
-    // calc  of parameter table in eeprom --> depends on number of com objects
-    _paramTableStartindex =
-        EEPROM_COMOBJECTTABLE_START + (Knx.getNumberOfComObjects() * 3);
-
-    _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
-
-    DEBUG_PRINTLN(F("_deviceFlags: " BYTETOBINARYPATTERN),
-                  BYTETOBINARY(_deviceFlags));
 
     _individualAddress = P_ADDR(1, 1, 254);
+
+    // force read-only memory
+    byte versionHi = memoryRead(0x0000);
+    byte versionLo = memoryRead(0x0001);
+    word version = __WORD(versionHi, versionLo);
+
+    if (version != KONNEKTING_VERSION) {
+        DEBUG_PRINTLN(F("setting read-only memory of system table ..."));
+        memoryWrite(0x0000, HI__(KONNEKTING_VERSION));
+        memoryWrite(0x0001, __LO(KONNEKTING_VERSION));
+        memoryWrite(0x0002, 0x80);  // device flags
+        memoryWrite(0x0003, HI__(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE));
+        memoryWrite(0x0004, __LO(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE));
+        memoryWrite(0x0005, HI__(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
+        memoryWrite(0x0006, __LO(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
+        memoryWrite(0x0007, HI__(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
+        memoryWrite(0x0008, __LO(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
+        memoryWrite(0x0009, HI__(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
+        memoryWrite(0x000A, __LO(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
+        DEBUG_PRINTLN(F("setting read-only memory of system table *done*"));
+    }
+
+    _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
+    DEBUG_PRINTLN(F("_deviceFlags: " BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+
+
     if (!isFactorySetting()) {
-        DEBUG_PRINTLN(F("->EEPROM"));
+        DEBUG_PRINTLN(F("->MEMORY"));
         /*
          * Read eeprom stuff
          */
@@ -153,26 +169,54 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         _individualAddress = __WORD(hiAddr, loAddr);
 
         // ComObjects
-        // at most 254 com objects, 255 is progcomobj
+        // at most 255 com objects, 256 is progcomobj
+
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE);
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE  = 0x%04x"), KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
+
+        DEBUG_PRINTLN(F("Reading commobj table..."));
+        uint8_t numberOfCommObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+
+/*
+        if (numberOfCommObjTableEntries != Knx.getNumberOfComObjects()) {
+            while (true) {
+                DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory. (%d)"), Knx.getNumberOfComObjects(), numberOfCommObjTableEntries);
+                delay(1000);
+            }
+        }*/
+
+        // read comobj configs
         for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
-            byte hi = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3));
-            byte lo = memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 1);
-            byte settings =
-                memoryRead(EEPROM_COMOBJECTTABLE_START + (i * 3) + 2);
-            word comObjAddr = (hi << 8) + (lo << 0);
-
-            bool active = ((settings & 0x80) == 0x80);
-            Knx.setComObjectAddress(i, comObjAddr, active);
-
-            DEBUG_PRINTLN(F("ComObj index=%d HI=0x%02x LO=0x%02x GA=0x%04x "
-                            "setting=0x%02x active=%d"),
-                          i, hi, lo, comObjAddr, settings, active);
+            byte config = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE + 1 + i);
+            DEBUG_PRINTLN(F("ComObj index=%d config: hex=0x%02x bin=" BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
+//            Knx.setComObjectIndicator(i, config & 0x3F);
         }
+        DEBUG_PRINTLN(F("Reading commobj table...*done*"));
+
+
+        DEBUG_PRINTLN(F("Reading association table..."));
+        // read assoc table
+        uint8_t numberOfAssociationEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        for (byte i = 0; i < numberOfAssociationEntries; i++) {
+            byte groupAddressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
+            byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i + 1);
+
+            // don't ieratate over AddressTable, we can access it directly by it's GA ID
+            byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE + 1 + (groupAddressId * 2));
+            byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE + 1 + (groupAddressId * 2) + 1);
+            word ga = __WORD(gaHi, gaLo);
+
+            DEBUG_PRINTLN(F("ComObj i=%d index=%d ga=0x%04x"), i, commObjectId, ga);
+            //Knx.setComObjectAddress(commObjectId, ga);
+        }
+        DEBUG_PRINTLN(F("Reading association table...*done*"));
+        
+
     } else {
         DEBUG_PRINTLN(F("->FACTORY"));
     }
-    // FIXME hardcoded for now
-    _individualAddress = P_ADDR(1, 1, 1);
 
     DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
     e_KnxDeviceStatus status;
@@ -266,8 +310,7 @@ bool KonnektingDevice::isActive() { return _initialized; }
  */
 /**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
-    bool isFactory = (_deviceFlags == 0xff);
-    //    DEBUG_PRINTLN(F("isFactorySetting: %d"), isFactory);
+    bool isFactory = (_deviceFlags & 0x80 == 1);
     return isFactory;
 }
 
@@ -298,7 +341,9 @@ int KonnektingDevice::calcParamSkipBytes(int index) {
  *  @return size in bytes
  */
 /**************************************************************************/
-byte KonnektingDevice::getParamSize(int index) { return _paramSizeList[index]; }
+byte KonnektingDevice::getParamSize(int index) {
+    return _paramSizeList[index];
+}
 
 /**************************************************************************/
 /*!
@@ -318,13 +363,13 @@ void KonnektingDevice::getParamValue(int index, byte value[]) {
     int skipBytes = calcParamSkipBytes(index);
     int paramLen = getParamSize(index);
 
-    DEBUG_PRINTLN(F("getParamValue: index=%d _paramTableStartindex=%d "
+    DEBUG_PRINTLN(F("getParamValue: index=%d paramTableStartIndex=%d "
                     "skipbytes=%d paremLen=%d"),
-                  index, _paramTableStartindex, skipBytes, paramLen);
+                  index, KONNEKTING_MEMORYADDRESS_PARAMETERTABLE, skipBytes, paramLen);
 
     // read byte by byte
     for (int i = 0; i < paramLen; i++) {
-        int addr = _paramTableStartindex + skipBytes + i;
+        int addr = KONNEKTING_MEMORYADDRESS_PARAMETERTABLE + skipBytes + i;
 
         value[i] = memoryRead(addr);
         DEBUG_PRINTLN(F(" val[%d]@%d -> 0x%02x"), i, addr, value[i]);
@@ -438,8 +483,7 @@ void KonnektingDevice::setProgLed(bool state) {
 KnxComObject KonnektingDevice::createProgComObject() {
     DEBUG_PRINTLN(F("createProgComObject"));
     KnxComObject p = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
-    p.setAddr(G_ADDR(15, 7, 255));
-    p.setActive(true);
+    p.addAddr(G_ADDR(15, 7, 255));
     return p;
 }
 
@@ -1002,7 +1046,7 @@ String KonnektingDevice::getSTRING11Param(int index) {
  */
 /**************************************************************************/
 int KonnektingDevice::getFreeEepromOffset() {
-    int offset = _paramTableStartindex;
+    int offset = KONNEKTING_MEMORYADDRESS_PARAMETERTABLE;
     for (int i = 0; i < _numberOfParams; i++) {
         offset += _paramSizeList[i];
     }

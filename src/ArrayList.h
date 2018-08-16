@@ -73,7 +73,9 @@ template <typename T> class ArrayList {
       return true;
     }
 
-    bool get(int index, T& item) {
+    // const, because of error: error: passing 'const ArrayList<short unsigned int>' as 'this' argument of 'bool ArrayList<T>::get(int, T&) [with T = short unsigned int]' discards qualifiers [-fpermissive]
+    // see: https://stackoverflow.com/questions/5973427/error-passing-xxx-as-this-argument-of-xxx-discards-qualifiers
+    bool get(int index, T& item) const {
       if (size == 0 || index > size) {
         return false;
       }

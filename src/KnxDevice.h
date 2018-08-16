@@ -227,13 +227,9 @@ class KnxDevice {
      * @return 
      */ 
     bool isActive(void) const;
-    
-    /*
-     * Overwrite the address of an attache Com Object
-     * Overwriting is allowed only when the KnxDevice is in INIT state
-     * Typically usage is end-user application stored Group Address in EEPROM
-     */
-    e_KnxDeviceStatus setComObjectAddress(byte index, word addr, bool active);
+        
+    e_KnxDeviceStatus setComObjectIndicator(byte index, byte indicator);
+    e_KnxDeviceStatus setComObjectAddress(byte index, word addr);
     
     /*
      *  Gets the address of an commobjects

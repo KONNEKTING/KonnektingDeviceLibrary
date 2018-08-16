@@ -31,6 +31,7 @@
 
 #include "KnxTelegram.h"
 #include "KnxDataPointTypes.h"
+#include "ArrayList.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 
@@ -66,16 +67,11 @@
 #define KNX_COM_OBJECT_ERROR    255
 
 class KnxComObject {
-    
-    /**
-     * true: CO can be used, false: CO is "offline"
-     */
-    bool _active;
-    
+      
     /**
      *  Group Address value
      */
-    word _addr; 
+    ArrayList<word> _addrList;
 
     /**
      * DPT
@@ -119,7 +115,6 @@ public:
     ~KnxComObject();
     
     bool isActive(void);
-    void setActive(bool flag);
 
     // INLINED functions (see definitions later in this file)
     word getAddr(void) const;
@@ -129,7 +124,9 @@ public:
      * The function is used in case of programming
      * @param the GA to set
      */
-    void setAddr(word);
+    void addAddr(word);
+
+    void setIndicator(byte);
 
     byte getDptId(void) const;
 
@@ -198,11 +195,17 @@ public:
 // --------------- Definition of the INLINE functions -----------------
 
 inline word KnxComObject::getAddr(void) const {
-    return _addr;
+    word addr;
+    _addrList.get(0, addr);
+    return addr;
 }
 
-inline void KnxComObject::setAddr(word addr) {
-    _addr = addr;
+inline void KnxComObject::addAddr(word addr) {
+    _addrList.add(addr);
+}
+
+inline void KnxComObject::setIndicator(byte indicator) {
+    _indicator = indicator & 0x3F /* mask for bit 0..b5, b6+b7 is not used here*/;
 }
 
 inline byte KnxComObject::getDptId(void) const {

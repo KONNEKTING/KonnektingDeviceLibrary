@@ -47,8 +47,7 @@ KnxDevice::KnxDevice() {
     _initIndex = 0;
     _rxTelegram = NULL;
     //AC
-    _progComObj.setAddr(G_ADDR(15, 7, 255));
-    _progComObj.setActive(true);
+    _progComObj.addAddr(G_ADDR(15, 7, 255));
 }
 
 int KnxDevice::getNumberOfComObjects() {
@@ -399,16 +398,16 @@ bool KnxDevice::isActive() const {
     return false;
 }
 
-/**
- * Overwrite the address of an attache Com Object
- * Overwriting is allowed only when the KnxDevice is in INIT state
- * Typically usage is end-user application stored Group Address in EEPROM
- */
-e_KnxDeviceStatus KnxDevice::setComObjectAddress(byte index, word addr, bool active) {
+e_KnxDeviceStatus KnxDevice::setComObjectAddress(byte index, word addr) {
     if (_state != INIT) return KNX_DEVICE_INIT_ERROR;
     if (index >= _numberOfComObjects) return KNX_DEVICE_INVALID_INDEX;
-    _comObjectsList[index].setAddr(addr);
-    _comObjectsList[index].setActive(active);
+    _comObjectsList[index].addAddr(addr);
+    return KNX_DEVICE_OK;
+}
+e_KnxDeviceStatus KnxDevice::setComObjectIndicator(byte index, byte indicator) {
+    if (_state != INIT) return KNX_DEVICE_INIT_ERROR;
+    if (index >= _numberOfComObjects) return KNX_DEVICE_INVALID_INDEX;
+    _comObjectsList[index].setIndicator(indicator);
     return KNX_DEVICE_OK;
 }
 

@@ -27,6 +27,8 @@
 #define KONNEKTING_DEVICE_LIBRARY_SNAPSHOT
 #define KONNEKTING_1_0_0_beta5
 
+#include "System.h"
+
 #include <Arduino.h>
 #include <DebugUtil.h>
 #include <KnxDevice.h>
@@ -41,11 +43,11 @@
 #endif
 #endif
 
-#define EEPROM_DEVICE_FLAGS 0          ///< EEPROM index for device flags
-#define EEPROM_INDIVIDUALADDRESS_HI 1  ///< EEPROM index for IA, high byte
-#define EEPROM_INDIVIDUALADDRESS_LO 2  ///< EEPROM index for IA, low byte
-#define EEPROM_COMOBJECTTABLE_START 10 ///< EEPROM index start of comobj table
+#define EEPROM_DEVICE_FLAGS 2         ///< EEPROM index for device flags
+#define EEPROM_INDIVIDUALADDRESS_HI 16  ///< EEPROM index for IA, high byte
+#define EEPROM_INDIVIDUALADDRESS_LO 17  ///< EEPROM index for IA, low byte
 
+#define KONNEKTING_VERSION 0x0000
 #define PROTOCOLVERSION 1
 
 #define ACK 0x00
@@ -189,8 +191,6 @@ private:
   word _manufacturerID;
   byte _deviceID;
   byte _revisionID;
-
-  int _paramTableStartindex;
 
   int _progLED;
   int _progButton; // (->interrupt)
