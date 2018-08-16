@@ -41,7 +41,7 @@ template <typename T> class ArrayList {
 
       // check if we are about to clear the list --> reach size=0 after this removal
       if (size == 1) {
-        clearList();
+        clear();
         return true;
       }
 
@@ -96,7 +96,7 @@ template <typename T> class ArrayList {
       return list;
     }
 
-    int size() {
+    int getSize() {
       return size;
     }
     
