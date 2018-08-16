@@ -1,29 +1,5 @@
-/*
- *    This file is part of KONNEKTING Knx Device Library.
- * 
- *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation, either version 3 of the License, or
- *    (at your option) any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-// File : ArrayList.h
-// Initial Author : Alexander Christian <info(at)root1.de>
-// Description : Generic array list for simple numeric types like word, int, ...
-// Module dependencies : none
 #ifndef ArrayList_h
 #define ArrayList_h
-
-#include "Arduino.h"
 
 // https://de.wikibooks.org/wiki/C%2B%2B-Programmierung/_Templates/_Klassentemplates
 // https://stackoverflow.com/questions/8752837/undefined-reference-to-template-class-constructor
@@ -38,8 +14,8 @@ template <typename T> class ArrayList {
       free(list);
     }
 
-    void addItem(T* item) {
-      T **newlist = (T**)malloc((size + 1) * sizeof(T*));
+    void add(T item) {
+      T* newlist = (T*)malloc((size + 1) * sizeof(T));
 
       if (size > 0) {
         // umkopieren
@@ -54,10 +30,10 @@ template <typename T> class ArrayList {
         free(list); // free memory of old list
       }
       list = newlist; // replace free'd list with newlist
-      size = size + 1;
+      size++;
     }
 
-    bool removeItem(int index) {
+    bool remove(int index) {
       // if there is nothing to remove, just return
       if (size == 0 || index > size) {
         return false;
@@ -69,8 +45,8 @@ template <typename T> class ArrayList {
         return true;
       }
 
-      // we did not yet reach size=0, so we need to shring the array by creatingnew array
-      T **newlist = (T**)malloc((size - 1) * sizeof(T*));
+      // we did not yet reach size=0, so we need to shring the array by creating new array
+      T* newlist = (T*) malloc((size - 1) * sizeof(T));
 
       //From Begining
       for (int i = 0; i < index; i++) {
@@ -89,7 +65,7 @@ template <typename T> class ArrayList {
       return true;
     }
 
-    bool setItem(int index, T* item) {
+    bool set(int index, T item) {
       if (size == 0 || index > size) {
         return false;
       }
@@ -97,7 +73,7 @@ template <typename T> class ArrayList {
       return true;
     }
 
-    bool getItem(int index, T* item) {
+    bool get(int index, T& item) {
       if (size == 0 || index > size) {
         return false;
       }
@@ -105,36 +81,36 @@ template <typename T> class ArrayList {
       return true;
     }
 
-    void clearList() {
+    void clear() {
       size = 0;
       free(list); // free memory of old list
       list = NULL;
     }
 
-    void setList(T** list) {
+    void set(T* list) {
       free(this->list);
       this->list = list;
     }
     
-    T** getList() {
+    T* get() {
       return list;
     }
 
-    int getSize() {
+    int size() {
       return size;
     }
     
-    void logList() {
+    void log() {
       char charVal[20];
       for (int i = 0; i < size; i++) {
         sprintf(charVal, fmt, i, list[i]);
-        Serial.println(charVal);
+        SerialUSB.println(charVal);
       }
     }
 
   private:
-    const char* fmt = "[%i] 0x%08X";
-    T** list;
+    const char* fmt = "[%i] 0x%04X";
+    T* list; // pointer, as T is an array
     int size;
 };
 
