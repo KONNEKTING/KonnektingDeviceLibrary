@@ -171,6 +171,9 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     } else {
         DEBUG_PRINTLN(F("->FACTORY"));
     }
+    // FIXME hardcoded for now
+    _individualAddress = P_ADDR(1, 1, 1);
+
     DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
     e_KnxDeviceStatus status;
     status = Knx.begin(serial, _individualAddress);
@@ -434,10 +437,7 @@ void KonnektingDevice::setProgLed(bool state) {
 /**************************************************************************/
 KnxComObject KonnektingDevice::createProgComObject() {
     DEBUG_PRINTLN(F("createProgComObject"));
-    KnxComObject p =
-        KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */,
-                     KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR
-                                                          PROGRAMMING PURPOSE */
+    KnxComObject p = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
     p.setAddr(G_ADDR(15, 7, 255));
     p.setActive(true);
     return p;
@@ -516,6 +516,7 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
     DEBUG_PRINTLN(F("internalKnxEvents index=%d"), index);
     bool consumed = false;
     switch (index) {
+        // FIXME is prog-co still sitting on 255?
         case 255:  // prog com object index 255 has been updated
 
             byte buffer[14];
@@ -536,14 +537,11 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
             DEBUG_PRINTLN(F("msgType=0x%02x"), msgType);
 
             if (protocolversion != PROTOCOLVERSION) {
-                DEBUG_PRINTLN(
-                    F("Unsupported protocol version. Using: %d Got: %d !"),
-                    PROTOCOLVERSION, protocolversion);
+                DEBUG_PRINTLN(F("Unsupported protocol version. Using: %d Got: %d !"), PROTOCOLVERSION, protocolversion);
             } else {
                 switch (msgType) {
                     case MSGTYPE_ACK:
-                        DEBUG_PRINTLN(F(
-                            "Will not handle received ACK. Skipping message."));
+                        DEBUG_PRINTLN(F("Will not handle received ACK. Skipping message."));
                         break;
                     case MSGTYPE_PROPERTY_PAGE_READ:
                         handleMsgPropertyPageRead(buffer);
@@ -564,8 +562,7 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
                         if (_progState) handleMsgMemoryRead(buffer);
                         break;
                     default:
-                        DEBUG_PRINTLN(F("Unsupported msgtype: 0x%02x"),
-                                      msgType);
+                        DEBUG_PRINTLN(F("Unsupported msgtype: 0x%02x"), msgType);
                         DEBUG_PRINTLN(F(" !!! Skipping message."));
                         break;
                 }
@@ -587,8 +584,7 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
  */
 /**************************************************************************/
 void KonnektingDevice::sendAck(byte ackType, byte errorCode) {
-    DEBUG_PRINTLN(F("sendAck ackType=0x%02x errorCode=0x%02x"), ackType,
-                  errorCode);
+    DEBUG_PRINTLN(F("sendAck ackType=0x%02x errorCode=0x%02x"), ackType, errorCode);
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ACK;
@@ -640,7 +636,7 @@ void KonnektingDevice::handleMsgRestart(byte msg[]) {
         reboot();
     } else {
 #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("no matching IA"));
+        DEBUG_PRINTLN(F("no matching: IA 0x%04X <- 0x%04X"), _individualAddress, __WORD(msg[2], msg[3]));
 #endif
     }
 }
