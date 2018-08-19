@@ -137,6 +137,14 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     byte versionLo = memoryRead(0x0001);
     word version = __WORD(versionHi, versionLo);
 
+/*
+    DEBUG_PRINTLN(F("clear eeprom ..."));
+    for (int i=0;i<2048;i++)  {
+        memoryWrite(i, 0xFF);
+    }
+    DEBUG_PRINTLN(F("clear eeprom *done*"));
+*/
+
     if (version != KONNEKTING_VERSION) {
         DEBUG_PRINTLN(F("setting read-only memory of system table ..."));
         memoryWrite(0x0000, HI__(KONNEKTING_VERSION));
@@ -167,6 +175,8 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
         byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
         _individualAddress = __WORD(hiAddr, loAddr);
+        DEBUG_PRINTLN(F("ia=0x%04x"), _individualAddress);
+        _individualAddress = P_ADDR(1, 1, 1);
 
         // ComObjects
         // at most 255 com objects, 256 is progcomobj
@@ -756,8 +766,8 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_MEMORY_RESPONSE;
     response[2] = count;
-    response[3] = HI__(_individualAddress);
-    response[4] = __LO(_individualAddress);
+    response[3] = HI__(startAddr);
+    response[4] = __LO(startAddr);
 
     // read data from eeprom and put into answer message
     for (uint8_t i = 0; i < count; i++) {
@@ -765,12 +775,8 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
 
         response[5 + i] = memoryRead(addr);
     }
-
-    // fill remaining bytes with 0xFF
-    for (uint8_t i = 5 + count; i < 14; i++) {
-        response[i] = 0xFF;
-    }
-
+    fillEmpty(response, 5 + count);
+    
     Knx.write(PROGCOMOBJ_INDEX, response);
 }
 

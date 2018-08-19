@@ -98,7 +98,7 @@ template <typename T> class ArrayList {
       return list;
     }
 
-    int getSize() {
+    int getSize() const {
       return size;
     }
     
