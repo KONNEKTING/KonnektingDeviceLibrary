@@ -9,7 +9,7 @@ int freeMemory() {
   char stack_dummy = 0;
   return &stack_dummy - sbrk(0);
 #else
-return -1
+return -1;
 #endif
 }
 
