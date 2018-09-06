@@ -91,7 +91,7 @@ void konnektingKnxEvents(byte index) {
  */
 /**************************************************************************/
 KonnektingDevice::KonnektingDevice() {
-    DEBUG_PRINTLN(F("\n\n\n\nSetup KonnektingDevice"));
+    // no debug output here, as debug might not be initialized when constructor is called
 }
 
 /**************************************************************************/
@@ -110,7 +110,7 @@ KonnektingDevice::KonnektingDevice() {
 /**************************************************************************/
 void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
                                     byte deviceID, byte revisionID) {
-    DEBUG_PRINTLN(F("Initialize KonnektingDevice"));
+    DEBUG_PRINTLN(F("Initialize KonnektingDevice (build date=%s time=%s)"), F(__DATE__), F(__TIME__));
 
     _initialized = true;
 
@@ -146,10 +146,10 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
 */
 
     if (version != KONNEKTING_VERSION) {
-        DEBUG_PRINTLN(F("setting read-only memory of system table ..."));
+        DEBUG_PRINTLN(F("##### setting read-only memory of system table ..."));
         memoryWrite(0x0000, HI__(KONNEKTING_VERSION));
         memoryWrite(0x0001, __LO(KONNEKTING_VERSION));
-        memoryWrite(0x0002, 0x80);  // device flags
+        memoryWrite(0x0002, 0xff);  // device flags
         memoryWrite(0x0003, HI__(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE));
         memoryWrite(0x0004, __LO(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE));
         memoryWrite(0x0005, HI__(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
@@ -158,11 +158,11 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         memoryWrite(0x0008, __LO(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
         memoryWrite(0x0009, HI__(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
         memoryWrite(0x000A, __LO(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
-        DEBUG_PRINTLN(F("setting read-only memory of system table *done*"));
+        DEBUG_PRINTLN(F("##### setting read-only memory of system table *done*"));
     }
 
     _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
-    DEBUG_PRINTLN(F("_deviceFlags: " BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+    DEBUG_PRINTLN(F("_deviceFlags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
 
 
     if (!isFactorySetting()) {
@@ -181,47 +181,51 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         // ComObjects
         // at most 255 com objects, 256 is progcomobj
 
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE);
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE  = 0x%04x"), KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE);
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE  = 0x%04x"), KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
 
-        DEBUG_PRINTLN(F("Reading commobj table..."));
+        DEBUG_PRINT(F("Reading commobj table..."));
         uint8_t numberOfCommObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+        DEBUG_PRINT(F("%i entries"), numberOfCommObjTableEntries);
 
-/*
         if (numberOfCommObjTableEntries != Knx.getNumberOfComObjects()) {
             while (true) {
                 DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory. (%d)"), Knx.getNumberOfComObjects(), numberOfCommObjTableEntries);
                 delay(1000);
             }
-        }*/
+        }
 
         // read comobj configs
         for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
             byte config = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE + 1 + i);
             DEBUG_PRINTLN(F("ComObj index=%d config: hex=0x%02x bin=" BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
+            // set comobj config
 //            Knx.setComObjectIndicator(i, config & 0x3F);
         }
         DEBUG_PRINTLN(F("Reading commobj table...*done*"));
 
 
-        DEBUG_PRINTLN(F("Reading association table..."));
+        DEBUG_PRINT(F("Reading association table..."));
         // read assoc table
-        uint8_t numberOfAssociationEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
-        for (byte i = 0; i < numberOfAssociationEntries; i++) {
+        uint8_t numberOfAssociationTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        DEBUG_PRINT(F("%i entries"), numberOfAssociationTableEntries);
+        for (byte i = 0; i < numberOfAssociationTableEntries; i++) {
             byte groupAddressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
             byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i + 1);
 
-            // don't ieratate over AddressTable, we can access it directly by it's GA ID
+            // don't iterate over AddressTable, we can access it directly by it's GA ID
             byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE + 1 + (groupAddressId * 2));
             byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE + 1 + (groupAddressId * 2) + 1);
             word ga = __WORD(gaHi, gaLo);
 
-            DEBUG_PRINTLN(F("ComObj i=%d index=%d ga=0x%04x"), i, commObjectId, ga);
+            DEBUG_PRINTLN(F("ComObj i=%d index=%d -> ga=0x%04x"), i, commObjectId, ga);
             //Knx.setComObjectAddress(commObjectId, ga);
         }
         DEBUG_PRINTLN(F("Reading association table...*done*"));
+
+        // params are read "on the fly" and not on init() ...
         
 
     } else {
@@ -320,7 +324,8 @@ bool KonnektingDevice::isActive() { return _initialized; }
  */
 /**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
-    bool isFactory = (_deviceFlags & 0x80 == 1);
+    // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
+    bool isFactory = _deviceFlags==0xff || (_deviceFlags & 0x80) == 0x80;
     return isFactory;
 }
 
@@ -461,7 +466,7 @@ bool KonnektingDevice::isReadyForApplication() {
 void KonnektingDevice::setProgState(bool state) {
     _progState = state;
     setProgLed(state);
-    DEBUG_PRINTLN(F("PrgState %d"), state);
+    DEBUG_PRINTLN(F("setProgState=%d"), state);
     if (*_progIndicatorFunc == NULL) {
         digitalWrite(_progLED, state);
     }
@@ -481,7 +486,7 @@ void KonnektingDevice::setProgLed(bool state) {
     } else {
         digitalWrite(_progLED, state);
     }
-    DEBUG_PRINTLN(F("PrgLed %d"), state);
+    DEBUG_PRINTLN(F("setProgLed=%d"), state);
 }
 
 /**************************************************************************/
@@ -706,17 +711,18 @@ void KonnektingDevice::handleMsgProgrammingModeWrite(byte msg[]) {
         setProgState(msg[4] == 0x01);
         sendAck(ACK, ERR_CODE_OK);
 
+        if (msg[4] == 0x00) {
 #if defined(ESP8266) || defined(ESP32)
         // ESP8266/ESP32 uses own EEPROM implementation which requires commit()
         // call
-        if (msg[4] == 0x00) {
             DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.commit()"));
             EEPROM.commit();
-        }
 #else
         // commit memory changes
         memoryCommit();
 #endif
+        }
+
     } else {
         DEBUG_PRINTLN(F("no matching IA"));
     }
@@ -751,6 +757,12 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
         byte data = msg[5] + i;
 
         memoryWrite(addr, data);
+    }
+    if (isFactorySetting()) {
+        // toggle factory setting bit
+        _deviceFlags ^= 0x80; 
+        DEBUG_PRINTLN(F("toggled factory setting in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
     }
     sendAck(ACK, ERR_CODE_OK);
 }
