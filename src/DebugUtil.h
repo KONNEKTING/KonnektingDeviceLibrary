@@ -32,9 +32,11 @@
 #define DEBUG
 
 #ifdef DEBUG
+    #define DEBUG_RAM() Debug.print(F("DEBUG! free ram: %d bytes \n"), Debug.freeRam());
     #define DEBUG_PRINT(...) Debug.print(__VA_ARGS__);
     #define DEBUG_PRINTLN(...) Debug.println(__VA_ARGS__);
 #else
+    #define DEBUG_RAM()
     #define DEBUG_PRINT(...)
     #define DEBUG_PRINTLN(...)
 #endif

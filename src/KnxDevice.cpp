@@ -422,13 +422,18 @@ word KnxDevice::getComObjectAddress(byte index) {
 void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
     type_tx_action action;
     byte targetedComObjIndex; // index of the Com Object targeted by the event
+    DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents"));
 
     // Manage RECEIVED MESSAGES
     if (event == TPUART_EVENT_RECEIVED_KNX_TELEGRAM) {
         Knx._state = IDLE;
         targetedComObjIndex = Knx._tpuart->GetTargetedComObjectIndex();
         KnxComObject* comObj = (targetedComObjIndex == 255 ? &Knx._progComObj : &_comObjectsList[targetedComObjIndex]);
+
+        DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->GetCommand());
         
+        byte indicator = comObj->getIndicator();
+
         switch (Knx._rxTelegram->GetCommand()) {
             case KNX_COMMAND_VALUE_READ:
                 // READ command coming from the bus
@@ -454,16 +459,20 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
             case KNX_COMMAND_VALUE_WRITE:
                 // WRITE command coming from KNX network, we update the value of the corresponding Com Object.
                 // We 1st check that the corresponding Com Object has WRITE attribute
-                if ((comObj->getIndicator()) & KNX_COM_OBJ_W_INDICATOR) {
+                
+                DEBUG_PRINTLN(F("ComObj Indicator=0x%02X"), indicator);
+                if ((indicator) & KNX_COM_OBJ_W_INDICATOR) {
                     comObj->updateValue(*(Knx._rxTelegram));
                     //We notify the upper layer of the update
                     if (Konnekting.isActive()) {
-//                        DEBUG_PRINTLN(F("Routing event to konnektingKnxEvents"));
+                        DEBUG_PRINTLN(F("Routing event to konnektingKnxEvents #%d"), targetedComObjIndex);
                         konnektingKnxEvents(targetedComObjIndex);
                     } else {
-//                        DEBUG_PRINTLN(F("No event routing"));
+                        DEBUG_PRINTLN(F("No event routing, because not active: #%d"), targetedComObjIndex);
 //                        knxEvents(targetedComObjIndex);
                     }
+                } else {
+                    DEBUG_PRINTLN(F("Wrong config byte on comobj #%d: 0x%02X"), targetedComObjIndex, indicator);
                 }
                 break;
 
@@ -472,7 +481,7 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
             default: break; // not supposed to happen
         }
     } else {
-//        DEBUG_PRINTLN(F("GetTpUartEvents event=%d"), event);
+        DEBUG_PRINTLN(F("GetTpUartEvents event=%d"), event);
     }
 
     // Manage RESET events

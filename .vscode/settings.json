@@ -5,6 +5,10 @@
         "functional": "cpp",
         "istream": "cpp",
         "tuple": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "list": "cpp",
+        "*.tpp": "cpp",
+        "bitset": "cpp",
+        "initializer_list": "cpp"
     }
 }

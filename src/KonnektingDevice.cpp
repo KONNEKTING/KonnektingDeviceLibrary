@@ -49,7 +49,7 @@
 #define DEBUG_PROTOCOL
 #define WRITEMEM
 // reboot feature via progbutton
-#define REBOOT_BUTTON
+//#define REBOOT_BUTTON
 
 #include "KonnektingDevice.h"
 #include "Arduino.h"
@@ -117,9 +117,10 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     _manufacturerID = manufacturerID;
     _deviceID = deviceID;
     _revisionID = revisionID;
-
+#ifdef REBOOT_BUTTON
     _lastProgbtn = 0;
     _progbtnCount = 0;
+#endif
 
     setProgState(false);
 
@@ -129,7 +130,6 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
 
     DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
 
-
     _individualAddress = P_ADDR(1, 1, 254);
 
     // force read-only memory
@@ -137,7 +137,9 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     byte versionLo = memoryRead(0x0001);
     word version = __WORD(versionHi, versionLo);
 
-/*
+    DEBUG_PRINTLN(F("version: 0x%04X expected: 0x%04X"), version, KONNEKTING_VERSION);
+
+    /*
     DEBUG_PRINTLN(F("clear eeprom ..."));
     for (int i=0;i<2048;i++)  {
         memoryWrite(i, 0xFF);
@@ -145,13 +147,14 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     DEBUG_PRINTLN(F("clear eeprom *done*"));
 */
 
+    // FIXME when this is called? when doing programming?
     if (version != KONNEKTING_VERSION) {
-        DEBUG_PRINTLN(F("##### setting read-only memory of system table ..."));
+        DEBUG_PRINTLN(F("##### setting read-only memory of system table for first time?..."));
         memoryWrite(0x0000, HI__(KONNEKTING_VERSION));
         memoryWrite(0x0001, __LO(KONNEKTING_VERSION));
         memoryWrite(0x0002, 0xff);  // device flags
-        memoryWrite(0x0003, HI__(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE));
-        memoryWrite(0x0004, __LO(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE));
+        memoryWrite(0x0003, HI__(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE));
+        memoryWrite(0x0004, __LO(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE));
         memoryWrite(0x0005, HI__(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
         memoryWrite(0x0006, __LO(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
         memoryWrite(0x0007, HI__(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
@@ -164,7 +167,6 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
     DEBUG_PRINTLN(F("_deviceFlags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
 
-
     if (!isFactorySetting()) {
         DEBUG_PRINTLN(F("->MEMORY"));
         /*
@@ -176,23 +178,23 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
         _individualAddress = __WORD(hiAddr, loAddr);
         DEBUG_PRINTLN(F("ia=0x%04x"), _individualAddress);
-        _individualAddress = P_ADDR(1, 1, 1);
+        //_individualAddress = P_ADDR(1, 1, 1);
 
         // ComObjects
         // at most 255 com objects, 256 is progcomobj
 
-        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE);
-        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE  = 0x%04x"), KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
-        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
-        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE  = 0x%04x"), KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
 
-        DEBUG_PRINT(F("Reading commobj table..."));
         uint8_t numberOfCommObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+        DEBUG_PRINT(F("Reading commobj table..."));
         DEBUG_PRINT(F("%i entries"), numberOfCommObjTableEntries);
 
         if (numberOfCommObjTableEntries != Knx.getNumberOfComObjects()) {
             while (true) {
-                DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory. (%d)"), Knx.getNumberOfComObjects(), numberOfCommObjTableEntries);
+                DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory (%d)."), Knx.getNumberOfComObjects(), numberOfCommObjTableEntries);
                 delay(1000);
             }
         }
@@ -202,31 +204,30 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
             byte config = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE + 1 + i);
             DEBUG_PRINTLN(F("ComObj index=%d config: hex=0x%02x bin=" BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
             // set comobj config
-//            Knx.setComObjectIndicator(i, config & 0x3F);
+            Knx.setComObjectIndicator(i, config & 0x3F);
         }
         DEBUG_PRINTLN(F("Reading commobj table...*done*"));
 
-
-        DEBUG_PRINT(F("Reading association table..."));
         // read assoc table
         uint8_t numberOfAssociationTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        DEBUG_PRINT(F("Reading association table..."));
         DEBUG_PRINT(F("%i entries"), numberOfAssociationTableEntries);
+
         for (byte i = 0; i < numberOfAssociationTableEntries; i++) {
-            byte groupAddressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
+            byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
             byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i + 1);
 
             // don't iterate over AddressTable, we can access it directly by it's GA ID
-            byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE + 1 + (groupAddressId * 2));
-            byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE + 1 + (groupAddressId * 2) + 1);
+            byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (addressId * 2));
+            byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (addressId * 2) + 1);
             word ga = __WORD(gaHi, gaLo);
 
             DEBUG_PRINTLN(F("ComObj i=%d index=%d -> ga=0x%04x"), i, commObjectId, ga);
-            //Knx.setComObjectAddress(commObjectId, ga);
+            Knx.setComObjectAddress(commObjectId, ga);
         }
         DEBUG_PRINTLN(F("Reading association table...*done*"));
 
         // params are read "on the fly" and not on init() ...
-        
 
     } else {
         DEBUG_PRINTLN(F("->FACTORY"));
@@ -248,6 +249,7 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     // an initial size. We create 8k EEPROM
     EEPROM.begin(8192);
 #endif
+    _rebootRequired = false;
 }
 
 /**************************************************************************/
@@ -325,7 +327,7 @@ bool KonnektingDevice::isActive() { return _initialized; }
 /**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
     // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
-    bool isFactory = _deviceFlags==0xff || (_deviceFlags & 0x80) == 0x80;
+    bool isFactory = _deviceFlags == 0xff || (_deviceFlags & 0x80) == 0x80;
     return isFactory;
 }
 
@@ -413,6 +415,7 @@ void KonnektingProgButtonPressed() {
  */
 /**************************************************************************/
 void KonnektingDevice::toggleProgState() {
+    setProgState(!_progState);  // toggle and set
 #ifdef REBOOT_BUTTON
     if (millis() - _lastProgbtn < 300) {
         _progbtnCount++;
@@ -426,9 +429,7 @@ void KonnektingDevice::toggleProgState() {
     }
     _lastProgbtn = millis();
 #endif
-
-    setProgState(!_progState);  // toggle and set
-    if (_rebootRequired) {
+    if (!isProgState() && _rebootRequired) {
         DEBUG_PRINTLN(F("found rebootRequired flag, triggering reboot"));
         reboot();
     }
@@ -657,10 +658,31 @@ void KonnektingDevice::sendAck(byte ackType, byte errorCode) {
 void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgPropertyPageRead"));
 
-    if (_individualAddress == __WORD(msg[2], msg[3])) {
-        byte response[14];
+    byte addressFlag = msg[2];
 
-        switch (msg[4]) {
+    boolean doReply = false;
+#ifdef DEBUG_PROTOCOL
+    DEBUG_PRINTLN(F(" addressFlag=0x%02X"), addressFlag);
+#endif
+
+    if (addressFlag == 0x00 && isProgState()) {
+        doReply = true;
+#ifdef DEBUG_PROTOCOL
+        DEBUG_PRINTLN(F(" reply due to prog button"));
+#endif
+    } else if (addressFlag = 0xFF && _individualAddress == __WORD(msg[3], msg[4])) {
+#ifdef DEBUG_PROTOCOL
+        DEBUG_PRINTLN(F(" reply due to matching IA"));
+#endif
+        doReply = true;
+    }
+
+    if (doReply) {
+        byte response[14];
+#ifdef DEBUG_PROTOCOL
+        DEBUG_PRINTLN(F(" reply page #%i"), msg[5]);
+#endif
+        switch (msg[5]) {
             case 0x00:  // Device Info
                 response[0] = PROTOCOLVERSION;
                 response[1] = MSGTYPE_PROPERTY_PAGE_RESPONSE;
@@ -673,14 +695,11 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
                 fillEmpty(response, 8);
                 break;
             default:
+                fillEmpty(response, 0);
                 break;
         }
 
         Knx.write(PROGCOMOBJ_INDEX, response);
-    } else {
-#ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("no matching IA"));
-#endif
     }
 }
 
@@ -702,9 +721,9 @@ void KonnektingDevice::handleMsgRestart(byte msg[]) {
 
 void KonnektingDevice::handleMsgProgrammingModeWrite(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgProgrammingModeWrite"));
-    // word addr = (msg[2] << 8) + (msg[3] << 0);
+    word addr = __WORD(msg[2], msg[3]);
 
-    if (_individualAddress == __WORD(msg[2], msg[3])) {
+    if (_individualAddress == addr) {
 #ifdef DEBUG_PROTOCOL
         DEBUG_PRINTLN(F("matching IA"));
 #endif
@@ -713,18 +732,17 @@ void KonnektingDevice::handleMsgProgrammingModeWrite(byte msg[]) {
 
         if (msg[4] == 0x00) {
 #if defined(ESP8266) || defined(ESP32)
-        // ESP8266/ESP32 uses own EEPROM implementation which requires commit()
-        // call
+            // ESP8266/ESP32 uses own EEPROM implementation which requires commit() call
             DEBUG_PRINTLN(F("ESP8266/ESP32: EEPROM.commit()"));
             EEPROM.commit();
 #else
-        // commit memory changes
-        memoryCommit();
+            // commit memory changes
+            memoryCommit();
 #endif
         }
 
     } else {
-        DEBUG_PRINTLN(F("no matching IA"));
+        DEBUG_PRINTLN(F("no matching IA. self=0x%04X got=0x%04X"), _individualAddress, addr);
     }
 }
 
@@ -748,21 +766,34 @@ void KonnektingDevice::handleMsgProgrammingModeRead(byte /*msg*/[]) {
 void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgMemoryWrite"));
 
+    boolean systemTableChanged = false;
+
     uint8_t count = msg[2];
     uint16_t startAddr = __WORD(msg[3], msg[4]);
     DEBUG_PRINTLN(F("  count=%d startAddr=0x%04x"), count, startAddr);
 
+    if (startAddr >= 16 && startAddr < 32 && count > 0) {
+        systemTableChanged = true;
+    }
+
     for (uint8_t i = 0; i < count; i++) {
         uint16_t addr = startAddr + i;
-        byte data = msg[5] + i;
+        byte data = msg[5 + i];
 
         memoryWrite(addr, data);
     }
     if (isFactorySetting()) {
-        // toggle factory setting bit
-        _deviceFlags ^= 0x80; 
-        DEBUG_PRINTLN(F("toggled factory setting in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+        // clear factory setting bit to 0
+        _deviceFlags &= ~0x80;
+        DEBUG_PRINTLN(F(" toggled factory setting in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
         memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    }
+    if (systemTableChanged) {
+        DEBUG_PRINTLN(F(" reload system table data due to change"));
+        // reload all system table related r/w data
+        byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
+        byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
+        _individualAddress = __WORD(hiAddr, loAddr);
     }
     sendAck(ACK, ERR_CODE_OK);
 }
@@ -788,7 +819,7 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
         response[5 + i] = memoryRead(addr);
     }
     fillEmpty(response, 5 + count);
-    
+
     Knx.write(PROGCOMOBJ_INDEX, response);
 }
 

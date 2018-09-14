@@ -31,6 +31,7 @@
 #include "ArrayList.h"
 #include "KnxDataPointTypes.h"
 #include "KnxTelegram.h"
+#include "DebugUtil.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 
@@ -40,7 +41,7 @@
 // INDICATOR field : B7  B6  B5  B4  B3  B2  B1  B0
 //                   xx  xx   C   R   W   T   U   I
 //                   xx  xx   K   L   S   Ü   A   I
-#define KNX_COM_OBJ_C_INDICATOR 0x20  // Comuunication (C)
+#define KNX_COM_OBJ_C_INDICATOR 0x20  // Communication (C)
 #define KNX_COM_OBJ_R_INDICATOR 0x10  // Read (R)
 #define KNX_COM_OBJ_W_INDICATOR 0x08  // Write (W)
 #define KNX_COM_OBJ_T_INDICATOR 0x04  // Transmit (T)
@@ -191,17 +192,21 @@ class KnxComObject {
 // --------------- Definition of the INLINE functions -----------------
 
 inline word KnxComObject::getAddr(void) const {
+//    DEBUG_PRINT(F("KnxComObject::getAddr="));
     word addr;
     // FIXME workaround
     if (_addrList.getSize() == 0) {
         addr = 0x0000;
+//        DEBUG_PRINTLN(F("fix:0x0000"));
     } else {
         _addrList.get(0, addr);
+//        DEBUG_PRINTLN(F("list:0x%04X"), addr);
     }
     return addr;
 }
 
 inline void KnxComObject::addAddr(word addr) {
+    DEBUG_PRINTLN(F("KnxComObject::addAddr=0x%04X"), addr);
     _addrList.add(addr);
 }
 

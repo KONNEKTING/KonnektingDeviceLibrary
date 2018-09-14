@@ -171,6 +171,7 @@ class KnxTpUart {
     KnxComObject *_comObjectsList;            // Attached list of com objects
     byte _assignedComObjectsNb;               // Nb of assigned com objects
     byte *_orderedIndexTable;                 // Table containing the assigned com objects indexes ordered by increasing @
+    ArrayList<byte> _addressIdHashMap;        // HashMap: Key = GroupAddress / value = GroupAddressID
     byte _stateIndication;                    // Value of the last received state indication
 #if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
     String *_debugStrPtr;
