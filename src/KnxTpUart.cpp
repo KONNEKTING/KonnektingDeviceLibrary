@@ -28,6 +28,7 @@
 // Module dependencies : HardwareSerial, KnxTelegram, KnxComObject
 
 #include "KnxTpUart.h"
+#include "KonnektingDevice.h"
 
 #ifndef ESP8266  //ESP8266 does't need pgmspace.h
 #ifdef ESP32
@@ -63,7 +64,7 @@ const char KnxTpUart::_debugErrorText[] = "KNXTPUART ERROR: ";
 KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMode mode)
     : _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
     _rx.state = RX_RESET;
-    _rx.addressedComObjectIndex = 0;
+//    _rx.addressedComObjectIndex = 0;
     _tx.state = TX_RESET;
     _tx.sentTelegram = NULL;
     _tx.ackFctPtr = NULL;
@@ -213,13 +214,13 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
         foundMin = 0xFFFF;
     }
     //    DEBUG_PRINTLN(F("AttachComObjectsList successful\n"));
+
     return KNX_TPUART_OK;
 }
 
 // Init
 // returns ERROR (255) if the TP-UART is not in INIT state, else returns OK (0)
 // Init must be called after every reset() execution
-
 byte KnxTpUart::Init(void) {
     byte tpuartCmd[3];
 
@@ -288,7 +289,7 @@ void KnxTpUart::RXTask(void) {
     word nowTime;
     static byte readBytesNb;              // Nb of read bytes during an KNX telegram reception
     static KnxTelegram telegram;          // telegram being received
-    static byte addressedComObjectIndex;  // index of the com object targeted by the received telegram
+    static ArrayList<byte> addressedComObjIndexList;  // index of the com object targeted by the received telegram
     static word lastByteRxTimeMicrosec;
 
     // === STEP 1 : Check EOP in case a Telegram is being received ===
@@ -310,16 +311,16 @@ void KnxTpUart::RXTask(void) {
                     break;
 
                 case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
-                    // DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED %d"), addressedComObjectIndex);
+                    // DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
                     if (telegram.IsChecksumCorrect()) {  
                         // checksum correct, let's update the _rx struct with the received telegram and correct index
                         telegram.Copy(_rx.receivedTelegram);
-                        _rx.addressedComObjectIndex = addressedComObjectIndex;
+                        _rx.addressedComObjIndexList.clearCopyFrom(addressedComObjIndexList);
                         // Notify the new received telegram
                         _evtCallbackFct(TPUART_EVENT_RECEIVED_KNX_TELEGRAM);  
                     } else {
                         // checksum incorrect, notify error
-                        DEBUG_PRINTLN(F("checksum incorrect. addressedComObjectIndex=%d"), addressedComObjectIndex);
+                        DEBUG_PRINTLN(F("checksum incorrect."));
                         _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR);  // Notify telegram reception error
                     }
                     break;
@@ -413,7 +414,7 @@ void KnxTpUart::RXTask(void) {
                 // We have just read the routing field containing the address type and the payload length
                 {
                     // We check if the message is addressed to us in order to send the appropriate acknowledge
-                    if (IsAddressAssigned(telegram.GetTargetAddress(), addressedComObjectIndex)) {  // Message addressed to us
+                    if (IsAddressAssigned(telegram.GetTargetAddress(), addressedComObjIndexList)) {  // Message addressed to us
 
                         // DEBUG_PRINTLN(F("assigned to us: ga=0x%04x index=%d"), telegram.GetTargetAddress(), addressedComObjectIndex);
 
@@ -566,76 +567,98 @@ boolean KnxTpUart::GetMonitoringData(type_MonitorData& data) {
  * @param index the index variable will be filled with the index matching this GA
  * @return true if assigned & active, false if not
  */
-boolean KnxTpUart::IsAddressAssigned(word addr, byte& index) const {
-    // DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x"), addr);
+boolean KnxTpUart::IsAddressAssigned(word addr, ArrayList<byte>& indexList) const {
+     DEBUG_PRINTLN(F("IsAddressAssigned: Searching for 0x%04x"), addr);
+
+    // clean up old findings
+    indexList.clear();
+
+    // in case of empty list, we return immediately
+    if (!_assignedComObjectsNb) return false;  
+
+    // in case of Programming Group Address, we also return immediately
+    if (addr == 0x7fff) { // 0x7fff = 15/7/255
+        indexList.add(255); // set ProgComObj
+        DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x == 0x7fff --> progComObj."), addr);
+        return true;
+    }
+
+
+    byte addressId; // address-id of groupaddress
+    Konnekting._addressToIdMap.get(addr, addressId);
+
+    
+    byte* assocTableGaId = Konnekting._associationTableGaId;
+    byte* assocTableCoId = Konnekting._associationTableCoId;
 
     /*
         New algorithm:
 
-        - clear given arraylist
-        - get the address-id of given address --> search in addresstable
+        x clear given arraylist
+        x get the address-id of given address --> search in addresstable
         - iterate over association-table until address-id-comobj-id-association is found. go to next until address is not matching to find next association
         - put all found comobj-ids into arraylist that is given from outside (add-call)
         - return true, if arraylist is not empty
-
      */
 
-    byte divisionCounter = 0;
-    byte i, searchIndexStart, searchIndexStop, searchIndexRange;
+    // inspired by https://www.geeksforgeeks.org/binary-search/
+    byte l = 0; // left
+    byte r = Konnekting._associationTableEntries-1;  // right
 
-    if (!_assignedComObjectsNb) return false;  // in case of empty list, we return immediately
+    int addressIdOnIndex = 0;
+    boolean addressIdFound = false;
 
-    if (addr == 0x7fff) {
-        index = 255;
-        // DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x == 0x7fff --> progComObj. index=%d"), addr, index);
-        return true;
+    while (l <= r) {
+        byte m = l + (r-l)/2; //middle
+
+        if (assocTableGaId[m] == addressId) {
+            addressIdFound = true;
+            addressIdOnIndex = m;
+            break;
+        }
+
+        // If 'addressId' greater, ignore left half by setting l to next right from middle
+        if (addressId > assocTableGaId[m]) {
+            l = m + 1;
+        } else {
+            // 'addressId' is smaller, so ignore right half by setting r to next left from middle
+            r = m -1;
+        }
     }
 
-    // Define how many divisions by 2 shall be done in order to reduce the search list by 8 Addr max
-    // if _assignedComObjectsNb >= 16 => divisionCounter = 1
-    // if _assignedComObjectsNb >= 32 => divisionCounter = 2
-    // if _assignedComObjectsNb >= 64 => divisionCounter = 3
-    // if _assignedComObjectsNb >= 128 => divisionCounter = 4
-    for (i = 4; _assignedComObjectsNb >> i; i++) divisionCounter++;
+    if (addressIdFound) {
+        DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x found in index=%d"), addressIdOnIndex);
+        
+        // add first occurence
+        indexList.add(assocTableCoId[addressIdOnIndex]);
 
-    // the starting point is to search on the whole address range (0 -> _assignedComObjectsNb -1)
-    searchIndexStart = 0;
-    searchIndexStop = _assignedComObjectsNb - 1;
-    searchIndexRange = _assignedComObjectsNb;
+        // search backwards until other address gets visible
+        byte i = addressIdOnIndex-1;
 
-    // reduce the address range if needed
-    while (divisionCounter) {
-        searchIndexRange >>= 1;  // Divide range width by 2
-        if (addr >= _comObjectsList[_orderedIndexTable[searchIndexStart + searchIndexRange]].getAddr())
-            searchIndexStart += searchIndexRange;
-        else
-            searchIndexStop -= searchIndexRange;
-        divisionCounter--;
+        while (assocTableGaId[i]==addressId) {
+            DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x found prev index index=%d"), i);
+            indexList.add(assocTableCoId[i]);
+            i--;
+        }
+
+        // search forward until other address gets visible
+        i = addressIdOnIndex+1;
+        while (assocTableGaId[i]==addressId) {
+            DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x found next index index=%d"), i);
+            indexList.add(assocTableCoId[i]);
+            i++;
+        }
+
     }
 
-    // search the address value and index in the reduced range
-    for (i = searchIndexStart; ((_comObjectsList[_orderedIndexTable[i]].getAddr() != addr) && (i <= searchIndexStop)); i++)
-        ;
 
-    if (i > searchIndexStop) {
-        // DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x --> false"), addr);
-        return false;  // Address is NOT part of the assigned addresses
+    boolean foundSomeIndex == !indexList.isEmpty();
+    
+    if (!foundSomeIndex) {
+        DEBUG_PRINTLN(F("IsAddressAssigned: found nothing, skipping this GA"), addr);
     }
 
-    // Address is part of the assigned addresses
-    index = _orderedIndexTable[i];
-
-    // DEBUG_PRINTLN(F("IsAddressAssigned: index=%d active=%d"), index, _comObjectsList[index].isActive());
-
-    if (_comObjectsList[index].isActive()) {
-        // CO is found AND is active
-        DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x --> TRUE"), addr);
-        return true;
-    } else {
-        // CO is found but is NOT active
-        // DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x --> FALSE"), addr);
-        return false;
-    }
+    return foundSomeIndex;
 
 }
 //EOF

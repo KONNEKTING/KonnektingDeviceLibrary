@@ -427,7 +427,9 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
     // Manage RECEIVED MESSAGES
     if (event == TPUART_EVENT_RECEIVED_KNX_TELEGRAM) {
         Knx._state = IDLE;
-        targetedComObjIndex = Knx._tpuart->GetTargetedComObjectIndex();
+        
+        Knx._tpuart->GetTargetedComObjectIndex().get(0, targetedComObjIndex);
+
         KnxComObject* comObj = (targetedComObjIndex == 255 ? &Knx._progComObj : &_comObjectsList[targetedComObjIndex]);
 
         DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->GetCommand());

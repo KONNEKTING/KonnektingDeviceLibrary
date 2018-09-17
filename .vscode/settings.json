@@ -9,6 +9,10 @@
         "list": "cpp",
         "*.tpp": "cpp",
         "bitset": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "system_error": "cpp"
     }
 }

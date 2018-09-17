@@ -66,7 +66,13 @@
 
 // KonnektingDevice unique instance creation
 KonnektingDevice KonnektingDevice::Konnekting;
-KonnektingDevice &Konnekting = KonnektingDevice::Konnekting;
+KonnektingDevice &Konnekting = KonnektingDevice::Konnekting; // maybe this line is useless??
+
+// init static members, see https://thinkingeek.com/2012/08/08/common-linking-issues-c/
+HashMap<byte> KonnektingDevice::_addressToIdMap;
+byte KonnektingDevice::_associationTableEntries = 0;
+byte* KonnektingDevice::_associationTableGaId;
+byte* KonnektingDevice::_associationTableCoId;
 
 /**************************************************************************/
 /*!
@@ -209,13 +215,19 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         DEBUG_PRINTLN(F("Reading commobj table...*done*"));
 
         // read assoc table
-        uint8_t numberOfAssociationTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        _associationTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
         DEBUG_PRINT(F("Reading association table..."));
-        DEBUG_PRINT(F("%i entries"), numberOfAssociationTableEntries);
+        DEBUG_PRINT(F("%i entries"), _associationTableEntries);
 
-        for (byte i = 0; i < numberOfAssociationTableEntries; i++) {
+        _associationTableGaId = (byte*) malloc(_associationTableEntries * sizeof(byte));
+        _associationTableCoId = (byte*) malloc(_associationTableEntries * sizeof(byte));
+
+        for (byte i = 0; i < _associationTableEntries; i++) {
             byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
             byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i + 1);
+
+            _associationTableGaId[i] = addressId;
+            _associationTableCoId[i] = commObjectId;
 
             // don't iterate over AddressTable, we can access it directly by it's GA ID
             byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (addressId * 2));
@@ -226,6 +238,15 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
             Knx.setComObjectAddress(commObjectId, ga);
         }
         DEBUG_PRINTLN(F("Reading association table...*done*"));
+
+        // Storing IDs of GroupAddresses for later reference
+        int addressEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        _addressToIdMap.init(addressEntries);
+
+        for(int id=0; id<addressEntries; id++) {
+            byte address = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + id);
+            _addressToIdMap.put(address, id);
+        }
 
         // params are read "on the fly" and not on init() ...
 

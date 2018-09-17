@@ -40,6 +40,9 @@
 #include "HardwareSerial.h"
 #include "KnxTelegram.h"
 #include "KnxComObject.h"
+#include "System.h"
+#include "ArrayList.h"
+
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 // DEBUG :
@@ -119,8 +122,9 @@ typedef struct {
   e_TpUartRxState state;        // Current TPUART RX state
   KnxTelegram receivedTelegram; // Where each received telegram is stored (the content is overwritten on each telegram reception)
                                 // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
-  byte addressedComObjectIndex; // Where the index to the targeted com object is stored (the value is overwritten on each telegram reception)
-                                // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
+  // byte addressedComObjectIndex; // Where the index to the targeted com object is stored (the value is overwritten on each telegram reception)
+  //                               // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
+  ArrayList<byte> addressedComObjIndexList;
 } type_tpuart_rx;
 
 // --- Definitions for the TRANSMISSION  part ----
@@ -171,7 +175,6 @@ class KnxTpUart {
     KnxComObject *_comObjectsList;            // Attached list of com objects
     byte _assignedComObjectsNb;               // Nb of assigned com objects
     byte *_orderedIndexTable;                 // Table containing the assigned com objects indexes ordered by increasing @
-    ArrayList<byte> _addressIdHashMap;        // HashMap: Key = GroupAddress / value = GroupAddressID
     byte _stateIndication;                    // Value of the last received state indication
 #if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
     String *_debugStrPtr;
@@ -215,7 +218,8 @@ static const char _debugErrorText[];
     KnxTelegram& GetReceivedTelegram(void);
 
     // Get the index of the com object targeted by the last received telegram
-    byte GetTargetedComObjectIndex(void) const;
+    //byte GetTargetedComObjectIndex(void) const;
+    ArrayList<byte> GetTargetedComObjectIndex(void) const;
 
     // returns true if there is an activity ongoing (RX/TX) on the TPUART
     // false when there's no activity or when the tpuart is not initialized
@@ -280,7 +284,7 @@ static const char _debugErrorText[];
     // Check if the target address points to an assigned com object (i.e. the target address equals a com object address)
     // if yes, then update index parameter with the index (in the list) of the targeted com object and return true
     // else return false
-    boolean IsAddressAssigned(word addr, byte &index) const;
+    boolean IsAddressAssigned(word addr, ArrayList<byte> &indexList) const;
 };
 
 
@@ -308,8 +312,8 @@ inline KnxTelegram& KnxTpUart::GetReceivedTelegram(void)
 { return _rx.receivedTelegram; }
 
 
-inline byte KnxTpUart::GetTargetedComObjectIndex(void) const
-{ return _rx.addressedComObjectIndex; } // return the index of the adress addressed by the received KNX Telegram
+inline ArrayList<byte> KnxTpUart::GetTargetedComObjectIndex(void) const
+{ return _rx.addressedComObjIndexList; } // return the index of the adress addressed by the received KNX Telegram
 
 
 inline boolean KnxTpUart::IsActive(void) const

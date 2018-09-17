@@ -17,33 +17,38 @@
 template <typename V>
 class HashMap {
    public:
-    HashMap(int size) {
-        V* list = (V*)malloc((size) * sizeof(V));
-        this->size = size;
+    HashMap(void) {
+        this->size = 0;
     }
 
     ~HashMap(void) {
         free(list);
     }
 
-    void put(uint16_t key, V value) {
-        DEBUG_PRINTLN(" HashMap.add(0x%04X)", value);
+    void init(uint8_t size) {
+        V* list = (V*)malloc((size) * sizeof(V));
+        this->size = size;
+    }
 
+    void put(uint16_t key, V value) {
         uint16_t index = key % size;
 
+        DEBUG_PRINTLN(" HashMap.put(key=0x%04X value=0x%04x index=%d)", key, value, index);
         // insert new value
         list[index] = value;
     }
 
     // const, because of error: error: passing 'const ArrayList<short unsigned int>' as 'this' argument of 'bool ArrayList<T>::get(int, T&) [with T = short unsigned int]' discards qualifiers [-fpermissive]
     // see: https://stackoverflow.com/questions/5973427/error-passing-xxx-as-this-argument-of-xxx-discards-qualifiers
-    bool get(uint16_t key, T& value) const {
+    bool get(uint16_t key, V& value) const {
         uint16_t index = key % size;
-        value = this->list[index];
-        return true;
-    }    
 
-    T* get() {
+        value = this->list[index];
+        DEBUG_PRINTLN(" HashMap.get(key=0x%04X value=0x%04x index=%d)", key, value, index);
+        return true;
+    }
+
+    V* get() {
         return list;
     }
 
@@ -59,7 +64,7 @@ class HashMap {
     }
 
    private:
-    T* list;  // pointer, as T is an array
+    V* list;  // pointer, as V is an array
     int size;
 };
 

@@ -55,7 +55,7 @@ template <typename T> class ArrayList {
       // we did not yet reach size=0, so we need to shring the array by creating new array
       T* newlist = (T*) malloc((size - 1) * sizeof(T));
 
-      //From Begining
+      //From beginning
       for (int i = 0; i < index; i++) {
         newlist[i] = list[i];
       }
@@ -105,6 +105,20 @@ template <typename T> class ArrayList {
     void set(T* list) {
       free(this->list);
       this->list = list;
+    }
+
+    void clearCopyFrom(ArrayList<T> other) {
+      clear();
+      int size = other.getSize();
+      for(int i=0; i<size; i++) {
+        T otherVal;
+        other.get(i, otherVal);
+        add(otherVal);
+      }
+    }
+
+    boolean isEmpty() {
+      return size==0;
     }
     
     T* get() {
