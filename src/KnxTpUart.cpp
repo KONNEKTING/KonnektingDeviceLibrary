@@ -649,7 +649,7 @@ boolean KnxTpUart::IsAddressAssigned(word addr, ArrayList<byte>& indexList) cons
 
     }
 
-    boolean foundSomeIndex == !indexList.isEmpty();
+    boolean foundSomeIndex = !indexList.isEmpty();
 
     if (!foundSomeIndex) {
         DEBUG_PRINTLN(F("IsAddressAssigned: found nothing, skipping this GA"), addr);
