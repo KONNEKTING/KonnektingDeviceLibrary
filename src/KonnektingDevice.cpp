@@ -214,15 +214,22 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         }
         DEBUG_PRINTLN(F("Reading commobj table...*done*"));
 
+        // read number of available GAs
+        byte addressEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
+        DEBUG_PRINTLN(F("Init addressToIdMap..."));
+        _addressToIdMap.init(addressEntries);
+        DEBUG_PRINTLN(F("Init addressToIdMap... *done*"));
+
         // read assoc table
         _associationTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
         DEBUG_PRINT(F("Reading association table..."));
-        DEBUG_PRINT(F("%i entries"), _associationTableEntries);
+        DEBUG_PRINTLN(F("%i entries"), _associationTableEntries);
 
         _associationTableGaId = (byte*) malloc(_associationTableEntries * sizeof(byte));
         _associationTableCoId = (byte*) malloc(_associationTableEntries * sizeof(byte));
 
         for (byte i = 0; i < _associationTableEntries; i++) {
+
             byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
             byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i + 1);
 
@@ -235,18 +242,12 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
             word ga = __WORD(gaHi, gaLo);
 
             DEBUG_PRINTLN(F("ComObj i=%d index=%d -> ga=0x%04x"), i, commObjectId, ga);
+
+            _addressToIdMap.put(ga, addressId);
+
             Knx.setComObjectAddress(commObjectId, ga);
         }
         DEBUG_PRINTLN(F("Reading association table...*done*"));
-
-        // Storing IDs of GroupAddresses for later reference
-        int addressEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
-        _addressToIdMap.init(addressEntries);
-
-        for(int id=0; id<addressEntries; id++) {
-            byte address = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + id);
-            _addressToIdMap.put(address, id);
-        }
 
         // params are read "on the fly" and not on init() ...
 

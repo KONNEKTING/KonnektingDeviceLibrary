@@ -19,14 +19,23 @@ class HashMap {
    public:
     HashMap(void) {
         this->size = 0;
+        free(this->list);
     }
 
     ~HashMap(void) {
-        free(list);
+        free(this->list);
     }
 
     void init(uint8_t size) {
-        V* list = (V*)malloc((size) * sizeof(V));
+        DEBUG_PRINTLN(F("HashMap.init(%d) V=%d"), size, sizeof(V));
+        int totalSize = size * sizeof(V);
+        this->list = (V*)malloc(totalSize);
+        if (list == NULL) {
+            DEBUG_PRINTLN(F("HashMap.init(%d) failed!"), totalSize);
+        } else {
+            DEBUG_PRINTLN(F("HashMap.init(%d) success"), totalSize);
+        }
+        DEBUG_PRINTLN(F("HashMap.init(%d) list=%d"), size, sizeof(list));
         this->size = size;
     }
 
@@ -35,7 +44,8 @@ class HashMap {
 
         DEBUG_PRINTLN(" HashMap.put(key=0x%04X value=0x%04x index=%d)", key, value, index);
         // insert new value
-        list[index] = value;
+        this->list[index] = value;
+        DEBUG_PRINTLN(" HashMap.put(key=0x%04X value=0x%04x index=%d) *done*", key, value, index);
     }
 
     // const, because of error: error: passing 'const ArrayList<short unsigned int>' as 'this' argument of 'bool ArrayList<T>::get(int, T&) [with T = short unsigned int]' discards qualifiers [-fpermissive]
