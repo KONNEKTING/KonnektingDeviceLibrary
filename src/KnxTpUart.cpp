@@ -584,44 +584,42 @@ boolean KnxTpUart::IsAddressAssigned(word addr, ArrayList<byte>& indexList) cons
     }
 
 
+    // Get the address-id based in the address from hashmap by doing simple lookup
     byte addressId; // address-id of groupaddress
     Konnekting._addressToIdMap.get(addr, addressId);
 
-    
+    // get the assoc table from konnkting. We handle them as two arrays 
+    // to make search for GA easier, as we can search in an 
+    // AddressId-Array-Only for th matching index and can use the ComObj 
+    // array to get the ComObjID based on the found index
     byte* assocTableGaId = Konnekting._associationTableGaId;
     byte* assocTableCoId = Konnekting._associationTableCoId;
 
-    /*
-        New algorithm:
-
-        x clear given arraylist
-        x get the address-id of given address --> search in addresstable
-        - iterate over association-table until address-id-comobj-id-association is found. go to next until address is not matching to find next association
-        - put all found comobj-ids into arraylist that is given from outside (add-call)
-        - return true, if arraylist is not empty
-     */
-
     // inspired by https://www.geeksforgeeks.org/binary-search/
-    byte l = 0; // left
-    byte r = Konnekting._associationTableEntries-1;  // right
+    byte l = 0; // left end of array
+    byte r = Konnekting._associationTableEntries-1;  // right end of array
 
+    // some helper variables for doing iterative binary search
     int addressIdOnIndex = 0;
     boolean addressIdFound = false;
 
+    // do binary search
     while (l <= r) {
-        byte m = l + (r-l)/2; //middle
 
+        byte m = l + (r-l)/2; // mid
+
+        // Check if 'addressId' is present at mid
         if (assocTableGaId[m] == addressId) {
             addressIdFound = true;
             addressIdOnIndex = m;
             break;
         }
 
-        // If 'addressId' greater, ignore left half by setting l to next right from middle
+        // If 'addressId' greater, ignore left half by setting l to next right from mid
         if (addressId > assocTableGaId[m]) {
             l = m + 1;
         } else {
-            // 'addressId' is smaller, so ignore right half by setting r to next left from middle
+            // 'addressId' is smaller, so ignore right half by setting r to next left from mid
             r = m -1;
         }
     }
@@ -651,9 +649,8 @@ boolean KnxTpUart::IsAddressAssigned(word addr, ArrayList<byte>& indexList) cons
 
     }
 
-
     boolean foundSomeIndex == !indexList.isEmpty();
-    
+
     if (!foundSomeIndex) {
         DEBUG_PRINTLN(F("IsAddressAssigned: found nothing, skipping this GA"), addr);
     }
