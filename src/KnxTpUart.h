@@ -41,7 +41,6 @@
 #include "KnxTelegram.h"
 #include "KnxComObject.h"
 #include "System.h"
-#include "ArrayList.h"
 
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
@@ -118,13 +117,16 @@ enum e_TpUartRxState {
   RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED   // Tegram reception ongoing but not addressed
 };
 
+typedef struct AddressedComObjects {
+  byte size; // total size of list, incl. empty cells
+  byte items; // size if items in list
+  byte* list; // the list/array if indizes of addressed comcobjects
+} AddressedComObjects;
+
 typedef struct {
   e_TpUartRxState state;        // Current TPUART RX state
   KnxTelegram receivedTelegram; // Where each received telegram is stored (the content is overwritten on each telegram reception)
                                 // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
-  // byte addressedComObjectIndex; // Where the index to the targeted com object is stored (the value is overwritten on each telegram reception)
-  //                               // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
-  ArrayList<byte> addressedComObjIndexList;
 } type_tpuart_rx;
 
 // --- Definitions for the TRANSMISSION  part ----
@@ -164,7 +166,6 @@ typedef struct {
   byte dataByte;  // Last data retrieved on the bus (valid when isEOP is false)
 } type_MonitorData;
 
-
 class KnxTpUart {
     HardwareSerial& _serial;                  // Arduino HW serial port connected to the TPUART
     const word _physicalAddr;                 // Physical address set in the TP-UART
@@ -174,18 +175,8 @@ class KnxTpUart {
     type_EventCallbackFctPtr _evtCallbackFct; // Pointer to the EVENTS callback function
     KnxComObject *_comObjectsList;            // Attached list of com objects
     byte _assignedComObjectsNb;               // Nb of assigned com objects
-    byte *_orderedIndexTable;                 // Table containing the assigned com objects indexes ordered by increasing @
     byte _stateIndication;                    // Value of the last received state indication
-#if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
-    String *_debugStrPtr;
-#endif
 
-#ifdef KNXTPUART_DEBUG_INFO
-static const char _debugInfoText[];
-#endif
-#ifdef KNXTPUART_DEBUG_ERROR
-static const char _debugErrorText[];
-#endif
 
   public:  
   
@@ -200,55 +191,52 @@ static const char _debugErrorText[];
     // return KNX_TPUART_ERROR_NOT_INIT_STATE (254) if the TPUART is not in Init state
     // else return OK
     // The function must be called prior to Init() execution
-    byte SetEvtCallback(type_EventCallbackFctPtr);
+    byte setEvtCallback(type_EventCallbackFctPtr);
 
     // Set ACK callback function
     // return KNX_TPUART_ERROR (255) if the parameter is NULL
     // return KNX_TPUART_ERROR_NOT_INIT_STATE (254) if the TPUART is not in Init state
     // else return OK
     // The function must be called prior to Init() execution
-    byte SetAckCallback(type_AckCallbackFctPtr);
+    byte setAckCallback(type_AckCallbackFctPtr);
 
     // Get the value of the last received State Indication
     // NB : every state indication value change is notified by a "TPUART_EVENT_STATE_INDICATION" event
-    byte GetStateIndication(void) const;
+    byte getStateIndication(void) const;
 
     // Get the reference to the telegram received by the TPUART
     // NB : every received telegram content change is notified by a "TPUART_EVENT_RECEIVED_KNX_TELEGRAM" event
-    KnxTelegram& GetReceivedTelegram(void);
+    KnxTelegram& getReceivedTelegram(void);
 
     // Get the index of the com object targeted by the last received telegram
     //byte GetTargetedComObjectIndex(void) const;
-    ArrayList<byte> GetTargetedComObjectIndex(void) const;
+    AddressedComObjects getAddressedComObjects(void) const;
 
     // returns true if there is an activity ongoing (RX/TX) on the TPUART
     // false when there's no activity or when the tpuart is not initialized
-    boolean IsActive(void) const;
-
-    // Set the string used for debug traces
-    void SetDebugString(String *strPtr);
+    boolean isActive(void) const;
 
   // Functions NOT INLINED
     // Reset the Arduino UART port and the TPUART device
     // Return KNX_TPUART_ERROR in case of TPUART reset failure
-    byte Reset(void);
+    byte reset(void);
 
     // Attach a list of com objects
     // NB1 : only the objects with "communication" attribute are considered by the TPUART
     // NB2 : In case of objects with identical address, the object with highest index only is considered
     // return KNX_TPUART_ERROR_NOT_INIT_STATE (254) if the TPUART is not in Init state
     // The function must be called prior to Init() execution
-    byte AttachComObjectsList(KnxComObject KnxComObjectsList[], byte listSize);
+    byte attachComObjectsList(KnxComObject KnxComObjectsList[], byte listSize);
 
     // Init
     // returns ERROR (255) if the TP-UART is not in INIT state, else returns OK (0)
     // Init must be called after every reset() execution
-    byte Init(void);
+    byte init(void);
 
     // Send a KNX telegram
     // returns ERROR (255) if TX is not available or if the telegram is not valid, else returns OK (0)
     // NB : the source address is forced to TPUART physical address value
-    byte SendTelegram(KnxTelegram& sentTelegram);
+    byte sendTelegram(KnxTelegram& sentTelegram);
 
     // Reception task
     // This function shall be called periodically in order to allow a correct reception of the KNX bus data
@@ -256,7 +244,7 @@ static const char _debugErrorText[];
     // is transmitted in 0,58ms.
     // In order not to miss any End Of Packets (i.e. a gap from 2 to 2,5ms), the function shall be called at a max period of 0,5ms.
     // Typical calling period is 400 usec.
-    void RXTask(void);
+    void rxTask(void);
 
     // Transmission task
     // This function shall be called periodically in order to allow a correct transmission of the KNX bus data
@@ -265,32 +253,29 @@ static const char _debugErrorText[];
     // Sending one byte of a telegram consists in transmitting 2 characters (1,16ms)
     // Let's wait around 800us between each telegram piece sending so that the 64byte TX buffer remains almost empty.
     // Typical calling period is 800 usec.
-    void TXTask(void);
+    void txTask(void);
 
     // Get Bus monitoring data (BUS MONITORING mode)
     // The function returns true if a new data has been retrieved (data pointer in argument), else false
     // It shall be called periodically (max period of 0,5ms) in order to allow correct data reception
     // Typical calling period is 400 usec.
-    boolean GetMonitoringData(type_MonitorData&);
+    boolean getMonitoringData(type_MonitorData&);
 
   private:
 
-  // Private INLINED functions (see definitions later in this file)
-    void DebugInfo(const char[]) const;
-
-    void DebugError(const char[]) const;
+    AddressedComObjects _addressedComObjects;
 
   // Private NOT INLINED functions 
     // Check if the target address points to an assigned com object (i.e. the target address equals a com object address)
     // if yes, then update index parameter with the index (in the list) of the targeted com object and return true
     // else return false
-    boolean IsAddressAssigned(word addr, ArrayList<byte> &indexList) const;
+    boolean isAddressAssigned(word addr);
 };
 
 
 // ----- Definition of the INLINED functions :  ------------
 
-inline byte KnxTpUart::SetEvtCallback(type_EventCallbackFctPtr evtCallbackFct)
+inline byte KnxTpUart::setEvtCallback(type_EventCallbackFctPtr evtCallbackFct)
 { 
   if (evtCallbackFct == NULL) return KNX_TPUART_ERROR;
   if ((_rx.state!=RX_INIT) || (_tx.state!=TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
@@ -298,7 +283,7 @@ inline byte KnxTpUart::SetEvtCallback(type_EventCallbackFctPtr evtCallbackFct)
   return KNX_TPUART_OK;
 }
 
-inline byte KnxTpUart::SetAckCallback(type_AckCallbackFctPtr ackFctPtr)
+inline byte KnxTpUart::setAckCallback(type_AckCallbackFctPtr ackFctPtr)
 {
   if (ackFctPtr == NULL) return KNX_TPUART_ERROR;
   if ((_rx.state!=RX_INIT) || (_tx.state!=TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
@@ -306,17 +291,17 @@ inline byte KnxTpUart::SetAckCallback(type_AckCallbackFctPtr ackFctPtr)
   return KNX_TPUART_OK;
 }
 
-inline byte KnxTpUart::GetStateIndication(void) const { return _stateIndication; }
+inline byte KnxTpUart::getStateIndication(void) const { return _stateIndication; }
 
-inline KnxTelegram& KnxTpUart::GetReceivedTelegram(void)
+inline KnxTelegram& KnxTpUart::getReceivedTelegram(void)
 { return _rx.receivedTelegram; }
 
 
-inline ArrayList<byte> KnxTpUart::GetTargetedComObjectIndex(void) const
-{ return _rx.addressedComObjIndexList; } // return the index of the adress addressed by the received KNX Telegram
+inline AddressedComObjects KnxTpUart::getAddressedComObjects(void) const
+{ return _addressedComObjects; }
 
 
-inline boolean KnxTpUart::IsActive(void) const
+inline boolean KnxTpUart::isActive(void) const
 {
   if ( _rx.state > RX_IDLE_WAITING_FOR_CTRL_FIELD) return true; // Rx activity
   if ( _tx.state > TX_IDLE) return true; // Tx activity
@@ -325,39 +310,7 @@ inline boolean KnxTpUart::IsActive(void) const
 
 
 
-inline void KnxTpUart::SetDebugString(String *
-#if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR) // ifdef to suppress compiler warning about unused variable when not in debug mode
-		strPtr
-#endif
-		)
-{
-#if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
-   _debugStrPtr = strPtr;
-#endif
-}
 
 
-inline void KnxTpUart::DebugInfo(const char 
-#if defined(KNXTPUART_DEBUG_INFO) // ifdef to suppress compiler warning about unused variable when not in debug mode
-		comment
-#endif
-		[]) const
-{
-#if defined(KNXTPUART_DEBUG_INFO)
-  if (_debugStrPtr != NULL) *_debugStrPtr += String(_debugInfoText) + String(comment);
-#endif
-}
-
-
-inline void KnxTpUart::DebugError(const char 
-#if defined(KNXTPUART_DEBUG_ERROR) // ifdef to suppress compiler warning about unused variable when not in debug mode
-		comment
-#endif
-		[]) const
-{
-#if defined(KNXTPUART_DEBUG_ERROR)
-  if (_debugStrPtr != NULL) *_debugStrPtr += String(_debugErrorText) + String(comment);
-#endif
-}
 
 #endif // KNXTPUART_H

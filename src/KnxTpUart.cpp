@@ -49,13 +49,6 @@ static inline word TimeDeltaWord(word now, word before) {
     return (word)(now - before);
 }
 
-#ifdef KNXTPUART_DEBUG_INFO
-const char KnxTpUart::_debugInfoText[] = "KNXTPUART INFO: ";
-#endif
-
-#ifdef KNXTPUART_DEBUG_ERROR
-const char KnxTpUart::_debugErrorText[] = "KNXTPUART ERROR: ";
-#endif
 
 // Constructor
 
@@ -64,7 +57,6 @@ const char KnxTpUart::_debugErrorText[] = "KNXTPUART ERROR: ";
 KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMode mode)
     : _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
     _rx.state = RX_RESET;
-//    _rx.addressedComObjectIndex = 0;
     _tx.state = TX_RESET;
     _tx.sentTelegram = NULL;
     _tx.ackFctPtr = NULL;
@@ -74,29 +66,26 @@ KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMo
     _evtCallbackFct = NULL;
     _comObjectsList = NULL;
     _assignedComObjectsNb = 0;
-    _orderedIndexTable = NULL;
     _stateIndication = 0;
-#if defined(KNXTPUART_DEBUG_INFO) || defined(KNXTPUART_DEBUG_ERROR)
-    _debugStrPtr = NULL;
-#endif
+
+    _addressedComObjects.size = Konnekting._assocMaxTableEntries;
+    _addressedComObjects.list = (byte*) malloc(_addressedComObjects.size * sizeof(byte));
 }
 
 // Destructor
 
 KnxTpUart::~KnxTpUart() {
-    if (_orderedIndexTable) free(_orderedIndexTable);
+//    if (_orderedIndexTable) free(_orderedIndexTable);
     // close the serial communication if opened
     if ((_rx.state > RX_RESET) || (_tx.state > TX_RESET)) {
         _serial.end();
-        DebugInfo("Destructor: connection closed, byebye\n");
-    } else
-        DebugInfo("Desctructor: byebye\n");
+    }
 }
 
 // Reset the Arduino UART port and the TPUART device
 // Return KNX_TPUART_ERROR in case of TPUART Reset failure
 
-byte KnxTpUart::Reset(void) {
+byte KnxTpUart::reset(void) {
     word startTime, nowTime;
     byte attempts = 10;
 
@@ -149,18 +138,18 @@ byte KnxTpUart::Reset(void) {
 // return KNX_TPUART_ERROR_NOT_INIT_STATE (254) if the TPUART is not in Init state
 // The function must be called prior to Init() execution
 
-byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSize) {
+byte KnxTpUart::attachComObjectsList(KnxComObject comObjectsList[], byte listSize) {
 #define IS_COM(index) (comObjectsList[index].getIndicator() & KNX_COM_OBJ_C_INDICATOR)
 #define ADDR(index) (comObjectsList[index].getAddr())
 
     if ((_rx.state != RX_INIT) || (_tx.state != TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
 
-    if (_orderedIndexTable) {  // a list is already attached, we detach it
-        free(_orderedIndexTable);
-        _orderedIndexTable = NULL;
+//    if (_orderedIndexTable) {  // a list is already attached, we detach it
+//        free(_orderedIndexTable);
+//        _orderedIndexTable = NULL;
         _comObjectsList = NULL;
         _assignedComObjectsNb = 0;
-    }
+//    }
     if ((!comObjectsList) || (!listSize)) {
         DEBUG_PRINTLN(F("AttachComObjectsList : warning : empty object list!\n"));
         return KNX_TPUART_OK;
@@ -173,46 +162,23 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
         return KNX_TPUART_OK;
     }
 
-    /*
-     * Removed duplicate check: GAs are initialized as "active=false", so they are not used.
-     * As soon as an address is set (only done on startup when reading user-settings from eeprom)
-     * the flag is set to "active=true" and ComObj is able to communicate.
-     * 
-     * If device starts with factory settings, all ComObjs have *no* GA, which leads to "duplicates"
-     * if this check is enabled.
-     * 
-     * Also it makes no sense to check for duplicates, as it is quite a use-case to have 
-     * multiple ComObjs with same GA
-     */
-    // Deduct the duplicate addresses
-    //    for (byte i = 0; i < listSize; i++) {
-    //        if (!IS_COM(i)) continue;
-    //        for (byte j = 0; j < listSize; j++) {
-    //            if ((i != j) && (ADDR(j) == ADDR(i)) && (IS_COM(j))) { // duplicate address found
-    //                if (j < i) break; // duplicate address already treated
-    //                else {
-    //                    _assignedComObjectsNb--;
-    //                    DEBUG_PRINTLN(F("AttachComObjectsList : warning : duplicate address found! i=%d:0x%04x j=%d:0x%04x"), i, j, ADDR(i), ADDR(j));
-    //                }
-    //            }
-    //        }
-    //    }
     _comObjectsList = comObjectsList;
 
     // Creation of the ordered index table
-    _orderedIndexTable = (byte*)malloc(_assignedComObjectsNb);
-    word minMin = 0x0000;    // minimum min value searched
-    word foundMin = 0xFFFF;  // min value found so far
-    for (byte i = 0; i < _assignedComObjectsNb; i++) {
-        for (byte j = 0; j < listSize; j++) {
-            if ((IS_COM(j)) && (ADDR(j) >= minMin) && (ADDR(j) <= foundMin)) {
-                foundMin = ADDR(j);
-                _orderedIndexTable[i] = j;
-            }
-        }
-        minMin = foundMin + 1;
-        foundMin = 0xFFFF;
-    }
+    // FIXME old unused code --> remove me
+    // _orderedIndexTable = (byte*)malloc(_assignedComObjectsNb);
+    // word minMin = 0x0000;    // minimum min value searched
+    // word foundMin = 0xFFFF;  // min value found so far
+    // for (byte i = 0; i < _assignedComObjectsNb; i++) {
+    //     for (byte j = 0; j < listSize; j++) {
+    //         if ((IS_COM(j)) && (ADDR(j) >= minMin) && (ADDR(j) <= foundMin)) {
+    //             foundMin = ADDR(j);
+    //             _orderedIndexTable[i] = j;
+    //         }
+    //     }
+    //     minMin = foundMin + 1;
+    //     foundMin = 0xFFFF;
+    // }
     //    DEBUG_PRINTLN(F("AttachComObjectsList successful\n"));
 
     return KNX_TPUART_OK;
@@ -221,7 +187,7 @@ byte KnxTpUart::AttachComObjectsList(KnxComObject comObjectsList[], byte listSiz
 // Init
 // returns ERROR (255) if the TP-UART is not in INIT state, else returns OK (0)
 // Init must be called after every reset() execution
-byte KnxTpUart::Init(void) {
+byte KnxTpUart::init(void) {
     byte tpuartCmd[3];
 
     if ((_rx.state != RX_INIT) || (_tx.state != TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
@@ -257,7 +223,7 @@ byte KnxTpUart::Init(void) {
 // returns ERROR (255) if TX is not available, or if the telegram is not valid, else returns OK (0)
 // NB : the source address is forced to TPUART physical address value
 
-byte KnxTpUart::SendTelegram(KnxTelegram& sentTelegram) {
+byte KnxTpUart::sendTelegram(KnxTelegram& sentTelegram) {
     if (_tx.state != TX_IDLE) return KNX_TPUART_ERROR;  // TX not initialized or busy
 
     if (sentTelegram.GetSourceAddress() != _physicalAddr)  // Check that source addr equals TPUART physical addr
@@ -284,40 +250,45 @@ byte KnxTpUart::SendTelegram(KnxTelegram& sentTelegram) {
  * 
  * DO NOT PUT TOO MUCH DEBUG PRINT CODE HERE! Telegram receiving might break!
  */
-void KnxTpUart::RXTask(void) {
+void KnxTpUart::rxTask(void) {
     byte incomingByte;
     word nowTime;
-    static byte readBytesNb;              // Nb of read bytes during an KNX telegram reception
-    static KnxTelegram telegram;          // telegram being received
-    static ArrayList<byte> addressedComObjIndexList;  // index of the com object targeted by the received telegram
+    static byte readBytesNb;                               // Nb of read bytes during an KNX telegram reception
+    static KnxTelegram telegram;                           // telegram being received
+    //static type_AddressedComObjects addressedComObjIndex;  // index of the com object targeted by the received telegram
     static word lastByteRxTimeMicrosec;
 
     // === STEP 1 : Check EOP in case a Telegram is being received ===
     if (_rx.state >= RX_KNX_TELEGRAM_RECEPTION_STARTED) {  // a telegram reception is ongoing
 
         // word cast because a 65ms looping counter is long enough
-        nowTime = (word)micros();                                                
+        nowTime = (word)micros();
 
-        if (TimeDeltaWord(nowTime, lastByteRxTimeMicrosec) > 2000 /* 2 ms */) {  
+        if (TimeDeltaWord(nowTime, lastByteRxTimeMicrosec) > 2000 /* 2 ms */) {
             // EOP detected, the telegram reception is completed
 
             //DEBUG_PRINTLN(F("EOP REACHED"));
             switch (_rx.state) {
                 case RX_KNX_TELEGRAM_RECEPTION_STARTED:  // we are not supposed to get EOP now, the telegram is incomplete
-                    DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED"));
+                    //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED"));
                 case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID:
                     DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID"));
                     _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR);  // Notify telegram reception error
                     break;
 
                 case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
-                    // DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
-                    if (telegram.IsChecksumCorrect()) {  
+                    //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
+                    if (telegram.IsChecksumCorrect()) {
                         // checksum correct, let's update the _rx struct with the received telegram and correct index
+                        //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED 1"));
                         telegram.Copy(_rx.receivedTelegram);
-                        _rx.addressedComObjIndexList.clearCopyFrom(addressedComObjIndexList);
+                        //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED 2"));
+                        
+                        //_rx.addressedComObjects = _addressedComObjects;
+
+                        //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED 3"));
                         // Notify the new received telegram
-                        _evtCallbackFct(TPUART_EVENT_RECEIVED_KNX_TELEGRAM);  
+                        _evtCallbackFct(TPUART_EVENT_RECEIVED_KNX_TELEGRAM);
                     } else {
                         // checksum incorrect, notify error
                         DEBUG_PRINTLN(F("checksum incorrect."));
@@ -370,7 +341,7 @@ void KnxTpUart::RXTask(void) {
                     _tx.state = TX_STOPPED;
                     _rx.state = RX_STOPPED;
                     // Notify RESET
-                    _evtCallbackFct(TPUART_EVENT_RESET);  
+                    _evtCallbackFct(TPUART_EVENT_RESET);
                     // DEBUG_PRINTLN(F("Rx: Reset Indication Received"));
                     return;
                 }
@@ -401,11 +372,11 @@ void KnxTpUart::RXTask(void) {
                 telegram.WriteRawByte(incomingByte, readBytesNb);
                 readBytesNb++;
 
-                if (readBytesNb == 3) {  
+                if (readBytesNb == 3) {
                     // We have just received the source address
 
                     // we check whether the received KNX telegram is coming from us (i.e. telegram is sent by the TPUART itself)
-                    if (telegram.GetSourceAddress() == _physicalAddr) {  
+                    if (telegram.GetSourceAddress() == _physicalAddr) {
                         // the message is coming from us, we consider it as not addressed and we don't send any ACK service
                         // DEBUG_PRINTLN(F("message from us, skip."));
                         _rx.state = RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED;
@@ -414,7 +385,7 @@ void KnxTpUart::RXTask(void) {
                 // We have just read the routing field containing the address type and the payload length
                 {
                     // We check if the message is addressed to us in order to send the appropriate acknowledge
-                    if (IsAddressAssigned(telegram.GetTargetAddress(), addressedComObjIndexList)) {  // Message addressed to us
+                    if (isAddressAssigned(telegram.GetTargetAddress() /*, addressedComObjIndex*/)) {  // Message addressed to us
 
                         // DEBUG_PRINTLN(F("assigned to us: ga=0x%04x index=%d"), telegram.GetTargetAddress(), addressedComObjectIndex);
 
@@ -451,15 +422,17 @@ void KnxTpUart::RXTask(void) {
                 break;
 
             // if the message is too long, nothing to do except waiting for EOP
-            case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID : break;
-            
-            // if the message is not addressed, nothing to do except waiting for EOP 
-            case RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED : break; 
+            case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID:
+                break;
+
+            // if the message is not addressed, nothing to do except waiting for EOP
+            case RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED:
+                break;
 
             default:
                 break;
-        } // end of: switch (_rx.state)
-    } // end of: if (_serial.available() > 0)
+        }  // end of: switch (_rx.state)
+    }      // end of: if (_serial.available() > 0)
 }
 
 /**
@@ -471,7 +444,7 @@ void KnxTpUart::RXTask(void) {
  * Let's wait around 800us between each telegram piece sending so that the 64byte TX buffer remains almost empty.
  * Typical calling period is 800 usec.
  */
-void KnxTpUart::TXTask(void) {
+void KnxTpUart::txTask(void) {
     word nowTime;
     byte txByte[2];
     static word sentMessageTimeMillisec;
@@ -528,7 +501,7 @@ void KnxTpUart::TXTask(void) {
  * It shall be called periodically (max period of 0,5ms) in order to allow correct data reception
  * Typical calling period is 400 usec.
  */
-boolean KnxTpUart::GetMonitoringData(type_MonitorData& data) {
+boolean KnxTpUart::getMonitoringData(type_MonitorData& data) {
     word nowTime;
     static type_MonitorData currentData = {true, 0};
     static word lastByteRxTimeMicrosec;
@@ -537,7 +510,7 @@ boolean KnxTpUart::GetMonitoringData(type_MonitorData& data) {
     if (!(currentData.isEOP))  // check that we have not already detected an EOP
     {
         // word cast because a 65ms counter is enough
-        nowTime = (word)micros();                                                
+        nowTime = (word)micros();
         if (TimeDeltaWord(nowTime, lastByteRxTimeMicrosec) > 2000 /* 2 ms */) {  // EOP detected
             currentData.isEOP = true;
             currentData.dataByte = 0;
@@ -567,95 +540,139 @@ boolean KnxTpUart::GetMonitoringData(type_MonitorData& data) {
  * @param index the index variable will be filled with the index matching this GA
  * @return true if assigned & active, false if not
  */
-boolean KnxTpUart::IsAddressAssigned(word addr, ArrayList<byte>& indexList) const {
-     DEBUG_PRINTLN(F("IsAddressAssigned: Searching for 0x%04x"), addr);
+boolean KnxTpUart::isAddressAssigned(word addr) {
+    long start = micros();
+    DEBUG_PRINTLN(F("IsAddressAssigned: Searching for 0x%04x"), addr);
 
     // clean up old findings
-    indexList.clear();
+    _addressedComObjects.items = 0;
 
     // in case of empty list, we return immediately
-    if (!_assignedComObjectsNb) return false;  
+    if (!_assignedComObjectsNb) return false;
 
     // in case of Programming Group Address, we also return immediately
-    if (addr == 0x7fff) { // 0x7fff = 15/7/255
-        indexList.add(255); // set ProgComObj
-        DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x == 0x7fff --> progComObj."), addr);
+    if (addr == 0x7fff) {     // 0x7fff = 15/7/255
+        _addressedComObjects.list[0] = 255;  // set ProgComObj
+        _addressedComObjects.items = 1;
+        DEBUG_PRINTLN(F("  0x%04x == 0x7fff --> progComObj. [%dus]"), addr, (micros() - start));
         return true;
     }
 
+    // search for adressid in address table
+    AddressTable addressTable = Konnekting._addressTable;
+    byte l = 0;                                    // left end of array
+    byte r = addressTable.size - 1;  // right end of array
+    boolean addressFound = false;                  // true if address found in address table
+    byte addressId;                                // address-id of groupaddress in address table
 
-    // Get the address-id based in the address from hashmap by doing simple lookup
-    byte addressId; // address-id of groupaddress
-    Konnekting._addressToIdMap.get(addr, addressId);
+    // do binary search in address table
+    while (l <= r) {
+        byte m = l + (r - l) / 2;  // mid
 
-    // get the assoc table from konnkting. We handle them as two arrays 
-    // to make search for GA easier, as we can search in an 
-    // AddressId-Array-Only for th matching index and can use the ComObj 
+        // Check if 'addr' is present at mid
+        if (addressTable.address[m] == addr) {
+            addressFound = true;
+            addressId = m;
+            break;
+        }
+
+        // If 'addr' greater, ignore left half by setting l to next right from mid
+        if (addr > addressTable.address[m]) {
+            l = m + 1;
+        } else {
+            // 'addr' is smaller, so ignore right half by setting r to next left from mid
+            r = m - 1;
+        }
+    }
+    if (!addressFound) {
+        DEBUG_PRINTLN(F("  0x%04x not in addr table. [%dus]"), addr, (micros() - start));
+        return false;  // address unknown
+    } else {
+        DEBUG_PRINTLN(F("  0x%04x has id #%d"), addr, addressId);
+    }
+
+    // get the assoc table from konnkting. We handle them as two arrays
+    // to make search for GA easier, as we can search in an
+    // AddressId-Array-Only for th matching index and can use the ComObj
     // array to get the ComObjID based on the found index
-    byte* assocTableGaId = Konnekting._associationTableGaId;
-    byte* assocTableCoId = Konnekting._associationTableCoId;
+
+    AssociationTable associationTable = Konnekting._associationTable;
 
     // inspired by https://www.geeksforgeeks.org/binary-search/
-    byte l = 0; // left end of array
-    byte r = Konnekting._associationTableEntries-1;  // right end of array
+    l = 0;                                        // left end of array
+    r = associationTable.size - 1;  // right end of array
 
     // some helper variables for doing iterative binary search
     int addressIdOnIndex = 0;
     boolean addressIdFound = false;
 
-    // do binary search
+    // do binary search in assoc table
     while (l <= r) {
-
-        byte m = l + (r-l)/2; // mid
+        byte m = l + (r - l) / 2;  // mid
 
         // Check if 'addressId' is present at mid
-        if (assocTableGaId[m] == addressId) {
+        if (associationTable.gaId[m] == addressId) {
             addressIdFound = true;
             addressIdOnIndex = m;
             break;
         }
 
         // If 'addressId' greater, ignore left half by setting l to next right from mid
-        if (addressId > assocTableGaId[m]) {
+        if (addressId > associationTable.gaId[m]) {
             l = m + 1;
         } else {
             // 'addressId' is smaller, so ignore right half by setting r to next left from mid
-            r = m -1;
+            r = m - 1;
         }
     }
 
+    byte listIndex = 0;
+
     if (addressIdFound) {
-        DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x found in index=%d"), addressIdOnIndex);
-        
+        DEBUG_PRINTLN(F("  addrID=%d found on assoc table index %d"), addressId, addressIdOnIndex);
+
         // add first occurence
-        indexList.add(assocTableCoId[addressIdOnIndex]);
+        _addressedComObjects.list[listIndex] = associationTable.coId[addressIdOnIndex];
+        _addressedComObjects.items++;
+        listIndex++;
 
         // search backwards until other address gets visible
-        byte i = addressIdOnIndex-1;
+        byte i = addressIdOnIndex - 1;
 
-        while (assocTableGaId[i]==addressId) {
-            DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x found prev index index=%d"), i);
-            indexList.add(assocTableCoId[i]);
-            i--;
+        if (i > 0) {
+            while (associationTable.gaId[i] == addressId) {
+                DEBUG_PRINTLN(F("    found prev index: %d"), i);
+
+                _addressedComObjects.list[listIndex] = associationTable.coId[i];
+                _addressedComObjects.items++;
+                listIndex++;
+
+                i--;
+            }
         }
 
         // search forward until other address gets visible
-        i = addressIdOnIndex+1;
-        while (assocTableGaId[i]==addressId) {
-            DEBUG_PRINTLN(F("IsAddressAssigned: 0x%04x found next index index=%d"), i);
-            indexList.add(assocTableCoId[i]);
-            i++;
-        }
+        i = addressIdOnIndex + 1;
+        if (i < associationTable.size - 1) {
+            while (associationTable.gaId[i] == addressId) {
+                DEBUG_PRINTLN(F("    found next index: %d"), i);
+                _addressedComObjects.list[listIndex] = associationTable.coId[i];
+                _addressedComObjects.items++;
+                listIndex++;
 
+                i++;
+            }
+        }
     }
 
-    boolean foundSomeIndex = !indexList.isEmpty();
+    boolean foundSomeIndex = _addressedComObjects.items > 0;
 
     if (!foundSomeIndex) {
         DEBUG_PRINTLN(F("IsAddressAssigned: found nothing, skipping this GA"), addr);
+    } else {
+        DEBUG_PRINTLN(F("IsAddressAssigned: found %d matching ComObjs"), _addressedComObjects.items);
     }
-
+    DEBUG_PRINTLN(F("IsAddressAssigned: [%dus]"), (micros() - start));
     return foundSomeIndex;
-
 }
 //EOF

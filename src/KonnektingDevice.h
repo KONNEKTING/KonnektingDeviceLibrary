@@ -34,7 +34,6 @@
 #include "DebugUtil.h"
 #include "KnxDevice.h"
 #include "KnxDptConstants.h"
-#include "HashMap.h"
 
 // AVR, ESP8266 and STM32 uses EEPROM (SAMD21 not ...)
 #if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(ARDUINO_ARCH_STM32)
@@ -107,6 +106,17 @@ inline word __WORD(byte hi, byte lo) { return (word)((hi << 8) + (lo << 0)); }
 // process intercepted knxEvents-calls with this method
 extern void konnektingKnxEvents(byte index);
 
+typedef struct AssociationTable {
+    byte size;
+    byte* gaId;
+    byte* coId;
+};
+
+typedef struct AddressTable {
+    byte size;
+    word* address;
+};
+
 /**************************************************************************/
 /*!
  *  @brief  Main class provides KONNEKTING Device API
@@ -120,14 +130,18 @@ class KonnektingDevice {
 
     static byte _paramSizeList[];
     static const int _numberOfParams;
-    static HashMap<byte> _addressToIdMap;
     /**
-     * 1st byte: size of table
-     * 2nd .. nth byte: table content, see https://wiki.konnekting.de/index.php?title=KONNEKTING_Protocol_Specification_0x01#Device_Memory_Layout
+     * see https://wiki.konnekting.de/index.php?title=KONNEKTING_Protocol_Specification_0x01#Device_Memory_Layout
      */
-    static byte _associationTableEntries;
-    static byte* _associationTableGaId;
-    static byte* _associationTableCoId;
+    static AssociationTable _associationTable;
+    /**
+     * see https://wiki.konnekting.de/index.php?title=KONNEKTING_Protocol_Specification_0x01#Device_Memory_Layout
+     */
+    static AddressTable _addressTable;
+    /**
+     * maximum number of associations of single group address, depends on the programming via suite and the assiciations a usedr set up
+    */
+    static byte _assocMaxTableEntries;
 
     byte (*_eepromReadFunc)(int);
     void (*_eepromWriteFunc)(int, byte);

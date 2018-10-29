@@ -17,7 +17,7 @@ template <typename T> class ArrayList {
     }
 
     void add(T item) {
-      DEBUG_PRINTLN(" ArrayList.add(0x%04X)", item);
+      //DEBUG_PRINTLN(F(" ArrayList.add(0x%04X)"), item);
       T* newlist = (T*)malloc((size + 1) * sizeof(T));
 
       if (size > 0) {
@@ -38,7 +38,7 @@ template <typename T> class ArrayList {
     }
 
     bool remove(int index) {
-      DEBUG_PRINTLN(" ArrayList.remove(%i)", index);
+      DEBUG_PRINTLN(F(" ArrayList.remove(%i)"), index);
       // if there is nothing to remove, just return
       if (size == 0 || index > size) {
 //        DEBUG_RAM();
@@ -78,7 +78,7 @@ template <typename T> class ArrayList {
         return false;
       }
       list[index] = item;
-//      DEBUG_PRINTLN(" ArrayList.set(%i)=0x%04X", index, item);
+//      DEBUG_PRINTLN(F(" ArrayList.set(%i)=0x%04X"), index, item);
 //      DEBUG_RAM();
       return true;
     }
@@ -91,14 +91,18 @@ template <typename T> class ArrayList {
       }
       item = this->list[index];
 //      DEBUG_RAM();
-//      DEBUG_PRINTLN(" ArrayList.get(%i)=0x%04X", index, item);
+//      DEBUG_PRINTLN(F(" ArrayList.get(%i)=0x%04X"), index, item);
       return true;
     }
 
     void clear() {
-//      DEBUG_PRINTLN(" ArrayList.clear");
+      DEBUG_PRINTLN(F("### ArrayList.clear size=%d list!=null?%d"), size, (list!=NULL));
+      DEBUG_RAM();
+      if (size>0) {
+        free(list); // free memory of old list
+      }
+      DEBUG_PRINTLN(F("### ArrayList.clear freed"));
       size = 0;
-      free(list); // free memory of old list
       list = NULL;
     }
 
@@ -108,12 +112,18 @@ template <typename T> class ArrayList {
     }
 
     void clearCopyFrom(ArrayList<T> other) {
+      //DEBUG_PRINTLN(F("### ArrayList.clearCopyFrom: clearing"));
       clear();
-      int size = other.getSize();
-      for(int i=0; i<size; i++) {
+      //DEBUG_PRINTLN(F("### ArrayList.clearCopyFrom: cleared"));
+      int otherSize = other.getSize();
+      //DEBUG_PRINTLN(F("### ArrayList.clearCopyFrom: osize=%d"), otherSize);
+      for(int i=0; i<otherSize; i++) {
         T otherVal;
+        //DEBUG_PRINTLN(F("### ArrayList.clearCopyFrom: getting i=%d"), i);
         other.get(i, otherVal);
+        //DEBUG_PRINTLN(F("### ArrayList.clearCopyFrom: got: %d"), otherVal);
         add(otherVal);
+        //DEBUG_PRINTLN(F("### ArrayList.clearCopyFrom: added"), otherVal);
       }
     }
 
@@ -126,14 +136,14 @@ template <typename T> class ArrayList {
     }
 
     int getSize() const {
-//      DEBUG_PRINTLN(" ArrayList.getSize=%i", size);
+//      DEBUG_PRINTLN(F(" ArrayList.getSize=%i"), size);
       return size;
     }
     
     void log() {
-      DEBUG_PRINTLN(" ArrayList Dump. size=%i", size);
+      DEBUG_PRINTLN(F(" ArrayList Dump. size=%i"), size);
       for (int i = 0; i < size; i++) {      
-        DEBUG_PRINTLN("   [%i] 0x%04X", i, list[i]);
+        DEBUG_PRINTLN(F("   [%i] 0x%04X"), i, list[i]);
       }
     }
 

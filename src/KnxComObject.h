@@ -28,7 +28,6 @@
 #ifndef KNXCOMOBJECT_H
 #define KNXCOMOBJECT_H
 
-#include "ArrayList.h"
 #include "KnxDataPointTypes.h"
 #include "KnxTelegram.h"
 #include "DebugUtil.h"
@@ -67,10 +66,14 @@
 #define KNX_COM_OBJECT_ERROR 255
 
 class KnxComObject {
+
+    // set to active if GA has been set
+    bool _active;
+
     /**
      *  Group Address value
      */
-    ArrayList<word> _addrList;
+    word _addr;
 
     /**
      * DPT
@@ -123,7 +126,7 @@ class KnxComObject {
      * The function is used in case of programming
      * @param the GA to set
      */
-    void addAddr(word);
+    void setAddr(word);
 
     void setIndicator(byte);
 
@@ -192,22 +195,12 @@ class KnxComObject {
 // --------------- Definition of the INLINE functions -----------------
 
 inline word KnxComObject::getAddr(void) const {
-//    DEBUG_PRINT(F("KnxComObject::getAddr="));
-    word addr;
-    // FIXME workaround
-    if (_addrList.getSize() == 0) {
-        addr = 0x0000;
-//        DEBUG_PRINTLN(F("fix:0x0000"));
-    } else {
-        _addrList.get(0, addr);
-//        DEBUG_PRINTLN(F("list:0x%04X"), addr);
-    }
-    return addr;
+    return _addr;
 }
 
-inline void KnxComObject::addAddr(word addr) {
-    DEBUG_PRINTLN(F("KnxComObject::addAddr=0x%04X"), addr);
-    _addrList.add(addr);
+inline void KnxComObject::setAddr(word addr) {
+    _addr = addr;
+    _active = true;
 }
 
 inline void KnxComObject::setIndicator(byte indicator) {

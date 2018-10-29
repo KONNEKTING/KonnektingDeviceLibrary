@@ -46,8 +46,8 @@ KnxDevice::KnxDevice() {
     _initCompleted = false;
     _initIndex = 0;
     _rxTelegram = NULL;
-    //AC
-    _progComObj.addAddr(G_ADDR(15, 7, 255));
+    
+    _progComObj.setAddr(G_ADDR(15, 7, 255));
 }
 
 int KnxDevice::getNumberOfComObjects() {
@@ -62,20 +62,20 @@ int KnxDevice::getNumberOfComObjects() {
 e_KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
     delete _tpuart; // always safe to delete null ptr
     _tpuart = new KnxTpUart(serial, physicalAddr, NORMAL);
-    _rxTelegram = &_tpuart->GetReceivedTelegram();
+    _rxTelegram = &_tpuart->getReceivedTelegram();
     //delay(10000); // Workaround for init issue with bus-powered arduino
     // the issue is reproduced on one (faulty?) TPUART device only, so remove it for the moment.
-    if (_tpuart->Reset() != KNX_TPUART_OK) {
+    if (_tpuart->reset() != KNX_TPUART_OK) {
         delete(_tpuart);
         _tpuart = NULL;
         _rxTelegram = NULL;
         DEBUG_PRINTLN(F("Init Error!"));
         return KNX_DEVICE_INIT_ERROR;
     }
-    _tpuart->AttachComObjectsList(_comObjectsList, _numberOfComObjects);
-    _tpuart->SetEvtCallback(&KnxDevice::GetTpUartEvents);
-    _tpuart->SetAckCallback(&KnxDevice::TxTelegramAck);
-    _tpuart->Init();
+    _tpuart->attachComObjectsList(_comObjectsList, _numberOfComObjects);
+    _tpuart->setEvtCallback(&KnxDevice::GetTpUartEvents);
+    _tpuart->setAckCallback(&KnxDevice::TxTelegramAck);
+    _tpuart->init();
     _state = IDLE;
     DEBUG_PRINTLN(F("Init successful"));
     _lastInitTimeMillis = millis();
@@ -138,7 +138,7 @@ void KnxDevice::task(void) {
     nowTimeMicros = micros();
     if (TimeDeltaWord(nowTimeMicros, _lastRXTimeMicros) > 400) {
         _lastRXTimeMicros = nowTimeMicros;
-        _tpuart->RXTask();
+        _tpuart->rxTask();
         
         // TODO: check for rx_state in tpuart and call rxtask repeatedly until telegram is received?!
     }
@@ -171,7 +171,7 @@ void KnxDevice::task(void) {
                     _txTelegram.ClearFirstPayloadByte(); // Is it required to have a clean payload ??
                     _txTelegram.SetCommand(KNX_COMMAND_VALUE_READ);
                     _txTelegram.UpdateChecksum();
-                    _tpuart->SendTelegram(_txTelegram);
+                    _tpuart->sendTelegram(_txTelegram);
                     _state = TX_ONGOING;
                     break;
 
@@ -180,7 +180,7 @@ void KnxDevice::task(void) {
                     comObj->copyValue(_txTelegram);
                     _txTelegram.SetCommand(KNX_COMMAND_VALUE_RESPONSE);
                     _txTelegram.UpdateChecksum();
-                    _tpuart->SendTelegram(_txTelegram);
+                    _tpuart->sendTelegram(_txTelegram);
                     _state = TX_ONGOING;
                     break;
 
@@ -204,7 +204,7 @@ void KnxDevice::task(void) {
                         comObj->copyValue(_txTelegram);
                         _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
                         _txTelegram.UpdateChecksum();
-                        _tpuart->SendTelegram(_txTelegram);
+                        _tpuart->sendTelegram(_txTelegram);
                         _state = TX_ONGOING;
                     }
                     break;
@@ -219,7 +219,7 @@ void KnxDevice::task(void) {
     nowTimeMicros = micros();
     if (TimeDeltaWord(nowTimeMicros, _lastTXTimeMicros) > 800) {
         _lastTXTimeMicros = nowTimeMicros;
-        _tpuart->TXTask();
+        _tpuart->txTask();
     }
 }
 
@@ -392,7 +392,7 @@ void KnxDevice::update(byte objectIndex) {
  *  The function returns true if there is rx/tx activity ongoing, else false
  */
 bool KnxDevice::isActive() const {
-    if (_tpuart->IsActive()) return true; // TPUART is active
+    if (_tpuart->isActive()) return true; // TPUART is active
     if (_state == TX_ONGOING) return true; // the Device is sending a request
     if (_txActionList.getItemCount()) return true; // there is at least one tx action in the queue
     return false;
@@ -401,7 +401,7 @@ bool KnxDevice::isActive() const {
 e_KnxDeviceStatus KnxDevice::setComObjectAddress(byte index, word addr) {
     if (_state != INIT) return KNX_DEVICE_INIT_ERROR;
     if (index >= _numberOfComObjects) return KNX_DEVICE_INVALID_INDEX;
-    _comObjectsList[index].addAddr(addr);
+    _comObjectsList[index].setAddr(addr);
     return KNX_DEVICE_OK;
 }
 e_KnxDeviceStatus KnxDevice::setComObjectIndicator(byte index, byte indicator) {
@@ -428,59 +428,67 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
     if (event == TPUART_EVENT_RECEIVED_KNX_TELEGRAM) {
         Knx._state = IDLE;
         
-        Knx._tpuart->GetTargetedComObjectIndex().get(0, targetedComObjIndex);
+        AddressedComObjects addressedComObjects = Knx._tpuart->getAddressedComObjects(); //.get(0, targetedComObjIndex);
 
-        KnxComObject* comObj = (targetedComObjIndex == 255 ? &Knx._progComObj : &_comObjectsList[targetedComObjIndex]);
+        DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents need to process %d comobjs."), addressedComObjects.items);
 
-        DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->GetCommand());
-        
-        byte indicator = comObj->getIndicator();
+        // handle all addressed comobjs
+        for (int i = 0; i < addressedComObjects.items; i++) {
 
-        switch (Knx._rxTelegram->GetCommand()) {
-            case KNX_COMMAND_VALUE_READ:
-                // READ command coming from the bus
-                // if the Com Object has read attribute, then add RESPONSE action in the TX action list
-                if ((comObj->getIndicator()) & KNX_COM_OBJ_R_INDICATOR) { // The targeted Com Object can indeed be read
-                    action.command = KNX_RESPONSE_REQUEST;
-                    action.index = targetedComObjIndex;
-                    Knx._txActionList.append(action);
-                }
-                break;
+            targetedComObjIndex = addressedComObjects.list[i];
 
-            case KNX_COMMAND_VALUE_RESPONSE:
-                // RESPONSE command coming from KNX network, we update the value of the corresponding Com Object.
-                // We 1st check that the corresponding Com Object has UPDATE attribute
-                if ((comObj->getIndicator()) & KNX_COM_OBJ_U_INDICATOR) {
-                    comObj->updateValue(*(Knx._rxTelegram));
-                    //We notify the upper layer of the update
-                    knxEvents(targetedComObjIndex);
-                }
-                break;
+            KnxComObject* comObj = (targetedComObjIndex == 255 ? &Knx._progComObj : &_comObjectsList[targetedComObjIndex]);
 
+            DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->GetCommand());
+            
+            byte indicator = comObj->getIndicator();
 
-            case KNX_COMMAND_VALUE_WRITE:
-                // WRITE command coming from KNX network, we update the value of the corresponding Com Object.
-                // We 1st check that the corresponding Com Object has WRITE attribute
-                
-                DEBUG_PRINTLN(F("ComObj Indicator=0x%02X"), indicator);
-                if ((indicator) & KNX_COM_OBJ_W_INDICATOR) {
-                    comObj->updateValue(*(Knx._rxTelegram));
-                    //We notify the upper layer of the update
-                    if (Konnekting.isActive()) {
-                        DEBUG_PRINTLN(F("Routing event to konnektingKnxEvents #%d"), targetedComObjIndex);
-                        konnektingKnxEvents(targetedComObjIndex);
-                    } else {
-                        DEBUG_PRINTLN(F("No event routing, because not active: #%d"), targetedComObjIndex);
-//                        knxEvents(targetedComObjIndex);
+            switch (Knx._rxTelegram->GetCommand()) {
+                case KNX_COMMAND_VALUE_READ:
+                    // READ command coming from the bus
+                    // if the Com Object has read attribute, then add RESPONSE action in the TX action list
+                    if ((comObj->getIndicator()) & KNX_COM_OBJ_R_INDICATOR) { // The targeted Com Object can indeed be read
+                        action.command = KNX_RESPONSE_REQUEST;
+                        action.index = targetedComObjIndex;
+                        Knx._txActionList.append(action);
                     }
-                } else {
-                    DEBUG_PRINTLN(F("Wrong config byte on comobj #%d: 0x%02X"), targetedComObjIndex, indicator);
-                }
-                break;
+                    break;
 
-                // case KNX_COMMAND_MEMORY_WRITE : break; // Memory Write not handled
+                case KNX_COMMAND_VALUE_RESPONSE:
+                    // RESPONSE command coming from KNX network, we update the value of the corresponding Com Object.
+                    // We 1st check that the corresponding Com Object has UPDATE attribute
+                    if ((comObj->getIndicator()) & KNX_COM_OBJ_U_INDICATOR) {
+                        comObj->updateValue(*(Knx._rxTelegram));
+                        //We notify the upper layer of the update
+                        knxEvents(targetedComObjIndex);
+                    }
+                    break;
 
-            default: break; // not supposed to happen
+
+                case KNX_COMMAND_VALUE_WRITE:
+                    // WRITE command coming from KNX network, we update the value of the corresponding Com Object.
+                    // We 1st check that the corresponding Com Object has WRITE attribute
+                    
+                    DEBUG_PRINTLN(F("ComObj Indicator=0x%02X"), indicator);
+                    if ((indicator) & KNX_COM_OBJ_W_INDICATOR) {
+                        comObj->updateValue(*(Knx._rxTelegram));
+                        //We notify the upper layer of the update
+                        if (Konnekting.isActive()) {
+                            DEBUG_PRINTLN(F("Routing event to konnektingKnxEvents #%d"), targetedComObjIndex);
+                            konnektingKnxEvents(targetedComObjIndex);
+                        } else {
+                            DEBUG_PRINTLN(F("No event routing, because not active: #%d"), targetedComObjIndex);
+    //                        knxEvents(targetedComObjIndex);
+                        }
+                    } else {
+                        DEBUG_PRINTLN(F("Wrong config byte on comobj #%d: 0x%02X"), targetedComObjIndex, indicator);
+                    }
+                    break;
+
+                    // case KNX_COMMAND_MEMORY_WRITE : break; // Memory Write not handled
+
+                default: break; // not supposed to happen
+            }
         }
     } else {
         DEBUG_PRINTLN(F("GetTpUartEvents event=%d"), event);
@@ -488,8 +496,8 @@ void KnxDevice::GetTpUartEvents(e_KnxTpUartEvent event) {
 
     // Manage RESET events
     if (event == TPUART_EVENT_RESET) {
-        while (Knx._tpuart->Reset() == KNX_TPUART_ERROR);
-        Knx._tpuart->Init();
+        while (Knx._tpuart->reset() == KNX_TPUART_ERROR);
+        Knx._tpuart->init();
         Knx._state = IDLE;
     }
 }

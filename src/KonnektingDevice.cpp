@@ -69,10 +69,16 @@ KonnektingDevice KonnektingDevice::Konnekting;
 KonnektingDevice &Konnekting = KonnektingDevice::Konnekting; // maybe this line is useless??
 
 // init static members, see https://thinkingeek.com/2012/08/08/common-linking-issues-c/
-HashMap<byte> KonnektingDevice::_addressToIdMap;
-byte KonnektingDevice::_associationTableEntries = 0;
-byte* KonnektingDevice::_associationTableGaId;
-byte* KonnektingDevice::_associationTableCoId;
+AssociationTable KonnektingDevice::_associationTable;
+AddressTable KonnektingDevice::_addressTable;
+//-----------
+// byte KonnektingDevice::_associationTableEntries = 0;
+// byte* KonnektingDevice::_associationTableGaId;
+// byte* KonnektingDevice::_associationTableCoId;
+// byte KonnektingDevice::_addressTableEntries = 0;
+// word* KonnektingDevice::_addressTable;
+byte KonnektingDevice::_assocMaxTableEntries = 0;
+// ---------------
 
 /**************************************************************************/
 /*!
@@ -184,70 +190,104 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
         _individualAddress = __WORD(hiAddr, loAddr);
         DEBUG_PRINTLN(F("ia=0x%04x"), _individualAddress);
-        //_individualAddress = P_ADDR(1, 1, 1);
 
-        // ComObjects
-        // at most 255 com objects, 256 is progcomobj
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE  = 0x%04x"), KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+        // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
 
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE  = 0x%04x"), KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
-        DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
-
-        uint8_t numberOfCommObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
         DEBUG_PRINT(F("Reading commobj table..."));
-        DEBUG_PRINT(F("%i entries"), numberOfCommObjTableEntries);
+        uint8_t commObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+        DEBUG_PRINTLN(F("%i entries"), commObjTableEntries);
 
-        if (numberOfCommObjTableEntries != Knx.getNumberOfComObjects()) {
+        if (commObjTableEntries != Knx.getNumberOfComObjects()) {
             while (true) {
-                DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory (%d)."), Knx.getNumberOfComObjects(), numberOfCommObjTableEntries);
+                DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory (%d)."), Knx.getNumberOfComObjects(), commObjTableEntries);
                 delay(1000);
             }
         }
 
-        // read comobj configs
+        /* *************************************
+         * read comobj configs from memory
+         * *************************************/
         for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
             byte config = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE + 1 + i);
-            DEBUG_PRINTLN(F("ComObj index=%d config: hex=0x%02x bin=" BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
+            DEBUG_PRINTLN(F("  ComObj #%d config: hex=0x%02x bin="BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
             // set comobj config
             Knx.setComObjectIndicator(i, config & 0x3F);
         }
         DEBUG_PRINTLN(F("Reading commobj table...*done*"));
 
+
+        /* *************************************
+         * read address table from memory
+         * *************************************/
+        DEBUG_PRINT(F("Reading address table..."));
         // read number of available GAs
-        byte addressEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
-        DEBUG_PRINTLN(F("Init addressToIdMap..."));
-        _addressToIdMap.init(addressEntries);
-        DEBUG_PRINTLN(F("Init addressToIdMap... *done*"));
+        _addressTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
+        DEBUG_PRINTLN(F("%i entries"), _addressTable.size);
 
-        // read assoc table
-        _associationTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+        _addressTable.address = (word*) malloc(_addressTable.size * sizeof(word));
+
+        for (byte i = 0; i < _addressTable.size; i++) {
+
+            byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2));
+            byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2) + 1);
+            word ga = __WORD(gaHi, gaLo);
+
+            DEBUG_PRINTLN(F("  index=%d GA: hex=0x%02x"), i, ga);
+            // store copy of addresstable in RAM
+            _addressTable.address[i] = ga;
+        }
+        DEBUG_PRINTLN(F("Reading address table...*done*"));
+
+        /* *************************************
+         * read association table from memory
+         * *************************************/
         DEBUG_PRINT(F("Reading association table..."));
-        DEBUG_PRINTLN(F("%i entries"), _associationTableEntries);
+        _associationTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
 
-        _associationTableGaId = (byte*) malloc(_associationTableEntries * sizeof(byte));
-        _associationTableCoId = (byte*) malloc(_associationTableEntries * sizeof(byte));
+        DEBUG_PRINTLN(F("%i entries"), _associationTable.size);
 
-        for (byte i = 0; i < _associationTableEntries; i++) {
+        _associationTable.gaId = (byte*) malloc(_associationTable.size * sizeof(byte));
+        _associationTable.coId = (byte*) malloc(_associationTable.size * sizeof(byte));
+
+        int overallMax = 0;
+        int currentMax = 0;
+        int currentAddrId = -1;
+
+        for (byte i = 0; i < _associationTable.size; i++) {
 
             byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
             byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i + 1);
 
-            _associationTableGaId[i] = addressId;
-            _associationTableCoId[i] = commObjectId;
+            if (currentAddrId==addressId) {
+                currentMax++;
+            } else { // different GA detected
 
-            // don't iterate over AddressTable, we can access it directly by it's GA ID
-            byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (addressId * 2));
-            byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (addressId * 2) + 1);
-            word ga = __WORD(gaHi, gaLo);
+                // if the last known currentMax is bigger than the overallMax, replace overallMax
+                if (currentMax>overallMax) {
+                    overallMax = currentMax;
+                } 
 
-            DEBUG_PRINTLN(F("ComObj i=%d index=%d -> ga=0x%04x"), i, commObjectId, ga);
+                currentMax = 1; // found different GA association, so we found 1 assoc for this GA so far
+                currentAddrId = addressId; // remember that we are currently counting for this address
+            }
 
-            _addressToIdMap.put(ga, addressId);
+            // store copy of association table in RAM
+            _associationTable.gaId[i] = addressId;
+            _associationTable.coId[i] = commObjectId;
+
+            // get group address by it's ID from already read address table
+            word ga = _addressTable.address[addressId];
+
+            DEBUG_PRINTLN(F("  index=%d ComObj=%d ga=0x%04x"), i, commObjectId, ga);
 
             Knx.setComObjectAddress(commObjectId, ga);
         }
-        DEBUG_PRINTLN(F("Reading association table...*done*"));
+        _assocMaxTableEntries = overallMax;
+        DEBUG_PRINTLN(F("Reading association table...*done* _assocMaxTableEntries=%d"), _assocMaxTableEntries);
+
 
         // params are read "on the fly" and not on init() ...
 
@@ -521,7 +561,7 @@ void KonnektingDevice::setProgLed(bool state) {
 KnxComObject KonnektingDevice::createProgComObject() {
     DEBUG_PRINTLN(F("createProgComObject"));
     KnxComObject p = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR); /* NEEDS TO BE THERE FOR PROGRAMMING PURPOSE */
-    p.addAddr(G_ADDR(15, 7, 255));
+    p.setAddr(G_ADDR(15, 7, 255));
     return p;
 }
 
@@ -606,7 +646,7 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
 #ifdef DEBUG_PROTOCOL
             for (int i = 0; i < 14; i++) {
                 DEBUG_PRINTLN(
-                    F("buffer[%d]\thex=0x%02x bin=" BYTETOBINARYPATTERN), i,
+                    F("buffer[%02d]\thex=0x%02x bin=" BYTETOBINARYPATTERN), i,
                     buffer[i], BYTETOBINARY(buffer[i]));
             }
 #endif
@@ -720,9 +760,10 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
                 fillEmpty(response, 0);
                 break;
         }
-
+        DEBUG_PRINTLN(F("handleMsgPropertyPageRead send response"));
         Knx.write(PROGCOMOBJ_INDEX, response);
     }
+    DEBUG_PRINTLN(F("handleMsgPropertyPageRead *done*"));
 }
 
 void KonnektingDevice::handleMsgRestart(byte msg[]) {
@@ -780,9 +821,10 @@ void KonnektingDevice::handleMsgProgrammingModeRead(byte /*msg*/[]) {
         response[3] = __LO(_individualAddress);
 
         fillEmpty(response, 4);
-
+        DEBUG_PRINTLN(F("handleMsgProgrammingModeRead send response"));
         Knx.write(PROGCOMOBJ_INDEX, response);
     }
+    DEBUG_PRINTLN(F("handleMsgProgrammingModeRead *done*"));
 }
 
 void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
@@ -818,6 +860,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
         _individualAddress = __WORD(hiAddr, loAddr);
     }
     sendAck(ACK, ERR_CODE_OK);
+    DEBUG_PRINTLN(F("handleMsgMemoryWrite *done*"));
 }
 
 void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
@@ -843,6 +886,7 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
     fillEmpty(response, 5 + count);
 
     Knx.write(PROGCOMOBJ_INDEX, response);
+    DEBUG_PRINTLN(F("handleMsgMemoryRead *done*"));
 }
 
 byte KonnektingDevice::memoryRead(int index) {

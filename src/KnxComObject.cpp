@@ -79,9 +79,7 @@ KnxComObject::~KnxComObject() {
  * @return 
  */
 bool KnxComObject::isActive() {
-    boolean isActive = _addrList.getSize()>0;
-//    DEBUG_PRINTLN(F("KnxComObject::isActive=%d"), isActive);
-    return isActive;
+    return _active;
 }
 
 /**
