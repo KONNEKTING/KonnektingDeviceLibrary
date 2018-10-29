@@ -258,8 +258,8 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
 
         for (byte i = 0; i < _associationTable.size; i++) {
 
-            byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i);
-            byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + i + 1);
+            byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i*2));
+            byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i*2) + 1);
 
             if (currentAddrId==addressId) {
                 currentMax++;

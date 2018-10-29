@@ -593,13 +593,12 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
 
     // get the assoc table from konnkting. We handle them as two arrays
     // to make search for GA easier, as we can search in an
-    // AddressId-Array-Only for th matching index and can use the ComObj
+    // AddressId-Array-Only for the matching index and can use the ComObj
     // array to get the ComObjID based on the found index
-
     AssociationTable associationTable = Konnekting._associationTable;
 
     // inspired by https://www.geeksforgeeks.org/binary-search/
-    l = 0;                                        // left end of array
+    l = 0;                          // left end of array
     r = associationTable.size - 1;  // right end of array
 
     // some helper variables for doing iterative binary search
