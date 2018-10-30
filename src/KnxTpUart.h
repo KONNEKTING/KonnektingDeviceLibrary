@@ -90,11 +90,11 @@
 #define TPUART_STATE_INDICATION_TEMP_WARNING_MASK     0x08
 
 // Definition of the TP-UART working modes
-enum type_KnxTpUartMode { NORMAL,
+enum KnxTpUartMode { NORMAL,
                           BUS_MONITOR };
 
 // Definition of the TP-UART events sent to the application layer
-enum e_KnxTpUartEvent { 
+enum KnxTpUartEvent { 
   TPUART_EVENT_RESET = 0,                    // reset received from the TPUART device
   TPUART_EVENT_RECEIVED_KNX_TELEGRAM,        // a new addressed KNX Telegram has been received
   TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR, // a new addressed KNX telegram reception failed
@@ -102,11 +102,11 @@ enum e_KnxTpUartEvent {
  };
 
 // Typedef for events callback function
-typedef void (*type_EventCallbackFctPtr) (e_KnxTpUartEvent);
+typedef void (*EventCallbackFctPtr) (KnxTpUartEvent);
 
 // --- Definitions for the RECEPTION part ----
 // RX states
-enum e_TpUartRxState {
+enum TpUartRxState {
   RX_RESET = 0,                             // The RX part is awaiting reset execution
   RX_STOPPED,                               // TPUART reset event received, RX activity is stopped
   RX_INIT,                                  // The RX part is awaiting init execution
@@ -123,15 +123,15 @@ typedef struct AddressedComObjects {
   byte* list; // the list/array if indizes of addressed comcobjects
 } AddressedComObjects;
 
-typedef struct {
-  e_TpUartRxState state;        // Current TPUART RX state
+typedef struct TpUartRx {
+  TpUartRxState state;        // Current TPUART RX state
   KnxTelegram receivedTelegram; // Where each received telegram is stored (the content is overwritten on each telegram reception)
                                 // A TPUART_EVENT_RECEIVED_KNX_TELEGRAM event notifies each content change
-} type_tpuart_rx;
+} TpUartRx;
 
 // --- Definitions for the TRANSMISSION  part ----
 // Transmission states
-enum e_TpUartTxState {
+enum TpUartTxState {
   TX_RESET = 0,                // The TX part is awaiting reset execution
   TX_STOPPED,                  // TPUART reset event received, TX activity is stopped
   TX_INIT,                     // The TX part is awaiting init execution
@@ -141,7 +141,7 @@ enum e_TpUartTxState {
 };
 
 // Acknowledge values following a telegram sending
-enum e_TpUartTxAck {
+enum TpUartTxAck {
    ACK_RESPONSE = 0,     // TPUART received an ACK following telegram sending
    NACK_RESPONSE,        // TPUART received a NACK following telegram sending (1+3 attempts by default)
    NO_ANSWER_TIMEOUT,    // No answer (Data_Confirm) received from the TPUART
@@ -149,30 +149,30 @@ enum e_TpUartTxAck {
 };
 
 // Typedef for TX acknowledge callback function
-typedef void (*type_AckCallbackFctPtr) (e_TpUartTxAck);
+typedef void (*AckCallbackFctPtr) (TpUartTxAck);
 
-typedef struct tpuart_tx {
-  e_TpUartTxState state;            // Current TPUART TX state
+typedef struct TpUartTx {
+  TpUartTxState state;            // Current TPUART TX state
   KnxTelegram *sentTelegram;        // Telegram being sent
-  type_AckCallbackFctPtr ackFctPtr; // Pointer to callback function for TX ack
+  AckCallbackFctPtr ackFctPtr; // Pointer to callback function for TX ack
   byte nbRemainingBytes;            // Nb of bytes remaining to be transmitted
   byte txByteIndex;                 // Index of the byte to be sent
-} type_tpuart_tx;
+} TpUartTx;
 
 
 // --- Typdef for BUS MONITORING mode data ----
-typedef struct {
+typedef struct MonitorData {
   boolean isEOP;  // True if the data is an End Of Packet
   byte dataByte;  // Last data retrieved on the bus (valid when isEOP is false)
-} type_MonitorData;
+} MonitorData;
 
 class KnxTpUart {
     HardwareSerial& _serial;                  // Arduino HW serial port connected to the TPUART
     const word _physicalAddr;                 // Physical address set in the TP-UART
-    const type_KnxTpUartMode _mode;           // TpUart working Mode (Normal/Bus Monitor)
-    type_tpuart_rx _rx;                       // Reception structure
-    type_tpuart_tx _tx;                       // Transmission structure
-    type_EventCallbackFctPtr _evtCallbackFct; // Pointer to the EVENTS callback function
+    const KnxTpUartMode _mode;           // TpUart working Mode (Normal/Bus Monitor)
+    TpUartRx _rx;                       // Reception structure
+    TpUartTx _tx;                       // Transmission structure
+    EventCallbackFctPtr _evtCallbackFct; // Pointer to the EVENTS callback function
     KnxComObject *_comObjectsList;            // Attached list of com objects
     byte _assignedComObjectsNb;               // Nb of assigned com objects
     byte _stateIndication;                    // Value of the last received state indication
@@ -181,7 +181,7 @@ class KnxTpUart {
   public:  
   
   // Constructor / Destructor
-    KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMode _mode);
+    KnxTpUart(HardwareSerial& serial, word physicalAddr, KnxTpUartMode _mode);
     ~KnxTpUart();
 
   // INLINED functions (see definitions later in this file)
@@ -191,14 +191,14 @@ class KnxTpUart {
     // return KNX_TPUART_ERROR_NOT_INIT_STATE (254) if the TPUART is not in Init state
     // else return OK
     // The function must be called prior to Init() execution
-    byte setEvtCallback(type_EventCallbackFctPtr);
+    byte setEvtCallback(EventCallbackFctPtr);
 
     // Set ACK callback function
     // return KNX_TPUART_ERROR (255) if the parameter is NULL
     // return KNX_TPUART_ERROR_NOT_INIT_STATE (254) if the TPUART is not in Init state
     // else return OK
     // The function must be called prior to Init() execution
-    byte setAckCallback(type_AckCallbackFctPtr);
+    byte setAckCallback(AckCallbackFctPtr);
 
     // Get the value of the last received State Indication
     // NB : every state indication value change is notified by a "TPUART_EVENT_STATE_INDICATION" event
@@ -259,7 +259,7 @@ class KnxTpUart {
     // The function returns true if a new data has been retrieved (data pointer in argument), else false
     // It shall be called periodically (max period of 0,5ms) in order to allow correct data reception
     // Typical calling period is 400 usec.
-    boolean getMonitoringData(type_MonitorData&);
+    boolean getMonitoringData(MonitorData&);
 
   private:
 
@@ -275,7 +275,7 @@ class KnxTpUart {
 
 // ----- Definition of the INLINED functions :  ------------
 
-inline byte KnxTpUart::setEvtCallback(type_EventCallbackFctPtr evtCallbackFct)
+inline byte KnxTpUart::setEvtCallback(EventCallbackFctPtr evtCallbackFct)
 { 
   if (evtCallbackFct == NULL) return KNX_TPUART_ERROR;
   if ((_rx.state!=RX_INIT) || (_tx.state!=TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
@@ -283,7 +283,7 @@ inline byte KnxTpUart::setEvtCallback(type_EventCallbackFctPtr evtCallbackFct)
   return KNX_TPUART_OK;
 }
 
-inline byte KnxTpUart::setAckCallback(type_AckCallbackFctPtr ackFctPtr)
+inline byte KnxTpUart::setAckCallback(AckCallbackFctPtr ackFctPtr)
 {
   if (ackFctPtr == NULL) return KNX_TPUART_ERROR;
   if ((_rx.state!=RX_INIT) || (_tx.state!=TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;

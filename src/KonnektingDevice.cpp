@@ -66,17 +66,12 @@
 
 // KonnektingDevice unique instance creation
 KonnektingDevice KonnektingDevice::Konnekting;
-KonnektingDevice &Konnekting = KonnektingDevice::Konnekting; // maybe this line is useless??
+KonnektingDevice &Konnekting = KonnektingDevice::Konnekting;  // maybe this line is useless??
 
+// ---------------
 // init static members, see https://thinkingeek.com/2012/08/08/common-linking-issues-c/
 AssociationTable KonnektingDevice::_associationTable;
 AddressTable KonnektingDevice::_addressTable;
-//-----------
-// byte KonnektingDevice::_associationTableEntries = 0;
-// byte* KonnektingDevice::_associationTableGaId;
-// byte* KonnektingDevice::_associationTableCoId;
-// byte KonnektingDevice::_addressTableEntries = 0;
-// word* KonnektingDevice::_addressTable;
 byte KonnektingDevice::_assocMaxTableEntries = 0;
 // ---------------
 
@@ -120,8 +115,8 @@ KonnektingDevice::KonnektingDevice() {
  *  @return void
  */
 /**************************************************************************/
-void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
-                                    byte deviceID, byte revisionID) {
+void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID, byte deviceID, byte revisionID) {
+
     DEBUG_PRINTLN(F("Initialize KonnektingDevice (build date=%s time=%s)"), F(__DATE__), F(__TIME__));
 
     _initialized = true;
@@ -137,10 +132,7 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     setProgState(false);
 
     // hardcoded stuff
-    DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"),
-                  _manufacturerID, _deviceID, _revisionID);
-
-    DEBUG_PRINTLN(F("numberOfCommObjects: %d"), Knx.getNumberOfComObjects());
+    DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
 
     _individualAddress = P_ADDR(1, 1, 254);
 
@@ -175,6 +167,8 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         memoryWrite(0x000A, __LO(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
         DEBUG_PRINTLN(F("##### setting read-only memory of system table *done*"));
     }
+
+    DEBUG_PRINTLN(F("comobjs in sketch: %d"), Knx.getNumberOfComObjects());
 
     _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
     DEBUG_PRINTLN(F("_deviceFlags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
@@ -212,25 +206,22 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
          * *************************************/
         for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
             byte config = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE + 1 + i);
-            DEBUG_PRINTLN(F("  ComObj #%d config: hex=0x%02x bin="BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
+            DEBUG_PRINTLN(F("  ComObj #%d config: hex=0x%02x bin=" BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
             // set comobj config
             Knx.setComObjectIndicator(i, config & 0x3F);
         }
         DEBUG_PRINTLN(F("Reading commobj table...*done*"));
 
-
         /* *************************************
          * read address table from memory
          * *************************************/
         DEBUG_PRINT(F("Reading address table..."));
-        // read number of available GAs
         _addressTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
         DEBUG_PRINTLN(F("%i entries"), _addressTable.size);
 
-        _addressTable.address = (word*) malloc(_addressTable.size * sizeof(word));
+        _addressTable.address = (word *)malloc(_addressTable.size * sizeof(word));
 
         for (byte i = 0; i < _addressTable.size; i++) {
-
             byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2));
             byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2) + 1);
             word ga = __WORD(gaHi, gaLo);
@@ -246,32 +237,30 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
          * *************************************/
         DEBUG_PRINT(F("Reading association table..."));
         _associationTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
-
         DEBUG_PRINTLN(F("%i entries"), _associationTable.size);
 
-        _associationTable.gaId = (byte*) malloc(_associationTable.size * sizeof(byte));
-        _associationTable.coId = (byte*) malloc(_associationTable.size * sizeof(byte));
+        _associationTable.gaId = (byte *)malloc(_associationTable.size * sizeof(byte));
+        _associationTable.coId = (byte *)malloc(_associationTable.size * sizeof(byte));
 
         int overallMax = 0;
         int currentMax = 0;
         int currentAddrId = -1;
 
         for (byte i = 0; i < _associationTable.size; i++) {
+            byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2));
+            byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2) + 1);
 
-            byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i*2));
-            byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i*2) + 1);
-
-            if (currentAddrId==addressId) {
+            if (currentAddrId == addressId) {
                 currentMax++;
-            } else { // different GA detected
+            } else {  // different GA detected
 
                 // if the last known currentMax is bigger than the overallMax, replace overallMax
-                if (currentMax>overallMax) {
+                if (currentMax > overallMax) {
                     overallMax = currentMax;
-                } 
+                }
 
-                currentMax = 1; // found different GA association, so we found 1 assoc for this GA so far
-                currentAddrId = addressId; // remember that we are currently counting for this address
+                currentMax = 1;             // found different GA association, so we found 1 assoc for this GA so far
+                currentAddrId = addressId;  // remember that we are currently counting for this address
             }
 
             // store copy of association table in RAM
@@ -288,15 +277,14 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         _assocMaxTableEntries = overallMax;
         DEBUG_PRINTLN(F("Reading association table...*done* _assocMaxTableEntries=%d"), _assocMaxTableEntries);
 
-
-        // params are read "on the fly" and not on init() ...
+        // params are read either on demand or in setup() and not on init() ...
 
     } else {
         DEBUG_PRINTLN(F("->FACTORY"));
     }
 
     DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);
-    e_KnxDeviceStatus status;
+    KnxDeviceStatus status;
     status = Knx.begin(serial, _individualAddress);
     DEBUG_PRINTLN(F("KnxDevice startup status: 0x%02x"), status);
 

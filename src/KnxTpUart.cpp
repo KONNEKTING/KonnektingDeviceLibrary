@@ -52,9 +52,9 @@ static inline word TimeDeltaWord(word now, word before) {
 
 // Constructor
 
-//KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMode mode)
+//KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, KnxTpUartMode mode)
 //: _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
-KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMode mode)
+KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, KnxTpUartMode mode)
     : _serial(serial), _physicalAddr(physicalAddr), _mode(mode) {
     _rx.state = RX_RESET;
     _tx.state = TX_RESET;
@@ -69,13 +69,13 @@ KnxTpUart::KnxTpUart(HardwareSerial& serial, word physicalAddr, type_KnxTpUartMo
     _stateIndication = 0;
 
     _addressedComObjects.size = Konnekting._assocMaxTableEntries;
+    DEBUG_PRINTLN(F("Malloc maxaddressedComObj: %d"), _addressedComObjects.size);
     _addressedComObjects.list = (byte*) malloc(_addressedComObjects.size * sizeof(byte));
 }
 
 // Destructor
 
 KnxTpUart::~KnxTpUart() {
-//    if (_orderedIndexTable) free(_orderedIndexTable);
     // close the serial communication if opened
     if ((_rx.state > RX_RESET) || (_tx.state > TX_RESET)) {
         _serial.end();
@@ -137,19 +137,16 @@ byte KnxTpUart::reset(void) {
 // NB2 : In case of objects with identical address, the object with highest index only is considered
 // return KNX_TPUART_ERROR_NOT_INIT_STATE (254) if the TPUART is not in Init state
 // The function must be called prior to Init() execution
-
 byte KnxTpUart::attachComObjectsList(KnxComObject comObjectsList[], byte listSize) {
 #define IS_COM(index) (comObjectsList[index].getIndicator() & KNX_COM_OBJ_C_INDICATOR)
 #define ADDR(index) (comObjectsList[index].getAddr())
 
-    if ((_rx.state != RX_INIT) || (_tx.state != TX_INIT)) return KNX_TPUART_ERROR_NOT_INIT_STATE;
+    if ((_rx.state != RX_INIT) || (_tx.state != TX_INIT)) {
+        return KNX_TPUART_ERROR_NOT_INIT_STATE;
+    }
 
-//    if (_orderedIndexTable) {  // a list is already attached, we detach it
-//        free(_orderedIndexTable);
-//        _orderedIndexTable = NULL;
-        _comObjectsList = NULL;
-        _assignedComObjectsNb = 0;
-//    }
+    _comObjectsList = NULL;
+    _assignedComObjectsNb = 0;
     if ((!comObjectsList) || (!listSize)) {
         DEBUG_PRINTLN(F("AttachComObjectsList : warning : empty object list!\n"));
         return KNX_TPUART_OK;
@@ -163,23 +160,6 @@ byte KnxTpUart::attachComObjectsList(KnxComObject comObjectsList[], byte listSiz
     }
 
     _comObjectsList = comObjectsList;
-
-    // Creation of the ordered index table
-    // FIXME old unused code --> remove me
-    // _orderedIndexTable = (byte*)malloc(_assignedComObjectsNb);
-    // word minMin = 0x0000;    // minimum min value searched
-    // word foundMin = 0xFFFF;  // min value found so far
-    // for (byte i = 0; i < _assignedComObjectsNb; i++) {
-    //     for (byte j = 0; j < listSize; j++) {
-    //         if ((IS_COM(j)) && (ADDR(j) >= minMin) && (ADDR(j) <= foundMin)) {
-    //             foundMin = ADDR(j);
-    //             _orderedIndexTable[i] = j;
-    //         }
-    //     }
-    //     minMin = foundMin + 1;
-    //     foundMin = 0xFFFF;
-    // }
-    //    DEBUG_PRINTLN(F("AttachComObjectsList successful\n"));
 
     return KNX_TPUART_OK;
 }
@@ -222,7 +202,6 @@ byte KnxTpUart::init(void) {
 // Send a KNX telegram
 // returns ERROR (255) if TX is not available, or if the telegram is not valid, else returns OK (0)
 // NB : the source address is forced to TPUART physical address value
-
 byte KnxTpUart::sendTelegram(KnxTelegram& sentTelegram) {
     if (_tx.state != TX_IDLE) return KNX_TPUART_ERROR;  // TX not initialized or busy
 
@@ -255,7 +234,6 @@ void KnxTpUart::rxTask(void) {
     word nowTime;
     static byte readBytesNb;                               // Nb of read bytes during an KNX telegram reception
     static KnxTelegram telegram;                           // telegram being received
-    //static type_AddressedComObjects addressedComObjIndex;  // index of the com object targeted by the received telegram
     static word lastByteRxTimeMicrosec;
 
     // === STEP 1 : Check EOP in case a Telegram is being received ===
@@ -284,9 +262,6 @@ void KnxTpUart::rxTask(void) {
                         telegram.Copy(_rx.receivedTelegram);
                         //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED 2"));
                         
-                        //_rx.addressedComObjects = _addressedComObjects;
-
-                        //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED 3"));
                         // Notify the new received telegram
                         _evtCallbackFct(TPUART_EVENT_RECEIVED_KNX_TELEGRAM);
                     } else {
@@ -501,9 +476,9 @@ void KnxTpUart::txTask(void) {
  * It shall be called periodically (max period of 0,5ms) in order to allow correct data reception
  * Typical calling period is 400 usec.
  */
-boolean KnxTpUart::getMonitoringData(type_MonitorData& data) {
+boolean KnxTpUart::getMonitoringData(MonitorData& data) {
     word nowTime;
-    static type_MonitorData currentData = {true, 0};
+    static MonitorData currentData = {true, 0};
     static word lastByteRxTimeMicrosec;
 
     // STEP 1 : Check EOP
