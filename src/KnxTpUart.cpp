@@ -243,15 +243,15 @@ void KnxTpUart::rxTask(void) {
         nowTime = (word)micros();
 
         if (TimeDeltaWord(nowTime, lastByteRxTimeMicrosec) > KNX_RECEPTION_TIMEOUT || telegramCompletelyReceived) { // EOP detected, the telegram reception is completed
-
             //DEBUG_PRINTLN(F("EOP REACHED"));
+            telegramCompletelyReceived = false;
             switch (_rx.state) {
                 case RX_KNX_TELEGRAM_RECEPTION_STARTED:  // we are not supposed to get EOP now, the telegram is incomplete
                     //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED"));
                 case RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID:
-//                    DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID"));
+                    //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID---"));
                     _evtCallbackFct(TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR); // Notify telegram reception error
-//                    DEBUG_PRINTLN(F("TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR"));
+                    //DEBUG_PRINTLN(F("TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR"));
                     break;
 
                 case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
@@ -287,18 +287,18 @@ void KnxTpUart::rxTask(void) {
     if (_serial.available() > 0) {
         incomingByte = (byte)(_serial.read());
         lastByteRxTimeMicrosec = (word)micros();
-        // DEBUG_PRINTLN(F("RX:  incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
+        //DEBUG_PRINTLN(F("RX:  incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
 
         switch (_rx.state) {
             case RX_IDLE_WAITING_FOR_CTRL_FIELD:
-                // DEBUG_PRINTLN(F("RX_IDLE_WAITING_FOR_CTRL_FIELD incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
+                //DEBUG_PRINTLN(F("RX_IDLE_WAITING_FOR_CTRL_FIELD \nincomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
 
                 // CASE OF KNX MESSAGE
                 if ((incomingByte & KNX_CONTROL_FIELD_PATTERN_MASK) == KNX_CONTROL_FIELD_VALID_PATTERN) {
                     _rx.state = RX_KNX_TELEGRAM_RECEPTION_STARTED;
                     readBytesNb = 1;
                     telegram.writeRawByte(incomingByte, 0);
-//                    DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED"));
+                    //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED"));
                 } 
                 // CASE OF TPUART_DATA_CONFIRM_SUCCESS NOTIFICATION
                 else if (incomingByte == TPUART_DATA_CONFIRM_SUCCESS) {
@@ -306,7 +306,7 @@ void KnxTpUart::rxTask(void) {
                         _tx.ackFctPtr(ACK_RESPONSE);
                         _tx.state = TX_IDLE;
                     } else {
-                        // DEBUG_PRINTLN(F("Rx: unexpected TPUART_DATA_CONFIRM_SUCCESS received!"));
+                        //DEBUG_PRINTLN(F("Rx: unexpected TPUART_DATA_CONFIRM_SUCCESS received!"));
                     }
                 }
                 // CASE OF TPUART_RESET NOTIFICATION
@@ -318,14 +318,14 @@ void KnxTpUart::rxTask(void) {
                     _rx.state = RX_STOPPED;
                     // Notify RESET
                     _evtCallbackFct(TPUART_EVENT_RESET);
-                    // DEBUG_PRINTLN(F("Rx: Reset Indication Received"));
+                    //DEBUG_PRINTLN(F("Rx: Reset Indication Received"));
                     return;
                 }
                 // CASE OF STATE_INDICATION RESPONSE
                 else if ((incomingByte & TPUART_STATE_INDICATION_MASK) == TPUART_STATE_INDICATION) {
                     _evtCallbackFct(TPUART_EVENT_STATE_INDICATION);  // Notify STATE INDICATION
                     _stateIndication = incomingByte;
-                    // DEBUG_PRINTLN(F("Rx: State Indication Received"));
+                    //DEBUG_PRINTLN(F("Rx: State Indication Received"));
                 }
                 // CASE OF TPUART_DATA_CONFIRM_FAILED NOTIFICATION
                 else if (incomingByte == TPUART_DATA_CONFIRM_FAILED) {
@@ -338,13 +338,13 @@ void KnxTpUart::rxTask(void) {
                 }
                 // UNKNOWN CONTROL FIELD RECEIVED
                 else if (incomingByte) {
-                    // DEBUG_PRINTLN(F("Rx: Unknown Control Field received: byte=0x%02x"), incomingByte);
+                    //DEBUG_PRINTLN(F("Rx: Unknown Control Field received: byte=0x%02x"), incomingByte);
                 }
                 // else ignore "0" value sent on Reset by TPUART prior to TPUART_RESET_INDICATION
                 break;
 
             case RX_KNX_TELEGRAM_RECEPTION_STARTED:
-                // DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
+                //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
                 telegram.writeRawByte(incomingByte, readBytesNb);
                 readBytesNb++;
 
@@ -354,7 +354,7 @@ void KnxTpUart::rxTask(void) {
                     // we check whether the received KNX telegram is coming from us (i.e. telegram is sent by the TPUART itself)
                     if (telegram.getSourceAddress() == _physicalAddr) {
                         // the message is coming from us, we consider it as not addressed and we don't send any ACK service
-                        // DEBUG_PRINTLN(F("message from us, skip."));
+                        //DEBUG_PRINTLN(F("message from us, skip."));
                         _rx.state = RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED;
                     }
                 } else if (readBytesNb == 6)
@@ -391,14 +391,14 @@ void KnxTpUart::rxTask(void) {
 
             case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
 
-                // DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
+                //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
 
                 if (readBytesNb == KNX_TELEGRAM_MAX_SIZE) {
                     _rx.state = RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID;
                     DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID"));
                 } else {
                     telegram.writeRawByte(incomingByte, readBytesNb);
-                    // DEBUG_PRINTLN(F("expectedTelegramLength: %d, readBytesNb: %d"),expectedTelegramLength,readBytesNb);
+                     //DEBUG_PRINTLN(F("expectedTelegramLength: %d, readBytesNb: %d"),expectedTelegramLength,readBytesNb);
                     if (expectedTelegramLength == readBytesNb) {
                         telegramCompletelyReceived = true;
                         //we are done with reception
@@ -463,7 +463,7 @@ void KnxTpUart::txTask(void) {
                 if (_tx.nbRemainingBytes == 1) {  // We are sending the last byte, i.e checksum
                     txByte[0] = TPUART_DATA_END_REQ + _tx.txByteIndex;
                     txByte[1] = _tx.sentTelegram->readRawByte(_tx.txByteIndex);
-                    // DEBUG_PRINTLN(F("data1[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
+                    //DEBUG_PRINTLN(F("data1[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
                     _serial.write(txByte, 2);  // write the UART control field and the data byte
 
                     // Message sending completed
@@ -472,7 +472,7 @@ void KnxTpUart::txTask(void) {
                 } else {
                     txByte[0] = TPUART_DATA_START_CONTINUE_REQ + _tx.txByteIndex;
                     txByte[1] = _tx.sentTelegram->readRawByte(_tx.txByteIndex);
-                    // DEBUG_PRINTLN(F("data2[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
+                    //DEBUG_PRINTLN(F("data2[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
                     _serial.write(txByte, 2);  // write the UART control field and the data byte
                     _tx.txByteIndex++;
                     _tx.nbRemainingBytes--;
