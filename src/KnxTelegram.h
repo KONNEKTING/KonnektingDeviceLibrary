@@ -1,11 +1,7 @@
 /*
- *    This file is part of KONNEKTING Knx Device Library.
- * 
- *    It is derived from another GPLv3 licensed project:
- *      The Arduino Knx Bus Device library allows to turn Arduino into "self-made" KNX bus device.
- *      Copyright (C) 2014 2015 Franck MARINI (fm@liwan.fr)
+ *    This file is part of KONNEKTING Device Library.
  *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
+ *    The KONNEKTING Device Library is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation, either version 3 of the License, or
  *    (at your option) any later version.
@@ -18,13 +14,6 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-
-// File : KnxTelegram.h
-// Author : Franck Marini
-// Modified: Alexander Christian <info(at)root1.de>
-// Description : Handling of the KNX Telegrams
-// Module dependencies : none
 
 #ifndef KNXTELEGRAM_H
 #define KNXTELEGRAM_H

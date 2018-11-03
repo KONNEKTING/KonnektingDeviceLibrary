@@ -15,11 +15,6 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-// File : KonnektingDebug.h
-// Author: Alexander Christian <info(at)root1.de>
-// Description : project debug, inspired by https://github.com/Naguissa/DebugUtils
-
 #ifndef DEBUGUTIL_H
 #define DEBUGUTIL_H
 

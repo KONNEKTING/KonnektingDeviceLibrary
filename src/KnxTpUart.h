@@ -1,11 +1,7 @@
 /*
- *    This file is part of KONNEKTING Knx Device Library.
- * 
- *    It is derived from another GPLv3 licensed project:
- *      The Arduino Knx Bus Device library allows to turn Arduino into "self-made" KNX bus device.
- *      Copyright (C) 2014 2015 Franck MARINI (fm@liwan.fr)
+ *    This file is part of KONNEKTING Device Library.
  *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
+ *    The KONNEKTING Device Library is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation, either version 3 of the License, or
  *    (at your option) any later version.
@@ -18,19 +14,6 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-
-// File : KnxTpUart.h
-// Author : Franck Marini
-// Modified: Alexander Christian <info(at)root1.de>
-// Description : Communication with TPUART
-// Module dependencies : HardwareSerial, KnxTelegram, KnxComObject
-
-// This library supports both TPUART version 1 and 2
-// The Siemens KNX TPUART version 1 datasheet is available at :
-// http://www.hqs.sbt.siemens.com/Lowvoltage/gamma_product_data/gamma-b2b/tpuart.pdf
-// The Siemens KNX TPUART version 2 datasheet is available at :
-// http://www.hqs.sbt.siemens.com/Lowvoltage/gamma_product_data/gamma-b2b/TPUART2_technical-data.pdf
 
 #ifndef KNXTPUART_H
 #define KNXTPUART_H

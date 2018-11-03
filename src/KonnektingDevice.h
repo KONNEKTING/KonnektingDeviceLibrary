@@ -4,9 +4,9 @@
  * This is part of KONNEKTING Device Library for the Arduino platform.
  *
  *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights
- * reserved. This file is part of KONNEKTING Knx Device Library.
+ * reserved. This file is part of KONNEKTING Device Library.
  *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute
+ *    The KONNEKTING Device Library is free software: you can redistribute
  * it and/or modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.

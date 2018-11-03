@@ -1,7 +1,7 @@
 /*
- *    This file is part of KONNEKTING Knx Device Library.
+ *    This file is part of KONNEKTING Device Library.
  *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
+ *    The KONNEKTING Device Library is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation, either version 3 of the License, or
  *    (at your option) any later version.
@@ -14,11 +14,6 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-// File : RingBuff.h
-// Initial Author : Alexander Christian <info(at)root1.de>
-// Description : Implementation of a ring buffer
-// Module dependencies : none
 
 #ifndef RINGBUFF_H
 #define RINGBUFF_H
