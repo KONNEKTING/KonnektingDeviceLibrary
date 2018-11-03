@@ -224,14 +224,14 @@ class KnxDevice {
     
   private:
     /*
-     * Static GetTpUartEvents() function called by the KnxTpUart layer (callback)
+     * Static getTpUartEvents() function called by the KnxTpUart layer (callback)
      */
-    static void GetTpUartEvents(KnxTpUartEvent event);
+    static void getTpUartEvents(KnxTpUartEvent event);
 
     /* 
-     * Static TxTelegramAck() function called by the KnxTpUart layer (callback)
+     * Static txTelegramAck() function called by the KnxTpUart layer (callback)
      */
-    static void TxTelegramAck(TpUartTxAck);
+    static void txTelegramAck(TpUartTxAck);
     
 };
 

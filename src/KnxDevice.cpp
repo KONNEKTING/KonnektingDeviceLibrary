@@ -72,8 +72,8 @@ KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
         return KNX_DEVICE_INIT_ERROR;
     }
     _tpuart->attachComObjectsList(_comObjectsList, _numberOfComObjects);
-    _tpuart->setEvtCallback(&KnxDevice::GetTpUartEvents);
-    _tpuart->setAckCallback(&KnxDevice::TxTelegramAck);
+    _tpuart->setEvtCallback(&KnxDevice::getTpUartEvents);
+    _tpuart->setAckCallback(&KnxDevice::txTelegramAck);
     _tpuart->init();
     _state = IDLE;
     DEBUG_PRINTLN(F("Init successful"));
@@ -401,12 +401,12 @@ word KnxDevice::getComObjectAddress(byte index) {
 }
 
 /**
- * Static GetTpUartEvents() function called by the KnxTpUart layer (callback)
+ * Static getTpUartEvents() function called by the KnxTpUart layer (callback)
  */
-void KnxDevice::GetTpUartEvents(KnxTpUartEvent event) {
+void KnxDevice::getTpUartEvents(KnxTpUartEvent event) {
     TxAction action;
     byte targetedComObjIndex;  // index of the Com Object targeted by the event
-    DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents"));
+    DEBUG_PRINTLN(F("KnxDevice::getTpUartEvents"));
 
     switch (event) {
         // Manage RECEIVED MESSAGES
@@ -415,7 +415,7 @@ void KnxDevice::GetTpUartEvents(KnxTpUartEvent event) {
 
             AddressedComObjects addressedComObjects = Knx._tpuart->getAddressedComObjects();  //.get(0, targetedComObjIndex);
 
-            DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents need to process %d comobjs."), addressedComObjects.items);
+            DEBUG_PRINTLN(F("KnxDevice::getTpUartEvents need to process %d comobjs."), addressedComObjects.items);
 
             // handle all addressed comobjs
             for (int i = 0; i < addressedComObjects.items; i++) {
@@ -423,7 +423,7 @@ void KnxDevice::GetTpUartEvents(KnxTpUartEvent event) {
 
                 KnxComObject* comObj = (targetedComObjIndex == 255 ? &Knx._progComObj : &_comObjectsList[targetedComObjIndex]);
 
-                DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->getCommand());
+                DEBUG_PRINTLN(F("KnxDevice::getTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->getCommand());
 
                 byte indicator = comObj->getIndicator();
 
@@ -485,12 +485,12 @@ void KnxDevice::GetTpUartEvents(KnxTpUartEvent event) {
         } break;
         // just log unhandled event id
         default:
-            DEBUG_PRINTLN(F("GetTpUartEvents unhandled event=%d"), event);
+            DEBUG_PRINTLN(F("getTpUartEvents unhandled event=%d"), event);
     }
 }
 
 // Static TxTelegramAck() function called by the KnxTpUart layer (callback)
-void KnxDevice::TxTelegramAck(TpUartTxAck) {
+void KnxDevice::txTelegramAck(TpUartTxAck) {
     Knx._state = IDLE;
 }
 

@@ -89,10 +89,10 @@ enum KnxTpUartMode { NORMAL,
 
 // Definition of the TP-UART events sent to the application layer
 enum KnxTpUartEvent { 
-  TPUART_EVENT_RESET = 0,                    // reset received from the TPUART device
-  TPUART_EVENT_RECEIVED_KNX_TELEGRAM,        // a new addressed KNX Telegram has been received
-  TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR, // a new addressed KNX telegram reception failed
-  TPUART_EVENT_STATE_INDICATION              // new TPUART state indication received
+  TPUART_EVENT_RESET = 0,                    // 0: reset received from the TPUART device
+  TPUART_EVENT_RECEIVED_KNX_TELEGRAM,        // 1: a new addressed KNX Telegram has been received
+  TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR, // 2: a new addressed KNX telegram reception failed
+  TPUART_EVENT_STATE_INDICATION              // 3: new TPUART state indication received
  };
 
 // Typedef for events callback function
