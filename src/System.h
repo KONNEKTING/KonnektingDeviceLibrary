@@ -35,6 +35,10 @@
 
 #warning Using KONNEKTING for ATmega32U4
     #define KONNEKTING_SYSTEM_TYPE_SIMPLE
+#else
+
+#warning No system, specified, using SIMPLE for now...
+    #define KONNEKTING_SYSTEM_TYPE_SIMPLE
 
 #endif
 
