@@ -15,11 +15,6 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-// File : KonnektingDebug.h
-// Author: Alexander Christian <info(at)root1.de>
-// Description : project debug, inspired by https://github.com/Naguissa/DebugUtils
-
 #ifndef DEBUGUTIL_H
 #define DEBUGUTIL_H
 
@@ -32,9 +27,11 @@
 #define DEBUG
 
 #ifdef DEBUG
+    #define DEBUG_RAM() Debug.print(F("DEBUG! free ram: %d bytes \n"), Debug.freeRam());
     #define DEBUG_PRINT(...) Debug.print(__VA_ARGS__);
     #define DEBUG_PRINTLN(...) Debug.println(__VA_ARGS__);
 #else
+    #define DEBUG_RAM()
     #define DEBUG_PRINT(...)
     #define DEBUG_PRINTLN(...)
 #endif

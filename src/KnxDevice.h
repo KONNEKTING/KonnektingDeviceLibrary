@@ -1,11 +1,7 @@
 /*
- *    This file is part of KONNEKTING Knx Device Library.
- * 
- *    It is derived from another GPLv3 licensed project:
- *      The Arduino Knx Bus Device library allows to turn Arduino into "self-made" KNX bus device.
- *      Copyright (C) 2014 2015 Franck MARINI (fm@liwan.fr)
+ *    This file is part of KONNEKTING Device Library.
  *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
+ *    The KONNEKTING Device Library is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation, either version 3 of the License, or
  *    (at your option) any later version.
@@ -18,12 +14,6 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-// File : KnxDevice.h
-// Author : Franck Marini
-// Modified: Alexander Christian <info(at)root1.de>
-// Description : KnxDevice Abstraction Layer
-// Module dependencies : HardwareSerial, KnxTelegram, KnxComObject, KnxTpUart, RingBuffer
 
 #ifndef KNXDEVICE_H
 #define KNXDEVICE_H
@@ -39,8 +29,8 @@
 // DEBUG :
 //#define KNXDEVICE_DEBUG_INFO   // Uncomment to activate info traces
 
-// Values returned by the KnxDevice member functions :
-enum e_KnxDeviceStatus {
+// Values returned by the KnxDevice functions
+enum KnxDeviceStatus {
   KNX_DEVICE_OK = 0,
   KNX_DEVICE_INVALID_INDEX = 1,
   KNX_DEVICE_INIT_ERROR = 2,
@@ -49,34 +39,31 @@ enum e_KnxDeviceStatus {
   KNX_DEVICE_ERROR = 255
 };
 
-// Macro functions for conversion of physical and 2/3 level group addresses
+// Macro functions for conversion of physical and group addresses
 inline word P_ADDR(byte area, byte line, byte busdevice)
 { return (word) ( ((area&0xF)<<12) + ((line&0xF)<<8) + busdevice ); }
 
 inline word G_ADDR(byte maingrp, byte midgrp, byte subgrp)
 { return (word) ( ((maingrp&0x1F)<<11) + ((midgrp&0x7)<<8) + subgrp ); }
 
-inline word G_ADDR(byte maingrp, word subgrp)
-{ return (word) ( ((maingrp&0x1F)<<11) + subgrp ); }
-
 #define ACTIONS_QUEUE_SIZE 16
 
 // KnxDevice internal state
-enum e_KnxDeviceState {
+enum InternalDeviceState {
   INIT,
   IDLE,
   TX_ONGOING,
 };
 
 // Action types
-enum e_KnxDeviceTxActionType {
+enum TxActionType {
   KNX_READ_REQUEST,
   KNX_WRITE_REQUEST,
   KNX_RESPONSE_REQUEST
 };
 
-struct struct_tx_action{
-  e_KnxDeviceTxActionType command; // Action type to be performed
+typedef struct TxAction{
+  TxActionType command; // Action type to be performed
   byte index; // Index of the involved ComObject
   union { // Value
     // Field used in case of short value (value width <= 1 byte)
@@ -86,8 +73,7 @@ struct struct_tx_action{
     };
     byte *valuePtr; // Field used in case of long value (width > 1 byte), space is allocated dynamically
   };
-};// type_tx_action;
-typedef struct struct_tx_action type_tx_action;
+} TxAction;
 
 
 // Callback function to catch and treat KNX events
@@ -98,11 +84,11 @@ extern void knxEvents(byte);
 // --------------- Definition of the functions for DPT translation --------------------
 // Functions to convert a DPT format to a standard C type
 // NB : only the usual DPT formats are supported (U16, V16, U32, V32, F16 and F32)
-template <typename T> e_KnxDeviceStatus ConvertFromDpt(const byte dpt[], T& result, byte dptFormat);
+template <typename T> KnxDeviceStatus ConvertFromDpt(const byte dpt[], T& result, byte dptFormat);
 
 // Functions to convert a standard C type to a DPT format
 // NB : only the usual DPT formats are supported (U16, V16, U32, V32, F16 and F32)
-template <typename T> e_KnxDeviceStatus ConvertToDpt(T value, byte dpt[], byte dptFormat);
+template <typename T> KnxDeviceStatus ConvertToDpt(T value, byte dpt[], byte dptFormat);
 
 
 class KnxDevice {
@@ -118,13 +104,13 @@ class KnxDevice {
     KnxComObject _progComObj = KnxComObject(KNX_DPT_60000_60000 /* KNX PROGRAM */, KNX_COM_OBJ_C_W_U_T_INDICATOR);  
     
     // Current KnxDevice state
-    e_KnxDeviceState _state;  
+    InternalDeviceState _state;  
     
     // TPUART associated to the KNX Device
     KnxTpUart *_tpuart;                             
     
     // Queue of transmit actions to be performed
-    RingBuff<type_tx_action, ACTIONS_QUEUE_SIZE> _txActionList; 
+    RingBuff<TxAction, ACTIONS_QUEUE_SIZE> _txActionList; 
     
     // True when all the Com Object with Init attr have been initialized
     bool _initCompleted;                         
@@ -168,7 +154,7 @@ class KnxDevice {
      * return KNX_DEVICE_ERROR (255) if begin() failed
      * else return KNX_DEVICE_OK
      */
-    e_KnxDeviceStatus begin(HardwareSerial& serial, word physicalAddr);
+    KnxDeviceStatus begin(HardwareSerial& serial, word physicalAddr);
 
     /*
      * Stop the KNX Device
@@ -191,12 +177,12 @@ class KnxDevice {
      *  Read an usual format com object
      * Supported DPT formats are short com object, U16, V16, U32, V32, F16 and F32
      */
-    template <typename T>  e_KnxDeviceStatus read(byte objectIndex, T& returnedValue);
+    template <typename T>  KnxDeviceStatus read(byte objectIndex, T& returnedValue);
 
     /*
      *  Read any type of com object (DPT value provided as is)
      */
-    e_KnxDeviceStatus read(byte objectIndex, byte returnedValue[]);
+    KnxDeviceStatus read(byte objectIndex, byte returnedValue[]);
 
     // Update com object functions :
     // For all the update functions, the com object value is updated locally
@@ -206,12 +192,12 @@ class KnxDevice {
      * Update an usual format com object
      * Supported DPT types are short com object, U16, V16, U32, V32, F16 and F32
      */
-    template <typename T>  e_KnxDeviceStatus write(byte objectIndex, T value);
+    template <typename T>  KnxDeviceStatus write(byte objectIndex, T value);
 
     /*
      * Update any type of com object (rough DPT value shall be provided)
      */
-    e_KnxDeviceStatus write(byte objectIndex, byte valuePtr[]);
+    KnxDeviceStatus write(byte objectIndex, byte valuePtr[]);
     
 
     /*
@@ -227,13 +213,9 @@ class KnxDevice {
      * @return 
      */ 
     bool isActive(void) const;
-    
-    /*
-     * Overwrite the address of an attache Com Object
-     * Overwriting is allowed only when the KnxDevice is in INIT state
-     * Typically usage is end-user application stored Group Address in EEPROM
-     */
-    e_KnxDeviceStatus setComObjectAddress(byte index, word addr, bool active);
+        
+    KnxDeviceStatus setComObjectIndicator(byte index, byte indicator);
+    KnxDeviceStatus setComObjectAddress(byte index, word addr);
     
     /*
      *  Gets the address of an commobjects
@@ -244,12 +226,12 @@ class KnxDevice {
     /*
      * Static GetTpUartEvents() function called by the KnxTpUart layer (callback)
      */
-    static void GetTpUartEvents(e_KnxTpUartEvent event);
+    static void GetTpUartEvents(KnxTpUartEvent event);
 
     /* 
      * Static TxTelegramAck() function called by the KnxTpUart layer (callback)
      */
-    static void TxTelegramAck(e_TpUartTxAck);
+    static void TxTelegramAck(TpUartTxAck);
     
 };
 

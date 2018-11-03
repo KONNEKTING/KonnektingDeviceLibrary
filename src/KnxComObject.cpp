@@ -1,14 +1,19 @@
-/*
- *    This file is part of KONNEKTING Knx Device Library.
- * 
- *    It is derived from another GPLv3 licensed project:
- *      The Arduino Knx Bus Device library allows to turn Arduino into "self-made" KNX bus device.
- *      Copyright (C) 2014 2015 Franck MARINI (fm@liwan.fr)
+/*!
+ * @file KnxComObject.cpp
  *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation, either version 3 of the License, or
- *    (at your option) any later version.
+ * @section author Author
+ *
+ * Written by Alexander Christian.
+ *
+ * @section license License
+ *
+ *    Copyright (C) 2016 Alexander Christian <info(at)root1.de>. All rights
+ * reserved. This file is part of KONNEKTING Device Library.
+ *
+ *    The KONNEKTING Device Library is free software: you can redistribute
+ * it and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  *    This program is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +22,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 /**
@@ -44,9 +50,7 @@ byte calcLength(KnxDpt dptId) {
  */
 KnxComObject::KnxComObject(KnxDpt dptId, byte indicator)
 : _dptId(dptId), _indicator(indicator), _dataLength(calcLength(dptId)) {
-    
-    _active = false;
-    
+        
     if (_indicator & KNX_COM_OBJ_I_INDICATOR) {
         // Object with "InitRead" indicator
         _validated = false; 
@@ -82,14 +86,6 @@ KnxComObject::~KnxComObject() {
  */
 bool KnxComObject::isActive() {
     return _active;
-}
-
-/**
- * TODO document me
- * @param flag
- */
-void KnxComObject::setActive(bool flag) {
-    _active = flag;
 }
 
 /**
