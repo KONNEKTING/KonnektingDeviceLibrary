@@ -129,6 +129,7 @@ void KnxDevice::task(void) {
                     action.index = _initIndex;
                     _txActionList.append(action);
                     _lastInitTimeMillis = millis();  // Update the timer
+                }
             }
         }
 
@@ -137,7 +138,7 @@ void KnxDevice::task(void) {
         nowTimeMicros = micros();
         if (TimeDeltaWord(nowTimeMicros, _lastRXTimeMicros) > 400) {
             _lastRXTimeMicros = nowTimeMicros;
-            _tpuart->RXTask();
+            _tpuart->rxTask();
             
             // TODO: check for rx_state in tpuart and call rxtask repeatedly until telegram is received?!
         }
@@ -149,15 +150,17 @@ void KnxDevice::task(void) {
                 //DEBUG_PRINTLN(F("Data to be transmitted index=%d"), action.index);
                 KnxComObject* comObj = (action.index == 255 ? &_progComObj : &_comObjectsList[action.index]);
                 
+                //}
+                
                 switch (action.command) {
                     
                     case KNX_READ_REQUEST: // a read operation of a Com Object on the KNX network is required
                         //_objectsList[action.index].CopyToTelegram(_txTelegram, KNX_COMMAND_VALUE_READ);
                             comObj->copyAttributes(_txTelegram);
-                            _txTelegram.ClearLongPayload();
-                            _txTelegram.ClearFirstPayloadByte(); // Is it required to have a clean payload ??
-                            _txTelegram.SetCommand(KNX_COMMAND_VALUE_READ);
-                            _txTelegram.UpdateChecksum();
+                            _txTelegram.clearLongPayload();
+                            _txTelegram.clearFirstPayloadByte(); // Is it required to have a clean payload ??
+                            _txTelegram.setCommand(KNX_COMMAND_VALUE_READ);
+                            _txTelegram.updateChecksum();
                             _tpuart->sendTelegram(_txTelegram);
                             _state = TX_ONGOING;
                             break;
@@ -165,9 +168,9 @@ void KnxDevice::task(void) {
                     case KNX_RESPONSE_REQUEST: // a response operation of a Com Object on the KNX network is required
                         comObj->copyAttributes(_txTelegram);
                         comObj->copyValue(_txTelegram);
-                        _txTelegram.SetCommand(KNX_COMMAND_VALUE_RESPONSE);
-                        _txTelegram.UpdateChecksum();
-                        _tpuart->SendTelegram(_txTelegram);
+                        _txTelegram.setCommand(KNX_COMMAND_VALUE_RESPONSE);
+                        _txTelegram.updateChecksum();
+                        _tpuart->sendTelegram(_txTelegram);
                         _state = TX_ONGOING;
                         break;
 
@@ -189,9 +192,9 @@ void KnxDevice::task(void) {
                             //DEBUG_PRINTLN(F("set tx ongoing"));
                             comObj->copyAttributes(_txTelegram);
                             comObj->copyValue(_txTelegram);
-                            _txTelegram.SetCommand(KNX_COMMAND_VALUE_WRITE);
-                            _txTelegram.UpdateChecksum();
-                            _tpuart->SendTelegram(_txTelegram);
+                            _txTelegram.setCommand(KNX_COMMAND_VALUE_WRITE);
+                            _txTelegram.updateChecksum();
+                            _tpuart->sendTelegram(_txTelegram);
                             _state = TX_ONGOING;
                         }
                         break;
@@ -206,7 +209,7 @@ void KnxDevice::task(void) {
         nowTimeMicros = micros();
         if (TimeDeltaWord(nowTimeMicros, _lastTXTimeMicros) > 800) {
             _lastTXTimeMicros = nowTimeMicros;
-            _tpuart->TXTask();
+            _tpuart->txTask();
         }
     } while (_tpuart->isActive());
 }
@@ -420,11 +423,11 @@ void KnxDevice::GetTpUartEvents(KnxTpUartEvent event) {
 
                 KnxComObject* comObj = (targetedComObjIndex == 255 ? &Knx._progComObj : &_comObjectsList[targetedComObjIndex]);
 
-                DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->GetCommand());
+                DEBUG_PRINTLN(F("KnxDevice::GetTpUartEvents targetedComObjIndex=%d command=%d"), targetedComObjIndex, Knx._rxTelegram->getCommand());
 
                 byte indicator = comObj->getIndicator();
 
-                switch (Knx._rxTelegram->GetCommand()) {
+                switch (Knx._rxTelegram->getCommand()) {
                     case KNX_COMMAND_VALUE_READ:
                         // READ command coming from the bus
                         // if the Com Object has read attribute, then add RESPONSE action in the TX action list

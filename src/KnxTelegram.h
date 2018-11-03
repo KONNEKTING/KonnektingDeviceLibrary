@@ -132,159 +132,159 @@ class KnxTelegram {
     KnxTelegram();
     
   // INLINED functions (defined later in this file)
-    void ChangePriority(e_KnxPriority priority);
-    e_KnxPriority GetPriority(void) const;
+    void changePriority(e_KnxPriority priority);
+    e_KnxPriority getPriority(void) const;
 
-    void SetRepeated(void);
-    boolean IsRepeated(void) const;
+    void setRepeated(void);
+    boolean isRepeated(void) const;
 
-    void SetSourceAddress(word addr);
-    word GetSourceAddress(void) const;
-    void SetTargetAddress(word addr);
-    word GetTargetAddress(void) const;
+    void setSourceAddress(word addr);
+    word getSourceAddress(void) const;
+    void setTargetAddress(word addr);
+    word getTargetAddress(void) const;
 
-    void SetMulticast(boolean);
-    boolean IsMulticast(void) const;
+    void setMulticast(boolean);
+    boolean isMulticast(void) const;
 
-    void ChangeRoutingCounter(byte counter);
-    byte GetRoutingCounter(void) const;
+    void changeRoutingCounter(byte counter);
+    byte getRoutingCounter(void) const;
 
-    void SetPayloadLength(byte length);
-    byte GetPayloadLength(void) const;
+    void setPayloadLength(byte length);
+    byte getPayloadLength(void) const;
 
-    byte GetTelegramLength(void) const;
+    byte getTelegramLength(void) const;
 
-    void SetCommand(e_KnxCommand cmd);
-    e_KnxCommand GetCommand(void) const;
+    void setCommand(e_KnxCommand cmd);
+    e_KnxCommand getCommand(void) const;
 
     // Handling of the 1st payload byte (the 6 lowest bits in _commandL field)
-    void SetFirstPayloadByte(byte data);
-    void ClearFirstPayloadByte(void);
-    byte GetFirstPayloadByte(void) const;
+    void setFirstPayloadByte(byte data);
+    void clearFirstPayloadByte(void);
+    byte getFirstPayloadByte(void) const;
 
     // Read of the telegram byte per byte
     // NB : do not check that the index is in the range
-    byte ReadRawByte(byte byteIndex) const;
+    byte readRawByte(byte byteIndex) const;
 
     // Write of the telegram byte per byte
     // NB : do not check that the index is in the range
-    void WriteRawByte(byte data, byte byteIndex);
+    void writeRawByte(byte data, byte byteIndex);
 
-    byte GetChecksum(void) const;
-    boolean IsChecksumCorrect(void) const;
+    byte getChecksum(void) const;
+    boolean isChecksumCorrect(void) const;
 
   // functions NOT INLINED (see definitions in KnxTelegram.cpp)
-    void ClearTelegram(void); // (re)set telegram with default values
+    void clearTelegram(void); // (re)set telegram with default values
 
     // Set 'nbOfBytes' bytes of the payload starting from the 2nd payload byte
     // if 'nbOfBytes' val is out of range, then we use the max allowed value instead
-    void SetLongPayload(const byte origin[], byte  nbOfBytes);
+    void setLongPayload(const byte origin[], byte  nbOfBytes);
     // Get 'nbOfBytes' bytes of the payload starting from the 2nd payload byte
     // if 'nbOfBytes' val  is out of range, then we use the max allowed value instead
-    void GetLongPayload(byte destination[], byte nbOfBytes) const;
+    void getLongPayload(byte destination[], byte nbOfBytes) const;
 
     // Clear the whole payload except the 1st payload byte
-    void ClearLongPayload(void);
+    void clearLongPayload(void);
 
-    byte CalculateChecksum(void) const;
+    byte calculateChecksum(void) const;
     // Let the class calculate and update the proper checksum value in the telegram
-    void UpdateChecksum(void);
+    void updateChecksum(void);
 
     // Whole telegram copy
-    void Copy(KnxTelegram& dest) const;
+    void copy(KnxTelegram& dest) const;
     // Header Copy (6 1st bytes of the telegram)
-    void CopyHeader(KnxTelegram& dest) const;
+    void copyHeader(KnxTelegram& dest) const;
 
-    e_KnxTelegramValidity GetValidity(void) const;
+    e_KnxTelegramValidity getValidity(void) const;
 
   // DEBUG functions :
-    void Info(String&) const; // copy telegram info into a string
-    void InfoRaw(String&) const; // copy raw data telegram into a string
-    void InfoVerbose(String&) const; // copy verbose telegram info into a string
+    void info(String&) const; // copy telegram info into a string
+    void infoRaw(String&) const; // copy raw data telegram into a string
+    void infoVerbose(String&) const; // copy verbose telegram info into a string
 };
 
 
 // --------------- Definition of the INLINED functions : -----------------
-inline void KnxTelegram::ChangePriority(e_KnxPriority priority)
+inline void KnxTelegram::changePriority(e_KnxPriority priority)
 { _controlField &= ~CONTROL_FIELD_PRIORITY_MASK; _controlField |= priority & CONTROL_FIELD_PRIORITY_MASK;}
     
-inline e_KnxPriority KnxTelegram::GetPriority(void) const 
+inline e_KnxPriority KnxTelegram::getPriority(void) const 
 {return (e_KnxPriority)(_controlField & CONTROL_FIELD_PRIORITY_MASK);}
 
-inline void KnxTelegram::SetRepeated(void ) 
+inline void KnxTelegram::setRepeated(void ) 
 { CONTROL_FIELD_SET_REPEATED(_controlField);};
     
-inline boolean KnxTelegram::IsRepeated(void) const 
+inline boolean KnxTelegram::isRepeated(void) const 
 {if (_controlField & CONTROL_FIELD_REPEATED_MASK ) return false; else return true ; }
 
-inline void KnxTelegram::SetSourceAddress(word addr) { 
+inline void KnxTelegram::setSourceAddress(word addr) { 
   // WARNING : works with little endianness only
   // The adresses within KNX telegram are big endian
   _sourceAddrL = (byte) addr; _sourceAddrH = byte(addr>>8);}
 
-inline word KnxTelegram::GetSourceAddress(void) const {
+inline word KnxTelegram::getSourceAddress(void) const {
   // WARNING : works with little endianness only
   // The adresses within KNX telegram are big endian
   word addr; addr = _sourceAddrL + (_sourceAddrH<<8); return addr; }
 
-inline void KnxTelegram:: SetTargetAddress(word addr) { 
+inline void KnxTelegram::setTargetAddress(word addr) { 
   // WARNING : works with little endianness only
   // The adresses within KNX telegram are big endian
   _targetAddrL = (byte) addr; _targetAddrH = byte(addr>>8);}
 
-inline word KnxTelegram::GetTargetAddress(void) const {
+inline word KnxTelegram::getTargetAddress(void) const {
  // WARNING : endianess sensitive!! Code below is for LITTLE ENDIAN chip
  // The KNX telegram uses BIG ENDIANNESS (Hight byte placed before Low Byte)
   word addr; addr = _targetAddrL + (_targetAddrH<<8); return addr; }
 
-inline boolean KnxTelegram::IsMulticast(void) const 
+inline boolean KnxTelegram::isMulticast(void) const 
 {return (_routing & ROUTING_FIELD_TARGET_ADDRESS_TYPE_MASK);}
 
-inline void KnxTelegram::SetMulticast(boolean mode)
+inline void KnxTelegram::setMulticast(boolean mode)
 { if (mode) _routing|= ROUTING_FIELD_TARGET_ADDRESS_TYPE_MASK;
   else _routing &= ~ROUTING_FIELD_TARGET_ADDRESS_TYPE_MASK; }
  
-inline void KnxTelegram::ChangeRoutingCounter(byte counter) 
+inline void KnxTelegram::changeRoutingCounter(byte counter) 
 { counter <<= 4; _routing &= ~ROUTING_FIELD_COUNTER_MASK; _routing |= (counter & ROUTING_FIELD_COUNTER_MASK); }
 
-inline byte KnxTelegram::GetRoutingCounter(void) const 
+inline byte KnxTelegram::getRoutingCounter(void) const 
 { return ((_routing & ROUTING_FIELD_COUNTER_MASK)>>4); }
 
-inline void KnxTelegram::SetPayloadLength(byte length) 
+inline void KnxTelegram::setPayloadLength(byte length) 
 { _routing&= ~ROUTING_FIELD_PAYLOAD_LENGTH_MASK ; _routing |= length & ROUTING_FIELD_PAYLOAD_LENGTH_MASK; }
 
-inline byte KnxTelegram::GetPayloadLength(void) const 
+inline byte KnxTelegram::getPayloadLength(void) const 
 {return (_routing & ROUTING_FIELD_PAYLOAD_LENGTH_MASK);}
 
-inline byte KnxTelegram::GetTelegramLength(void) const 
-{ return (KNX_TELEGRAM_LENGTH_OFFSET + GetPayloadLength());}
+inline byte KnxTelegram::getTelegramLength(void) const 
+{ return (KNX_TELEGRAM_LENGTH_OFFSET + getPayloadLength());}
 
-inline void KnxTelegram::SetCommand(e_KnxCommand cmd) {
+inline void KnxTelegram::setCommand(e_KnxCommand cmd) {
   _commandH &= ~COMMAND_FIELD_HIGH_COMMAND_MASK; _commandH |= (cmd >> 2);
   _commandL &= ~COMMAND_FIELD_LOW_COMMAND_MASK;  _commandL |= (cmd << 6);}
 
-inline e_KnxCommand KnxTelegram::GetCommand(void) const 
+inline e_KnxCommand KnxTelegram::getCommand(void) const 
 {return (e_KnxCommand)(((_commandL & COMMAND_FIELD_LOW_COMMAND_MASK)>>6) + ((_commandH & COMMAND_FIELD_HIGH_COMMAND_MASK)<<2)); };
     
-inline void KnxTelegram::SetFirstPayloadByte(byte data) 
+inline void KnxTelegram::setFirstPayloadByte(byte data) 
 { _commandL &= ~COMMAND_FIELD_LOW_DATA_MASK ; _commandL |= data & COMMAND_FIELD_LOW_DATA_MASK; }
 
-inline void KnxTelegram::ClearFirstPayloadByte(void)
+inline void KnxTelegram::clearFirstPayloadByte(void)
 { _commandL &= ~COMMAND_FIELD_LOW_DATA_MASK;}
 
-inline byte KnxTelegram::GetFirstPayloadByte(void) const 
+inline byte KnxTelegram::getFirstPayloadByte(void) const 
 { return (_commandL & COMMAND_FIELD_LOW_DATA_MASK);}
 
-inline byte KnxTelegram::ReadRawByte(byte byteIndex) const
+inline byte KnxTelegram::readRawByte(byte byteIndex) const
 { return _telegram[byteIndex];}
 
-inline void KnxTelegram::WriteRawByte(byte data, byte byteIndex)
+inline void KnxTelegram::writeRawByte(byte data, byte byteIndex)
 { _telegram[byteIndex] = data;}
 
-inline byte KnxTelegram::GetChecksum(void) const 
-{ return (_payloadChecksum[GetPayloadLength() - 1]);}
+inline byte KnxTelegram::getChecksum(void) const 
+{ return (_payloadChecksum[getPayloadLength() - 1]);}
 
-inline boolean KnxTelegram::IsChecksumCorrect(void) const 
-{ return (GetChecksum()==CalculateChecksum());}
+inline boolean KnxTelegram::isChecksumCorrect(void) const 
+{ return (getChecksum()==calculateChecksum());}
 
 #endif // KNXTELEGRAM_H

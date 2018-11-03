@@ -203,13 +203,13 @@ byte KnxTpUart::init(void) {
 byte KnxTpUart::sendTelegram(KnxTelegram& sentTelegram) {
     if (_tx.state != TX_IDLE) return KNX_TPUART_ERROR;  // TX not initialized or busy
 
-    if (sentTelegram.GetSourceAddress() != _physicalAddr)  // Check that source addr equals TPUART physical addr
+    if (sentTelegram.getSourceAddress() != _physicalAddr)  // Check that source addr equals TPUART physical addr
     {                                                      // if not, let's force source addr to the correct value
-        sentTelegram.SetSourceAddress(_physicalAddr);
-        sentTelegram.UpdateChecksum();
+        sentTelegram.setSourceAddress(_physicalAddr);
+        sentTelegram.updateChecksum();
     }
     _tx.sentTelegram = &sentTelegram;
-    _tx.nbRemainingBytes = sentTelegram.GetTelegramLength();
+    _tx.nbRemainingBytes = sentTelegram.getTelegramLength();
     _tx.txByteIndex = 0;  // Set index to 0
     _tx.state = TX_TELEGRAM_SENDING_ONGOING;
     return KNX_TPUART_OK;
@@ -256,10 +256,10 @@ void KnxTpUart::rxTask(void) {
 
                 case RX_KNX_TELEGRAM_RECEPTION_ADDRESSED:
                     //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED"));
-                    if (telegram.IsChecksumCorrect()) {
+                    if (telegram.isChecksumCorrect()) {
                         // checksum correct, let's update the _rx struct with the received telegram and correct index
                         //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED 1"));
-                        telegram.Copy(_rx.receivedTelegram);
+                        telegram.copy(_rx.receivedTelegram);
                         //DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_ADDRESSED 2"));
                         
                         // Notify the new received telegram
@@ -297,7 +297,7 @@ void KnxTpUart::rxTask(void) {
                 if ((incomingByte & KNX_CONTROL_FIELD_PATTERN_MASK) == KNX_CONTROL_FIELD_VALID_PATTERN) {
                     _rx.state = RX_KNX_TELEGRAM_RECEPTION_STARTED;
                     readBytesNb = 1;
-                    telegram.WriteRawByte(incomingByte, 0);
+                    telegram.writeRawByte(incomingByte, 0);
 //                    DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED"));
                 } 
                 // CASE OF TPUART_DATA_CONFIRM_SUCCESS NOTIFICATION
@@ -345,14 +345,14 @@ void KnxTpUart::rxTask(void) {
 
             case RX_KNX_TELEGRAM_RECEPTION_STARTED:
                 // DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_STARTED incomingByte=0x%02x, readBytesNb=%d"), incomingByte, readBytesNb);
-                telegram.WriteRawByte(incomingByte, readBytesNb);
+                telegram.writeRawByte(incomingByte, readBytesNb);
                 readBytesNb++;
 
                 //we should try to comment out this check, because we can send telegrams that should be received by own self
                 if (readBytesNb == 3) { // We have just received the source address
 
                     // we check whether the received KNX telegram is coming from us (i.e. telegram is sent by the TPUART itself)
-                    if (telegram.GetSourceAddress() == _physicalAddr) {
+                    if (telegram.getSourceAddress() == _physicalAddr) {
                         // the message is coming from us, we consider it as not addressed and we don't send any ACK service
                         // DEBUG_PRINTLN(F("message from us, skip."));
                         _rx.state = RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED;
@@ -365,7 +365,7 @@ void KnxTpUart::rxTask(void) {
                     expectedTelegramLength = (incomingByte & KNX_PAYLOAD_LENGTH_MASK) + 7;
 
                     // We check if the message is addressed to us in order to send the appropriate acknowledge
-                    if (isAddressAssigned(telegram.GetTargetAddress() /*, addressedComObjIndex*/)) {  // Message addressed to us
+                    if (isAddressAssigned(telegram.getTargetAddress() /*, addressedComObjIndex*/)) {  // Message addressed to us
 
                         // DEBUG_PRINTLN(F("assigned to us: ga=0x%04x index=%d"), telegram.GetTargetAddress(), addressedComObjectIndex);
 
@@ -397,7 +397,7 @@ void KnxTpUart::rxTask(void) {
                     _rx.state = RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID;
                     DEBUG_PRINTLN(F("RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID"));
                 } else {
-                    telegram.WriteRawByte(incomingByte, readBytesNb);
+                    telegram.writeRawByte(incomingByte, readBytesNb);
                     // DEBUG_PRINTLN(F("expectedTelegramLength: %d, readBytesNb: %d"),expectedTelegramLength,readBytesNb);
                     if (expectedTelegramLength == readBytesNb) {
                         telegramCompletelyReceived = true;
@@ -462,7 +462,7 @@ void KnxTpUart::txTask(void) {
             if (_rx.state != RX_KNX_TELEGRAM_RECEPTION_STARTED) {
                 if (_tx.nbRemainingBytes == 1) {  // We are sending the last byte, i.e checksum
                     txByte[0] = TPUART_DATA_END_REQ + _tx.txByteIndex;
-                    txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
+                    txByte[1] = _tx.sentTelegram->readRawByte(_tx.txByteIndex);
                     // DEBUG_PRINTLN(F("data1[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
                     _serial.write(txByte, 2);  // write the UART control field and the data byte
 
@@ -471,7 +471,7 @@ void KnxTpUart::txTask(void) {
                     _tx.state = TX_WAITING_ACK;
                 } else {
                     txByte[0] = TPUART_DATA_START_CONTINUE_REQ + _tx.txByteIndex;
-                    txByte[1] = _tx.sentTelegram->ReadRawByte(_tx.txByteIndex);
+                    txByte[1] = _tx.sentTelegram->readRawByte(_tx.txByteIndex);
                     // DEBUG_PRINTLN(F("data2[%d]=0x%02x"),_tx.txByteIndex, txByte[1]);
                     _serial.write(txByte, 2);  // write the UART control field and the data byte
                     _tx.txByteIndex++;
@@ -531,7 +531,7 @@ boolean KnxTpUart::getMonitoringData(MonitorData& data) {
  */
 boolean KnxTpUart::isAddressAssigned(word addr) {
     long start = micros();
-    DEBUG_PRINTLN(F("IsAddressAssigned: Searching for 0x%04x"), addr);
+    DEBUG_PRINTLN(F("isAddressAssigned: Searching for 0x%04x"), addr);
 
     // clean up old findings
     _addressedComObjects.items = 0;

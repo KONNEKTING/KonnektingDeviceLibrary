@@ -125,19 +125,19 @@ void KnxComObject::updateValue(const byte other[]) {
  */
 byte KnxComObject::updateValue(const KnxTelegram& other) {
     
-    if (other.GetPayloadLength() != getLength()) {
+    if (other.getPayloadLength() != getLength()) {
         return KNX_COM_OBJECT_ERROR; // Error : telegram payload length differs from com obj one
     }
     
     switch (_dataLength) {
         case 1:
-            _value = other.GetFirstPayloadByte();
+            _value = other.getFirstPayloadByte();
             break;
         case 2:
-            other.GetLongPayload(&_value, 1);
+            other.getLongPayload(&_value, 1);
             break;
         default:
-            other.GetLongPayload(_longValue, _dataLength - 1);
+            other.getLongPayload(_longValue, _dataLength - 1);
     }    
     
     _validated = true; // com object set to valid
@@ -149,9 +149,9 @@ byte KnxComObject::updateValue(const KnxTelegram& other) {
  * @param dest
  */
 void KnxComObject::copyAttributes(KnxTelegram& dest) const {
-    dest.ChangePriority(getPriority());
-    dest.SetTargetAddress(getAddr());
-    dest.SetPayloadLength(_dataLength); 
+    dest.changePriority(getPriority());
+    dest.setTargetAddress(getAddr());
+    dest.setPayloadLength(_dataLength); 
 }
 
 /**
@@ -161,12 +161,12 @@ void KnxComObject::copyAttributes(KnxTelegram& dest) const {
 void KnxComObject::copyValue(KnxTelegram& dest) const {
     switch (_dataLength) {
         case 1:
-            dest.SetFirstPayloadByte(_value);
+            dest.setFirstPayloadByte(_value);
             break;
         case 2:
-            dest.SetLongPayload(&_value, 1);
+            dest.setLongPayload(&_value, 1);
             break;
         default:
-            dest.SetLongPayload(_longValue, _dataLength - 1);
+            dest.setLongPayload(_longValue, _dataLength - 1);
     }    
 }
