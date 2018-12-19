@@ -926,7 +926,7 @@ void KonnektingDevice::handleMsgDataWrite(byte msg[]) {
         DataWrite dw;
         dw.count = msg[2];
 
-        memcpy(dw.data[0], msg[3], dw.count);
+        memcpy(&dw.data[0], &msg[3], dw.count);
 
         DEBUG_PRINT(F(" using fctptr"));
         bool result = _dataWriteFunc(dw);
