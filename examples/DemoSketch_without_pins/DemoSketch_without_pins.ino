@@ -1,3 +1,4 @@
+#define KONNEKTING_SYSTEM_TYPE_SIMPLE
 #include <KonnektingDevice.h>
 
 // include device related configuration code, created by "KONNEKTING CodeGenerator"
