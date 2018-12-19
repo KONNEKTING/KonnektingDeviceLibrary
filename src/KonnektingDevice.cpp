@@ -990,12 +990,34 @@ void KonnektingDevice::handleMsgDataRead(byte msg[]) {
             fillEmpty(response, 12);
             Knx.write(PROGCOMOBJ_INDEX, response);
             
-            // iterate over file in 11 byte steps
-            int processed = 0;
-            while (processed < di.size) {
-                byte data[11];
-                _dataReadFunc(data);
+            // open the file 
+            result = _dataOpenFunc(di.type, di.id);
+            // TODO check result
+
+            // iterate over file in 11 byte steps, read data and send over bus
+            int remainingBytes = di.size;
+            while (remainingBytes > 0) {
+                int toRead = min(11, remainingBytes);
+                byte data[toRead];
+                
+                result = _dataReadFunc(data);
+                // TODO check result
+
+                remainingBytes -= toRead;
+
+                byte readResponse[14]; 
+                readResponse[0] = PROTOCOLVERSION;
+                readResponse[1] = MSGTYPE_MEMORY_RESPONSE;
+                readResponse[2] = toRead;
+                memcpy(&readResponse[3], &data[0], toRead);
+                fillEmpty(readResponse, 3+toRead);
+
+                Knx.write(PROGCOMOBJ_INDEX, readResponse);
             }
+
+            // close file
+            result = _dataCloseFunc();
+            // TODO check result
             
 
         } else {
@@ -1006,10 +1028,6 @@ void KonnektingDevice::handleMsgDataRead(byte msg[]) {
         DEBUG_PRINTLN(F("handleMsgDataRead: missing FCTPTR!"));
         sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
     }
-}
-
-void KonnektingDevice::sendMsgDataReadData(byte *msg) {
-    // TODO
 }
 
 void KonnektingDevice::handleMsgDataRemove(byte msg[]) {

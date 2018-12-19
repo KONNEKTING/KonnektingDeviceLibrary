@@ -295,7 +295,6 @@ class KonnektingDevice {
     void handleMsgDataWrite(byte *msg);
     void handleMsgDataWriteFinish(byte *msg);
     void handleMsgDataRead(byte *msg);
-    void sendMsgDataReadData(byte *msg);
     void handleMsgDataRemove(byte *msg);
 
     byte memoryRead(int index);
