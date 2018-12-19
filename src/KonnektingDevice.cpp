@@ -907,10 +907,10 @@ void KonnektingDevice::handleMsgDataWritePrepare(byte msg[]) {
 
         DEBUG_PRINT(F(" using fctptr"));
         bool result = _dataWritePrepareFunc(dwp);
-        if (!result) {
-            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_PREPARE_FAILED);
-        } else {
+        if (result) {
             sendMsgAck(ACK, ERR_CODE_OK);
+        } else {
+            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_PREPARE_FAILED);
         }
 
     } else {
@@ -930,10 +930,10 @@ void KonnektingDevice::handleMsgDataWrite(byte msg[]) {
 
         DEBUG_PRINT(F(" using fctptr"));
         bool result = _dataWriteFunc(dw);
-        if (!result) {
-            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_FAILED);
-        } else {
+        if (result) {
             sendMsgAck(ACK, ERR_CODE_OK);
+        } else {
+            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_FAILED);
         }
 
     } else {
@@ -950,10 +950,10 @@ void KonnektingDevice::handleMsgDataWriteFinish(byte msg[]) {
         
         DEBUG_PRINT(F(" using fctptr"));
         bool result = _dataWriteFinishFunc(crc32);
-        if (!result) {
-            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_CRC_FAILED);
-        } else {
+        if (result) {
             sendMsgAck(ACK, ERR_CODE_OK);
+        } else {
+            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_CRC_FAILED);
         }
 
     } else {
@@ -963,11 +963,49 @@ void KonnektingDevice::handleMsgDataWriteFinish(byte msg[]) {
 }
 
 void KonnektingDevice::handleMsgDataRead(byte msg[]) {
-    // TODO
-}
+    
+    DEBUG_PRINTLN(F("handleMsgDataRead"));
+    if (*_dataGetInfoFunc != NULL) {
 
-void KonnektingDevice::sendMsgDataReadResponse(byte msg[]) {
-    // TODO
+        DataInfo di;
+        di.type = msg[2];
+        di.id = msg[3];
+
+        DEBUG_PRINT(F(" using fctptr"));
+        bool result = _dataGetInfoFunc(&di);
+        if (result) {
+            byte response[14]; 
+            response[0] = PROTOCOLVERSION;
+            response[1] = MSGTYPE_MEMORY_RESPONSE;
+            response[2] = di.type;
+            response[3] = di.id;
+            response[4] = ______BB(di.size);
+            response[5] = ____BB__(di.size);
+            response[6] = __BB____(di.size);
+            response[7] = BB______(di.size);
+            response[8] = ______BB(di.crc32);
+            response[9] = ____BB__(di.crc32);
+            response[10] = __BB____(di.crc32);
+            response[11] = BB______(di.crc32);
+            fillEmpty(response, 12);
+            Knx.write(PROGCOMOBJ_INDEX, response);
+            
+            // iterate over file in 11 byte steps
+            int processed = 0;
+            while (processed < di.size) {
+                byte data[11];
+                _dataReadFunc(data);
+            }
+            
+
+        } else {
+            sendMsgAck(NACK, ERR_CODE_DATA_READ_FAILED);
+        }
+
+    } else {
+        DEBUG_PRINTLN(F("handleMsgDataRead: missing FCTPTR!"));
+        sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
+    }
 }
 
 void KonnektingDevice::sendMsgDataReadData(byte *msg) {
@@ -1313,4 +1351,16 @@ void KonnektingDevice::setDataWriteFunc(bool (*func)(DataWrite)) {
 }
 void KonnektingDevice::setDataWriteFinishFunc(bool (*func)(unsigned long)) {
     _dataWriteFinishFunc = func;
+}
+void KonnektingDevice::setDataGetInfoFunc(bool (*func)(DataInfo*)){
+    _dataGetInfoFunc = func;
+}
+void KonnektingDevice::setDataOpenFunc(bool (*func)(byte, byte)){
+    _dataOpenFunc = func;
+}
+void KonnektingDevice::setDataReadFunc(bool (*func)(byte*)){
+    _dataReadFunc = func;
+}
+void KonnektingDevice::setDataCloseFunc(bool (*func)()){
+    _dataCloseFunc = func;
 }

@@ -57,6 +57,7 @@
 #define ERR_CODE_DATA_WRITE_PREPARE_FAILED 0x02
 #define ERR_CODE_DATA_WRITE_FAILED 0x03
 #define ERR_CODE_DATA_WRITE_CRC_FAILED 0x04
+#define ERR_CODE_DATA_READ_FAILED 0x05
 
 #define SYSTEM_TYPE_SIMPLE 0x00
 #define SYSTEM_TYPE_DEFAULT 0x01
@@ -107,8 +108,12 @@
 #define PARAM_STRING11 11
 
 inline byte HI__(word w) { return (byte)((w >> 8) & 0xff); }
-
 inline byte __LO(word w) { return (byte)((w >> 0) & 0xff); }
+
+inline byte BB______(unsigned long dw) { return (byte)((dw >> 24) & 0xff); }
+inline byte __BB____(unsigned long dw) { return (byte)((dw >> 16) & 0xff); }
+inline byte ____BB__(unsigned long dw) { return (byte)((dw >> 8) & 0xff); }
+inline byte ______BB(unsigned long dw) { return (byte)((dw >> 0) & 0xff); }
 
 inline word __WORD(byte hi, byte lo) { return (word)((hi << 8) + (lo << 0)); }
 inline unsigned long __DWORD(byte b0, byte b1, byte b2, byte b3) { return (unsigned long)((b0 << 24) + (b1 << 16) + (b2 << 8) + (b3 << 0)); }
@@ -138,6 +143,12 @@ typedef struct DataWritePrepare {
 typedef struct DataWrite {
     byte count;
     byte* data;
+};
+typedef struct DataInfo {
+    byte type;
+    byte id;
+    unsigned long size;
+    unsigned long crc32;
 };
 
 /**************************************************************************/
@@ -174,6 +185,11 @@ class KonnektingDevice {
     bool (*_dataWritePrepareFunc)(DataWritePrepare);
     bool (*_dataWriteFunc)(DataWrite);
     bool (*_dataWriteFinishFunc)(unsigned long); // crc32
+    
+    bool (*_dataGetInfoFunc)(DataInfo*);
+    bool (*_dataOpenFunc)(byte, byte);
+    bool (*_dataReadFunc)(byte*);
+    bool (*_dataCloseFunc)(void);
 
 
     // Constructor, Destructor
@@ -193,6 +209,11 @@ class KonnektingDevice {
     void setDataWritePrepareFunc(bool (*func)(DataWritePrepare));
     void setDataWriteFunc(bool (*func)(DataWrite));
     void setDataWriteFinishFunc(bool (*func)(unsigned long));
+
+    void setDataGetInfoFunc(bool (*func)(DataInfo*));
+    void setDataOpenFunc(bool (*func)(byte, byte));
+    void setDataReadFunc(bool (*func)(byte*));
+    void setDataCloseFunc(bool (*func)());
 
     void init(HardwareSerial &serial, void (*progIndicatorFunc)(bool),
               word manufacturerID, byte deviceID, byte revisionID);
@@ -274,7 +295,6 @@ class KonnektingDevice {
     void handleMsgDataWrite(byte *msg);
     void handleMsgDataWriteFinish(byte *msg);
     void handleMsgDataRead(byte *msg);
-    void sendMsgDataReadResponse(byte *msg);
     void sendMsgDataReadData(byte *msg);
     void handleMsgDataRemove(byte *msg);
 
