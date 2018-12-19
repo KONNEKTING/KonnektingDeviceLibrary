@@ -263,11 +263,19 @@ KnxDeviceStatus KnxDevice::read(byte objectIndex, byte returnedValue[]) {
     return KNX_DEVICE_OK;
 }
 
-// Update an usual format com object
-// Supported DPT types are short com object, U16, V16, U32, V32, F16 and F32
-// The Com Object value is updated locally
-// And a telegram is sent on the KNX bus if the com object has communication & transmit attributes
-
+/**************************************************************************/
+/*!
+ *  @brief  Update an usual format com object
+ * Supported DPT types are short com object, U16, V16, U32, V32, F16 and F32
+ * The Com Object value is updated locally
+ * And a telegram is sent on the KNX bus if the com object has communication & transmit attributes
+ *  @param  objectIndex
+ *              Comobject index
+ *  @param value 
+ *              the new value
+ *  @return KnxDeviceStatus
+ */
+/**************************************************************************/
 template <typename T>
 KnxDeviceStatus KnxDevice::write(byte objectIndex, T value) {
     TxAction action;
@@ -316,17 +324,10 @@ template KnxDeviceStatus KnxDevice::write<double>(byte objectIndex, double value
  */
 KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
     TxAction action;
-    //TxAction action2;
 
     // get length of comobj for copying value into tx-action struct
     KnxComObject* comObj = (objectIndex == 255 ? &_progComObj : &_comObjectsList[objectIndex]);
     byte length = comObj->getLength();
-
-    //if (!(objectIndex == 255 ? _progComObj.isActive() : _comObjectsList[objectIndex].isActive())) {
-    //	return KNX_DEVICE_COMOBJ_INACTIVE;
-    //}
-
-    //byte length = (objectIndex == 255 ? _progComObj.GetLength() : _comObjectsList[objectIndex].GetLength());
 
     // check we are in long object case
     if (length > 2) {
@@ -339,22 +340,10 @@ KnxDeviceStatus KnxDevice::write(byte objectIndex, byte valuePtr[]) {
 
         for (byte i = 0; i < length - 1; i++) {
             dptValue[i] = valuePtr[i];  // copy value
-                                        //            DEBUG_PRINTLN(F("dptValue[%d]=0x%02x == valuePtr[%d]=0x%02x"), i, dptValue[i], i, valuePtr[i]);
         }
         action.valuePtr = (byte*)dptValue;
 
-        // bis hier hin alles okay
         _txActionList.append(action);
-        //for (byte i = 0; i < length - 1; i++) {
-        //    DEBUG_PRINTLN(F("action.valuePtr[%d]=0x%02x"), i, action.valuePtr[i]);
-        //}
-        // immer noch okay.
-
-        // TODO: pop machen und dann daten testen. Wenn dann noch okay, muss jemand die Daten zu späterem zeitpunkt manipulieren.
-        //_txActionList.pop(action2);
-        //for (byte i = 0; i < length - 1; i++) {
-        //    DEBUG_PRINTLN(F("action2.valuePtr[%d]=0x%02x"), i, action2.valuePtr[i]);
-        //}
 
         return KNX_DEVICE_OK;
     }
@@ -489,13 +478,13 @@ void KnxDevice::getTpUartEvents(KnxTpUartEvent event) {
     }
 }
 
-// Static TxTelegramAck() function called by the KnxTpUart layer (callback)
+/*
+ * Static txTelegramAck() function called by the KnxTpUart layer (callback)
+ */
 void KnxDevice::txTelegramAck(TpUartTxAck) {
     Knx._state = IDLE;
 }
 
-// Functions to convert a standard C type to a DPT format
-// NB : only the usual DPT formats are supported (U16, V16, U32, V32, F16 and F32 (not yet implemented)
 template <typename T>
 KnxDeviceStatus ConvertFromDpt(const byte dptOriginValue[], T& resultValue, byte dptFormat) {
     switch (dptFormat) {
@@ -546,9 +535,6 @@ template KnxDeviceStatus ConvertFromDpt<long>(const byte dptOriginValue[], long&
 template KnxDeviceStatus ConvertFromDpt<float>(const byte dptOriginValue[], float&, byte dptFormat);
 template KnxDeviceStatus ConvertFromDpt<double>(const byte dptOriginValue[], double&, byte dptFormat);
 
-// Functions to convert a standard C type to a DPT format
-// NB : only the usual DPT formats are supported (U16, V16, U32, V32, F16 and F32 (not yet implemented)
-
 template <typename T>
 KnxDeviceStatus ConvertToDpt(T originValue, byte dptDestValue[], byte dptFormat) {
     switch (dptFormat) {
@@ -570,7 +556,7 @@ KnxDeviceStatus ConvertToDpt(T originValue, byte dptDestValue[], byte dptFormat)
 
         case KNX_DPT_FORMAT_F16: {
             long longValuex100 = (long)(100.0 * originValue);
-            boolean negativeSign = (longValuex100 & 0x80000000) ? true : false;
+            bool negativeSign = (longValuex100 & 0x80000000) ? true : false;
             byte exponent = 0;
             byte round = 0;
 

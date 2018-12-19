@@ -53,6 +53,10 @@
 #define ACK 0x00
 #define NACK 0xFF
 #define ERR_CODE_OK 0x00
+#define ERR_CODE_NOT_SUPPORTED 0x01
+#define ERR_CODE_DATA_WRITE_PREPARE_FAILED 0x02
+#define ERR_CODE_DATA_WRITE_FAILED 0x03
+#define ERR_CODE_DATA_WRITE_CRC_FAILED 0x04
 
 #define SYSTEM_TYPE_SIMPLE 0x00
 #define SYSTEM_TYPE_DEFAULT 0x01
@@ -73,10 +77,15 @@
 #define MSGTYPE_MEMORY_READ 0x1F      ///< Message Type: Memory Read 0x1F
 #define MSGTYPE_MEMORY_RESPONSE 0x20  ///< Message Type: Memory Response 0x20
 
-#define MSGTYPE_DATA_PREPARE 0x28  ///< Message Type: Data Prepare 0x28
+#define MSGTYPE_DATA_WRITE_PREPARE 0x28  ///< Message Type: Data Write Prepare 0x28
 #define MSGTYPE_DATA_WRITE 0x29    ///< Message Type: Data Write 0x29
-#define MSGTYPE_DATA_FINISH 0x2A   ///< Message Type: Data Finish 0x2A
-#define MSGTYPE_DATA_REMOVE 0x2B   ///< Message Type: Data Finish 0x2B
+#define MSGTYPE_DATA_WRITE_FINISH 0x2A   ///< Message Type: Data Write Finish 0x2A
+#define MSGTYPE_DATA_READ 0x2B   ///< Message Type: Data Read 0x2B
+#define MSGTYPE_DATA_READ_RESPONSE 0x2C   ///< Message Type: Data Read Response 0x2C
+#define MSGTYPE_DATA_READ_DATA 0x2D   ///< Message Type: Data Read Data 0x2D
+#define MSGTYPE_DATA_REMOVE 0x2E   ///< Message Type: Data Remove 0x2E
+
+#define DATA_TYPE_ID_UPDATE 0x00
 
 #define PARAM_INT8 1
 #define PARAM_UINT8 1
@@ -102,6 +111,7 @@ inline byte HI__(word w) { return (byte)((w >> 8) & 0xff); }
 inline byte __LO(word w) { return (byte)((w >> 0) & 0xff); }
 
 inline word __WORD(byte hi, byte lo) { return (word)((hi << 8) + (lo << 0)); }
+inline unsigned long __DWORD(byte b0, byte b1, byte b2, byte b3) { return (unsigned long)((b0 << 24) + (b1 << 16) + (b2 << 8) + (b3 << 0)); }
 
 // process intercepted knxEvents-calls with this method
 extern void konnektingKnxEvents(byte index);
@@ -117,11 +127,23 @@ typedef struct AddressTable {
     word* address;
 };
 
+/**
+ * see https://wiki.konnekting.de/index.php?title=KONNEKTING_Protocol_Specification_0x01#0x28_DataWritePrepare
+ */
+typedef struct DataWritePrepare {
+    byte type;
+    byte id;
+    unsigned long size;
+};
+typedef struct DataWrite {
+    byte count;
+    byte* data;
+};
+
 /**************************************************************************/
 /*!
  *  @brief  Main class provides KONNEKTING Device API
  */
-
 /**************************************************************************/
 class KonnektingDevice {
 
@@ -149,6 +171,11 @@ class KonnektingDevice {
     void (*_eepromCommitFunc)(void);
     void (*_progIndicatorFunc)(bool);
 
+    bool (*_dataWritePrepareFunc)(DataWritePrepare);
+    bool (*_dataWriteFunc)(DataWrite);
+    bool (*_dataWriteFinishFunc)(unsigned long); // crc32
+
+
     // Constructor, Destructor
     KonnektingDevice();  // private constructor (singleton design pattern)
 
@@ -162,6 +189,10 @@ class KonnektingDevice {
     void setMemoryWriteFunc(void (*func)(int, byte));
     void setMemoryUpdateFunc(void (*func)(int, byte));
     void setMemoryCommitFunc(void (*func)(void));
+
+    void setDataWritePrepareFunc(bool (*func)(DataWritePrepare));
+    void setDataWriteFunc(bool (*func)(DataWrite));
+    void setDataWriteFinishFunc(bool (*func)(unsigned long));
 
     void init(HardwareSerial &serial, void (*progIndicatorFunc)(bool),
               word manufacturerID, byte deviceID, byte revisionID);
@@ -228,14 +259,24 @@ class KonnektingDevice {
     void reboot();
 
     // prog methods
-    void sendAck(byte ackType, byte errorCode);
+    void sendMsgAck(byte ackType, byte errorCode);
     void handleMsgReadDeviceInfo(byte *msg);
     void handleMsgRestart(byte *msg);
+    
     void handleMsgProgrammingModeWrite(byte *msg);
     void handleMsgProgrammingModeRead(byte *msg);
     void handleMsgPropertyPageRead(byte *msg);
+    
     void handleMsgMemoryWrite(byte *msg);
     void handleMsgMemoryRead(byte *msg);
+
+    void handleMsgDataWritePrepare(byte *msg);
+    void handleMsgDataWrite(byte *msg);
+    void handleMsgDataWriteFinish(byte *msg);
+    void handleMsgDataRead(byte *msg);
+    void sendMsgDataReadResponse(byte *msg);
+    void sendMsgDataReadData(byte *msg);
+    void handleMsgDataRemove(byte *msg);
 
     byte memoryRead(int index);
     void memoryWrite(int index, byte data);

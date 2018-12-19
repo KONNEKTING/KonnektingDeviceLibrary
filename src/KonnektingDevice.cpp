@@ -116,7 +116,6 @@ KonnektingDevice::KonnektingDevice() {
  */
 /**************************************************************************/
 void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID, byte deviceID, byte revisionID) {
-
     DEBUG_PRINTLN(F("Initialize KonnektingDevice (build date=%s time=%s)"), F(__DATE__), F(__TIME__));
 
     _initialized = true;
@@ -149,7 +148,7 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         memoryWrite(i, 0xFF);
     }
     DEBUG_PRINTLN(F("clear eeprom *done*"));
-*/
+    */
 
     // FIXME when this is called? when doing programming?
     if (version != KONNEKTING_VERSION) {
@@ -626,7 +625,6 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
     DEBUG_PRINTLN(F("internalKnxEvents index=%d"), index);
     bool consumed = false;
     switch (index) {
-        // FIXME is prog-co still sitting on 255?
         case 255:  // prog com object index 255 has been updated
 
             byte buffer[14];
@@ -671,6 +669,27 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
                     case MSGTYPE_MEMORY_READ:
                         if (_progState) handleMsgMemoryRead(buffer);
                         break;
+                    case MSGTYPE_DATA_WRITE_PREPARE:
+                        if (_progState) handleMsgDataWritePrepare(buffer);
+                        break;
+                    case MSGTYPE_DATA_WRITE:
+                        if (_progState) handleMsgDataWrite(buffer);
+                        break;
+                    case MSGTYPE_DATA_WRITE_FINISH:
+                        if (_progState) handleMsgDataWriteFinish(buffer);
+                        break;
+                    case MSGTYPE_DATA_READ:
+                        if (_progState) handleMsgDataRead(buffer);
+                        break;
+                    case MSGTYPE_DATA_READ_RESPONSE:
+                        DEBUG_PRINTLN(F("Will not handle received MSGTYPE_DATA_READ_RESPONSE. Skipping message."));
+                        break;
+                    case MSGTYPE_DATA_READ_DATA:
+                        DEBUG_PRINTLN(F("Will not handle received MSGTYPE_DATA_READ_DATA. Skipping message."));
+                        break;
+                    case MSGTYPE_DATA_REMOVE:
+                        if (_progState) handleMsgDataRemove(buffer);
+                        break;
                     default:
                         DEBUG_PRINTLN(F("Unsupported msgtype: 0x%02x"), msgType);
                         DEBUG_PRINTLN(F(" !!! Skipping message."));
@@ -693,8 +712,8 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
  *  @return void
  */
 /**************************************************************************/
-void KonnektingDevice::sendAck(byte ackType, byte errorCode) {
-    DEBUG_PRINTLN(F("sendAck ackType=0x%02x errorCode=0x%02x"), ackType, errorCode);
+void KonnektingDevice::sendMsgAck(byte ackType, byte errorCode) {
+    DEBUG_PRINTLN(F("sendMsgAck ackType=0x%02x errorCode=0x%02x"), ackType, errorCode);
     byte response[14];
     response[0] = PROTOCOLVERSION;
     response[1] = MSGTYPE_ACK;
@@ -779,7 +798,7 @@ void KonnektingDevice::handleMsgProgrammingModeWrite(byte msg[]) {
         DEBUG_PRINTLN(F("matching IA"));
 #endif
         setProgState(msg[4] == 0x01);
-        sendAck(ACK, ERR_CODE_OK);
+        sendMsgAck(ACK, ERR_CODE_OK);
 
         if (msg[4] == 0x00) {
 #if defined(ESP8266) || defined(ESP32)
@@ -847,7 +866,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
         byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
         _individualAddress = __WORD(hiAddr, loAddr);
     }
-    sendAck(ACK, ERR_CODE_OK);
+    sendMsgAck(ACK, ERR_CODE_OK);
     DEBUG_PRINTLN(F("handleMsgMemoryWrite *done*"));
 }
 
@@ -875,6 +894,88 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
 
     Knx.write(PROGCOMOBJ_INDEX, response);
     DEBUG_PRINTLN(F("handleMsgMemoryRead *done*"));
+}
+
+void KonnektingDevice::handleMsgDataWritePrepare(byte msg[]) {
+    DEBUG_PRINTLN(F("handleMsgDataWritePrepare"));
+    if (*_dataWritePrepareFunc != NULL) {
+        
+        DataWritePrepare dwp;
+        dwp.type = msg[2];
+        dwp.id = msg[3];
+        dwp.size = __DWORD(msg[4], msg[5], msg[6], msg[7]);
+
+        DEBUG_PRINT(F(" using fctptr"));
+        bool result = _dataWritePrepareFunc(dwp);
+        if (!result) {
+            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_PREPARE_FAILED);
+        } else {
+            sendMsgAck(ACK, ERR_CODE_OK);
+        }
+
+    } else {
+        DEBUG_PRINTLN(F("handleMsgDataWritePrepare: missing FCTPTR!"));
+        sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
+    }
+}
+
+void KonnektingDevice::handleMsgDataWrite(byte msg[]) {
+    DEBUG_PRINTLN(F("handleMsgDataWrite"));
+    if (*_dataWriteFunc != NULL) {
+
+        DataWrite dw;
+        dw.count = msg[2];
+
+        memcpy(dw.data[0], msg[3], dw.count);
+
+        DEBUG_PRINT(F(" using fctptr"));
+        bool result = _dataWriteFunc(dw);
+        if (!result) {
+            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_FAILED);
+        } else {
+            sendMsgAck(ACK, ERR_CODE_OK);
+        }
+
+    } else {
+        DEBUG_PRINTLN(F("handleMsgDataWrite: missing FCTPTR!"));
+        sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
+    }
+}
+
+void KonnektingDevice::handleMsgDataWriteFinish(byte msg[]) {
+    DEBUG_PRINTLN(F("handleMsgDataWriteFinish"));
+    if (*_dataWriteFinishFunc != NULL) {
+
+        unsigned long crc32 = __DWORD(msg[2], msg[3], msg[4], msg[5]);
+        
+        DEBUG_PRINT(F(" using fctptr"));
+        bool result = _dataWriteFinishFunc(crc32);
+        if (!result) {
+            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_CRC_FAILED);
+        } else {
+            sendMsgAck(ACK, ERR_CODE_OK);
+        }
+
+    } else {
+        DEBUG_PRINTLN(F("handleMsgDataWrite: missing FCTPTR!"));
+        sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
+    }
+}
+
+void KonnektingDevice::handleMsgDataRead(byte msg[]) {
+    // TODO
+}
+
+void KonnektingDevice::sendMsgDataReadResponse(byte msg[]) {
+    // TODO
+}
+
+void KonnektingDevice::sendMsgDataReadData(byte *msg) {
+    // TODO
+}
+
+void KonnektingDevice::handleMsgDataRemove(byte msg[]) {
+    // TODO
 }
 
 byte KonnektingDevice::memoryRead(int index) {
@@ -1202,4 +1303,14 @@ void KonnektingDevice::setMemoryUpdateFunc(void (*func)(int, byte)) {
 /**************************************************************************/
 void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
     _eepromCommitFunc = func;
+}
+
+void KonnektingDevice::setDataWritePrepareFunc(void (*func)(DataWritePrepare)) {
+    _dataWritePrepareFunc = func;
+}
+void KonnektingDevice::setDataWriteFunc(void (*func)(DataWrite)) {
+    _dataWriteFunc = func;
+}
+void KonnektingDevice::setDataWriteFinishFunc(void (*func)(unsigned long)) {
+    _dataWriteFinishFunc = func;
 }
