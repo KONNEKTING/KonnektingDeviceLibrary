@@ -1305,12 +1305,12 @@ void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
     _eepromCommitFunc = func;
 }
 
-void KonnektingDevice::setDataWritePrepareFunc(void (*func)(DataWritePrepare)) {
+void KonnektingDevice::setDataWritePrepareFunc(bool (*func)(DataWritePrepare)) {
     _dataWritePrepareFunc = func;
 }
-void KonnektingDevice::setDataWriteFunc(void (*func)(DataWrite)) {
+void KonnektingDevice::setDataWriteFunc(bool (*func)(DataWrite)) {
     _dataWriteFunc = func;
 }
-void KonnektingDevice::setDataWriteFinishFunc(void (*func)(unsigned long)) {
+void KonnektingDevice::setDataWriteFinishFunc(bool (*func)(unsigned long)) {
     _dataWriteFinishFunc = func;
 }
