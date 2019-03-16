@@ -90,9 +90,9 @@ enum KnxTpUartMode { NORMAL,
 // Definition of the TP-UART events sent to the application layer
 enum KnxTpUartEvent { 
   TPUART_EVENT_RESET = 0,                    // 0: reset received from the TPUART device
-  TPUART_EVENT_RECEIVED_KNX_TELEGRAM,        // 1: a new addressed KNX Telegram has been received
-  TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR, // 2: a new addressed KNX telegram reception failed
-  TPUART_EVENT_STATE_INDICATION              // 3: new TPUART state indication received
+  TPUART_EVENT_RECEIVED_KNX_TELEGRAM = 1,        // 1: a new addressed KNX Telegram has been received
+  TPUART_EVENT_KNX_TELEGRAM_RECEPTION_ERROR = 2, // 2: a new addressed KNX telegram reception failed
+  TPUART_EVENT_STATE_INDICATION = 3             // 3: new TPUART state indication received
  };
 
 // Typedef for events callback function
@@ -101,14 +101,14 @@ typedef void (*EventCallbackFctPtr) (KnxTpUartEvent);
 // --- Definitions for the RECEPTION part ----
 // RX states
 enum TpUartRxState {
-  RX_RESET = 0,                             // The RX part is awaiting reset execution
-  RX_STOPPED,                               // TPUART reset event received, RX activity is stopped
-  RX_INIT,                                  // The RX part is awaiting init execution
-  RX_IDLE_WAITING_FOR_CTRL_FIELD,           // Idle, no reception ongoing
-  RX_KNX_TELEGRAM_RECEPTION_STARTED,        // Telegram reception started (address evaluation not done yet)
-  RX_KNX_TELEGRAM_RECEPTION_ADDRESSED,      // Addressed telegram reception ongoing
-  RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID, // The telegram being received is too long
-  RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED   // Tegram reception ongoing but not addressed
+  RX_RESET = 0,                                 // The RX part is awaiting reset execution
+  RX_STOPPED = 1,                               // TPUART reset event received, RX activity is stopped
+  RX_INIT = 2,                                  // The RX part is awaiting init execution
+  RX_IDLE_WAITING_FOR_CTRL_FIELD = 3,           // Idle, no reception ongoing
+  RX_KNX_TELEGRAM_RECEPTION_STARTED = 4,        // Telegram reception started (address evaluation not done yet)
+  RX_KNX_TELEGRAM_RECEPTION_ADDRESSED = 5,      // Addressed telegram reception ongoing
+  RX_KNX_TELEGRAM_RECEPTION_LENGTH_INVALID = 6, // The telegram being received is too long
+  RX_KNX_TELEGRAM_RECEPTION_NOT_ADDRESSED = 7   // Tegram reception ongoing but not addressed
 };
 
 typedef struct AddressedComObjects {
@@ -170,7 +170,6 @@ class KnxTpUart {
     KnxComObject *_comObjectsList;            // Attached list of com objects
     byte _assignedComObjectsNb;               // Nb of assigned com objects
     byte _stateIndication;                    // Value of the last received state indication
-
 
   public:  
   

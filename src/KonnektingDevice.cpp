@@ -84,12 +84,13 @@ byte KonnektingDevice::_assocMaxTableEntries = 0;
  */
 /**************************************************************************/
 void konnektingKnxEvents(byte index) {
-    DEBUG_PRINTLN(F("\n\nkonnektingKnxEvents index=%d"), index);
+    DEBUG_PRINTLN(F("konnektingKnxEvents index=%d"), index);
 
     // if it's not a internal com object, route back to knxEvents()
     if (!Konnekting.internalKnxEvents(index)) {
         knxEvents(index);
     }
+    DEBUG_PRINTLN(F("\n\n"));
 }
 
 /**************************************************************************/
@@ -649,10 +650,13 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
             } else {
                 switch (msgType) {
                     case MSGTYPE_ACK:
-                        DEBUG_PRINTLN(F("Will not handle received ACK. Skipping message."));
+                        handleMsgAck(buffer);
                         break;
                     case MSGTYPE_PROPERTY_PAGE_READ:
                         handleMsgPropertyPageRead(buffer);
+                        break;
+                    case MSGTYPE_UNLOAD:
+                        handleMsgUnload(buffer);
                         break;
                     case MSGTYPE_RESTART:
                         handleMsgRestart(buffer);
@@ -724,6 +728,28 @@ void KonnektingDevice::sendMsgAck(byte ackType, byte errorCode) {
     Knx.write(PROGCOMOBJ_INDEX, response);
 }
 
+bool KonnektingDevice::waitForAck(byte ackCountBefore, unsigned long timeout) {
+    unsigned long start = micros();
+    timeout *= 1000;  // convert ms to µs
+    DEBUG_PRINTLN(F("Waiting for ACK before=%i curr=%i micros=%ld"), ackCountBefore, _ackCounter, micros());
+    while ((micros() < (start + timeout)) && _ackCounter == ackCountBefore) {
+        if (micros() % 100 * 1000 /* every 100ms */ == 1) DEBUG_PRINTLN(F("\tstart=%ld timeout=%ld micros=%ld before=%i ackCount=%i"), start, timeout, micros(), ackCountBefore, _ackCounter);
+        Knx.task();
+    }
+    bool result = _ackCounter > ackCountBefore;
+    DEBUG_PRINTLN(F("Waiting for ACK *done* result=%i curr=%i micros=%ld"), result, _ackCounter, micros());
+    return result;  // no ACK received --> timeout
+}
+
+void KonnektingDevice::handleMsgAck(byte msg[]) {
+    byte type = msg[2];
+    byte errCode = msg[3];
+    DEBUG_PRINTLN(F("handleMsgAck type=0x%02x errCode=0x%02x"), type, errCode);
+    if (type == 0x00) {
+        _ackCounter++;
+    }
+}
+
 void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgPropertyPageRead"));
 
@@ -771,6 +797,13 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
         Knx.write(PROGCOMOBJ_INDEX, response);
     }
     DEBUG_PRINTLN(F("handleMsgPropertyPageRead *done*"));
+}
+
+void KonnektingDevice::handleMsgUnload(byte msg[]) {
+    DEBUG_PRINTLN(F("handleMsgUnload"));
+    // TODO implement me
+    sendMsgAck(ACK, ERR_CODE_OK);
+    DEBUG_PRINTLN(F("handleMsgUnload *done*"));
 }
 
 void KonnektingDevice::handleMsgRestart(byte msg[]) {
@@ -898,23 +931,24 @@ void KonnektingDevice::handleMsgMemoryRead(byte msg[]) {
 
 void KonnektingDevice::handleMsgDataWritePrepare(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgDataWritePrepare"));
-    if (*_dataWritePrepareFunc != NULL) {
-        
-        DataWritePrepare dwp;
-        dwp.type = msg[2];
-        dwp.id = msg[3];
-        dwp.size = __DWORD(msg[4], msg[5], msg[6], msg[7]);
+    if (*_dataOpenWriteFunc != NULL) {
+        _crc32.reset();
+
+        byte type = msg[2];
+        byte id = msg[3];
+        unsigned long size = __DWORD(msg[4], msg[5], msg[6], msg[7]);
 
         DEBUG_PRINT(F(" using fctptr"));
-        bool result = _dataWritePrepareFunc(dwp);
+
+        bool result = _dataOpenWriteFunc(type, id, size);
         if (result) {
             sendMsgAck(ACK, ERR_CODE_OK);
         } else {
-            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_PREPARE_FAILED);
+            sendMsgAck(NACK, ERR_CODE_DATA_OPEN_WRITE_FAILED);
         }
 
     } else {
-        DEBUG_PRINTLN(F("handleMsgDataWritePrepare: missing FCTPTR!"));
+        DEBUG_PRINTLN(F("handleMsgDataOpenWrite: missing FCTPTR!"));
         sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
     }
 }
@@ -922,14 +956,21 @@ void KonnektingDevice::handleMsgDataWritePrepare(byte msg[]) {
 void KonnektingDevice::handleMsgDataWrite(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgDataWrite"));
     if (*_dataWriteFunc != NULL) {
+        DEBUG_PRINTLN(F(" using fctptr"));
 
-        DataWrite dw;
-        dw.count = msg[2];
+        int count = msg[2];
+        byte *data = (byte *)malloc(count * sizeof(byte));
 
-        memcpy(&dw.data[0], &msg[3], dw.count);
+        // using for, because of issues with memcpy
+        for (int i = 0; i < count; i++) {
+            data[i] = msg[3 + i];
+            DEBUG_PRINTLN(F("  data[%i]=0x%02x"), i, data[i]);
+        }
+        DEBUG_PRINTLN(F(" call fctptr"));
+        bool result = _dataWriteFunc(data, count);
+        _crc32.update(data, count);
+        free(data);
 
-        DEBUG_PRINT(F(" using fctptr"));
-        bool result = _dataWriteFunc(dw);
         if (result) {
             sendMsgAck(ACK, ERR_CODE_OK);
         } else {
@@ -944,16 +985,26 @@ void KonnektingDevice::handleMsgDataWrite(byte msg[]) {
 
 void KonnektingDevice::handleMsgDataWriteFinish(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgDataWriteFinish"));
-    if (*_dataWriteFinishFunc != NULL) {
+    if (*_dataCloseFunc != NULL) {
+        unsigned long otherCrc32 = __DWORD(msg[2], msg[3], msg[4], msg[5]);
+        unsigned long thisCrc32 = _crc32.finalize();
 
-        unsigned long crc32 = __DWORD(msg[2], msg[3], msg[4], msg[5]);
-        
-        DEBUG_PRINT(F(" using fctptr"));
-        bool result = _dataWriteFinishFunc(crc32);
-        if (result) {
-            sendMsgAck(ACK, ERR_CODE_OK);
+        DEBUG_PRINTLN(F(" using fctptr thiscrc32=%ld othercrc32=%ld"), thisCrc32, otherCrc32);
+        if (thisCrc32 == otherCrc32) {
+            bool result = _dataCloseFunc();
+            if (result) {
+                sendMsgAck(ACK, ERR_CODE_OK);
+                return;
+            } else {
+                sendMsgAck(NACK, ERR_CODE_DATA_WRITE_FAILED);
+                return;
+            }
+
         } else {
-            sendMsgAck(NACK, ERR_CODE_DATA_WRITE_CRC_FAILED);
+            DEBUG_PRINTLN(F(" crc mismatch"));
+            bool result = _dataCloseFunc();
+            sendMsgAck(NACK, ERR_CODE_DATA_CRC_FAILED);
+            return;
         }
 
     } else {
@@ -963,65 +1014,136 @@ void KonnektingDevice::handleMsgDataWriteFinish(byte msg[]) {
 }
 
 void KonnektingDevice::handleMsgDataRead(byte msg[]) {
-    
     DEBUG_PRINTLN(F("handleMsgDataRead"));
-    if (*_dataGetInfoFunc != NULL) {
+    byte type = msg[2];
+    byte id = msg[3];
 
-        DataInfo di;
-        di.type = msg[2];
-        di.id = msg[3];
+    if (*_dataOpenReadFunc != NULL && *_dataReadFunc != NULL && *_dataCloseFunc != NULL) {
+        _crc32.reset();
+        DEBUG_PRINTLN(F(" using fctptr type=%i id=%i"), type, id);
 
-        DEBUG_PRINT(F(" using fctptr"));
-        bool result = _dataGetInfoFunc(&di);
-        if (result) {
-            byte response[14]; 
-            response[0] = PROTOCOLVERSION;
-            response[1] = MSGTYPE_MEMORY_RESPONSE;
-            response[2] = di.type;
-            response[3] = di.id;
-            response[4] = ______BB(di.size);
-            response[5] = ____BB__(di.size);
-            response[6] = __BB____(di.size);
-            response[7] = BB______(di.size);
-            response[8] = ______BB(di.crc32);
-            response[9] = ____BB__(di.crc32);
-            response[10] = __BB____(di.crc32);
-            response[11] = BB______(di.crc32);
-            fillEmpty(response, 12);
-            Knx.write(PROGCOMOBJ_INDEX, response);
-            
-            // open the file 
-            result = _dataOpenFunc(di.type, di.id);
-            // TODO check result
+        // open the file
+        unsigned long size = _dataOpenReadFunc(type, id);
+        if (size == -1) {
+            sendMsgAck(NACK, ERR_CODE_DATA_OPEN_READ_FAILED);
+            return;
+        }
+        DEBUG_PRINTLN(F(" opened file with size=%ld"), size);
 
-            // iterate over file in 11 byte steps, read data and send over bus
-            int remainingBytes = di.size;
-            while (remainingBytes > 0) {
-                int toRead = min(11, remainingBytes);
-                byte data[toRead];
-                
-                result = _dataReadFunc(data);
-                // TODO check result
+        /*
+         * prepare 1st answer with filesize
+         */
+        byte response1[14];
+        response1[0] = PROTOCOLVERSION;
+        response1[1] = MSGTYPE_DATA_READ_RESPONSE;
+        response1[2] = type;
+        response1[3] = id;
+        response1[4] = ______BB(size);
+        response1[5] = ____BB__(size);
+        response1[6] = __BB____(size);
+        response1[7] = BB______(size);
+        fillEmpty(response1, 8);
 
-                remainingBytes -= toRead;
+        for (int i = 0; i < 14; i++) {
+            DEBUG_PRINTLN(F(" response1[%i]=0x%02x"), i, response1[i]);
+        }
 
-                byte readResponse[14]; 
-                readResponse[0] = PROTOCOLVERSION;
-                readResponse[1] = MSGTYPE_MEMORY_RESPONSE;
-                readResponse[2] = toRead;
-                memcpy(&readResponse[3], &data[0], toRead);
-                fillEmpty(readResponse, 3+toRead);
+        byte ackCnt = _ackCounter;
+        Knx.write(PROGCOMOBJ_INDEX, response1);
+        Knx.task();
+        bool ackReceived = waitForAck(ackCnt, WAIT_FOR_ACK_TIMEOUT);
+        if (!ackReceived) {
+            _dataCloseFunc();
+            sendMsgAck(NACK, ERR_CODE_TIMEOUT);
+            return;
+        }
 
-                Knx.write(PROGCOMOBJ_INDEX, readResponse);
+        /*
+         * Send data, block by block
+         */
+        // iterate over file in 11 byte steps, read data and send over bus
+        int remainingBytes = size;
+        while (remainingBytes > 0) {
+            int toRead = min(11, remainingBytes);
+            DEBUG_PRINTLN(F(" toRead=%i"), toRead);
+
+            byte *data = (byte *)malloc(toRead * sizeof(byte));
+
+            if (!_dataReadFunc(data, toRead)) {
+                _dataCloseFunc();
+                sendMsgAck(NACK, ERR_CODE_DATA_READ_FAILED);
+                return;
+            } else {
+                for (int i = 0; i < toRead; i++) {
+                    DEBUG_PRINTLN(F("  data[%i]=0x%02x"), i, data[i]);
+                }
+            }
+            _crc32.update(data, toRead);
+            DEBUG_PRINTLN(F(" read data OK"));
+
+            remainingBytes -= toRead;
+
+            byte readResponseN[14];
+            readResponseN[0] = PROTOCOLVERSION;
+            readResponseN[1] = MSGTYPE_DATA_READ_DATA;
+            readResponseN[2] = toRead;
+            for (int i = 0; i < toRead; i++) {
+                readResponseN[3 + i] = data[i];
+            }
+            fillEmpty(readResponseN, 3 + toRead);
+            free(data);
+
+            for (int i = 0; i < 14; i++) {
+                DEBUG_PRINTLN(F(" readResponseN[%i]=0x%02x"), i, readResponseN[i]);
             }
 
-            // close file
-            result = _dataCloseFunc();
-            // TODO check result
-            
+            ackCnt = _ackCounter;
+            Knx.write(PROGCOMOBJ_INDEX, readResponseN);
+            ackReceived = waitForAck(ackCnt, WAIT_FOR_ACK_TIMEOUT);
+            if (!ackReceived) {
+                _dataCloseFunc();
+                sendMsgAck(NACK, ERR_CODE_TIMEOUT);
+                return;
+            }
+        }
 
-        } else {
+        // close file
+        if (!_dataCloseFunc()) {
             sendMsgAck(NACK, ERR_CODE_DATA_READ_FAILED);
+            return;
+        }
+        DEBUG_PRINTLN(F(" closed file"));
+
+        /*
+         * send last answer with crc32
+         */
+        unsigned long crc32Value = _crc32.finalize();
+        DEBUG_PRINTLN(F(" finalize crc32=%ld"), crc32Value);
+        byte response3[14];
+        response3[0] = PROTOCOLVERSION;
+        response3[1] = MSGTYPE_DATA_READ_RESPONSE;
+        response3[2] = type;
+        response3[3] = id;
+        response3[4] = ______BB(size);
+        response3[5] = ____BB__(size);
+        response3[6] = __BB____(size);
+        response3[7] = BB______(size);
+        response3[8] = ______BB(crc32Value);
+        response3[9] = ____BB__(crc32Value);
+        response3[10] = __BB____(crc32Value);
+        response3[11] = BB______(crc32Value);
+        fillEmpty(response3, 12);
+
+        for (int i = 0; i < 14; i++) {
+            DEBUG_PRINTLN(F(" response3[%i]=0x%02x"), i, response3[i]);
+        }
+
+        ackCnt = _ackCounter;
+        Knx.write(PROGCOMOBJ_INDEX, response3);
+        ackReceived = waitForAck(ackCnt, WAIT_FOR_ACK_TIMEOUT);
+        if (!ackReceived) {
+            sendMsgAck(NACK, ERR_CODE_TIMEOUT);
+            return;
         }
 
     } else {
@@ -1361,24 +1483,18 @@ void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
     _eepromCommitFunc = func;
 }
 
-void KonnektingDevice::setDataWritePrepareFunc(bool (*func)(DataWritePrepare)) {
-    _dataWritePrepareFunc = func;
+void KonnektingDevice::setDataOpenWriteFunc(bool (*func)(byte, byte, unsigned long)) {
+    _dataOpenWriteFunc = func;
 }
-void KonnektingDevice::setDataWriteFunc(bool (*func)(DataWrite)) {
+void KonnektingDevice::setDataOpenReadFunc(unsigned long (*func)(byte, byte)) {
+    _dataOpenReadFunc = func;
+}
+void KonnektingDevice::setDataWriteFunc(bool (*func)(byte *, int)) {
     _dataWriteFunc = func;
 }
-void KonnektingDevice::setDataWriteFinishFunc(bool (*func)(unsigned long)) {
-    _dataWriteFinishFunc = func;
-}
-void KonnektingDevice::setDataGetInfoFunc(bool (*func)(DataInfo*)){
-    _dataGetInfoFunc = func;
-}
-void KonnektingDevice::setDataOpenFunc(bool (*func)(byte, byte)){
-    _dataOpenFunc = func;
-}
-void KonnektingDevice::setDataReadFunc(bool (*func)(byte*)){
+void KonnektingDevice::setDataReadFunc(bool (*func)(byte *, int)) {
     _dataReadFunc = func;
 }
-void KonnektingDevice::setDataCloseFunc(bool (*func)()){
+void KonnektingDevice::setDataCloseFunc(bool (*func)()) {
     _dataCloseFunc = func;
 }

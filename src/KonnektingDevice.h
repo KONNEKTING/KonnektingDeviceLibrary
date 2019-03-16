@@ -34,6 +34,8 @@
 #include "DebugUtil.h"
 #include "KnxDevice.h"
 #include "KnxDptConstants.h"
+// for doing CRC32 checks in data read/write
+#include <CRC32.h> // https://github.com/bakercp/CRC32
 
 // AVR, ESP8266, ESP32 and STM32 uses EEPROM (SAMD21 not ...)
 #if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(ARDUINO_ARCH_STM32)
@@ -54,10 +56,13 @@
 #define NACK 0xFF
 #define ERR_CODE_OK 0x00
 #define ERR_CODE_NOT_SUPPORTED 0x01
-#define ERR_CODE_DATA_WRITE_PREPARE_FAILED 0x02
-#define ERR_CODE_DATA_WRITE_FAILED 0x03
-#define ERR_CODE_DATA_WRITE_CRC_FAILED 0x04
+#define ERR_CODE_DATA_OPEN_WRITE_FAILED 0x02
+#define ERR_CODE_DATA_OPEN_READ_FAILED 0x03
+#define ERR_CODE_DATA_WRITE_FAILED 0x04
 #define ERR_CODE_DATA_READ_FAILED 0x05
+#define ERR_CODE_DATA_CRC_FAILED 0x06
+#define ERR_CODE_TIMEOUT 0x07
+#define ERR_CODE_ILLEGAL_STATE 0x08
 
 #define SYSTEM_TYPE_SIMPLE 0x00
 #define SYSTEM_TYPE_DEFAULT 0x01
@@ -68,6 +73,8 @@
 #define MSGTYPE_ACK 0x00                     ///< Message Type: ACK 0x00
 #define MSGTYPE_PROPERTY_PAGE_READ 0x01      ///< Message Type: Property Page Read 0x01
 #define MSGTYPE_PROPERTY_PAGE_RESPONSE 0x02  ///< Message Type: Property Page Response 0x02
+
+#define MSGTYPE_UNLOAD 0x08                  ///< Message Type: Unload 0x08
 #define MSGTYPE_RESTART 0x09                 ///< Message Type: Restart 0x09
 
 #define MSGTYPE_PROGRAMMING_MODE_WRITE 0x0A     ///< Message Type: Programming Mode Write 0x0C
@@ -87,6 +94,8 @@
 #define MSGTYPE_DATA_REMOVE 0x2E   ///< Message Type: Data Remove 0x2E
 
 #define DATA_TYPE_ID_UPDATE 0x00
+
+#define WAIT_FOR_ACK_TIMEOUT 5000
 
 #define PARAM_INT8 1
 #define PARAM_UINT8 1
@@ -135,21 +144,11 @@ typedef struct AddressTable {
 /**
  * see https://wiki.konnekting.de/index.php?title=KONNEKTING_Protocol_Specification_0x01#0x28_DataWritePrepare
  */
-typedef struct DataWritePrepare {
-    byte type;
-    byte id;
-    unsigned long size;
-};
 typedef struct DataWrite {
     byte count;
-    byte* data;
+    byte data[11];
 };
-typedef struct DataInfo {
-    byte type;
-    byte id;
-    unsigned long size;
-    unsigned long crc32;
-};
+
 
 /**************************************************************************/
 /*!
@@ -182,15 +181,11 @@ class KonnektingDevice {
     void (*_eepromCommitFunc)(void);
     void (*_progIndicatorFunc)(bool);
 
-    bool (*_dataWritePrepareFunc)(DataWritePrepare);
-    bool (*_dataWriteFunc)(DataWrite);
-    bool (*_dataWriteFinishFunc)(unsigned long); // crc32
-    
-    bool (*_dataGetInfoFunc)(DataInfo*);
-    bool (*_dataOpenFunc)(byte, byte);
-    bool (*_dataReadFunc)(byte*);
+    bool (*_dataOpenWriteFunc)(byte, byte, unsigned long);
+    unsigned long (*_dataOpenReadFunc)(byte, byte);
+    bool (*_dataWriteFunc)(byte*, int);
+    bool (*_dataReadFunc)(byte*, int);
     bool (*_dataCloseFunc)(void);
-
 
     // Constructor, Destructor
     KonnektingDevice();  // private constructor (singleton design pattern)
@@ -206,13 +201,10 @@ class KonnektingDevice {
     void setMemoryUpdateFunc(void (*func)(int, byte));
     void setMemoryCommitFunc(void (*func)(void));
 
-    void setDataWritePrepareFunc(bool (*func)(DataWritePrepare));
-    void setDataWriteFunc(bool (*func)(DataWrite));
-    void setDataWriteFinishFunc(bool (*func)(unsigned long));
-
-    void setDataGetInfoFunc(bool (*func)(DataInfo*));
-    void setDataOpenFunc(bool (*func)(byte, byte));
-    void setDataReadFunc(bool (*func)(byte*));
+    void setDataOpenWriteFunc(bool (*func)(byte, byte, unsigned long));
+    void setDataOpenReadFunc(unsigned long (*func)(byte, byte));
+    void setDataWriteFunc(bool (*func)(byte*, int));
+    void setDataReadFunc(bool (*func)(byte*, int));
     void setDataCloseFunc(bool (*func)());
 
     void init(HardwareSerial &serial, void (*progIndicatorFunc)(bool),
@@ -253,6 +245,8 @@ class KonnektingDevice {
     int getFreeEepromOffset();
 
    private:
+    CRC32 _crc32;
+    byte _ackCounter = 0;
     bool _rebootRequired = false;
     bool _initialized = false;
 #ifdef REBOOT_BUTTON
@@ -281,7 +275,12 @@ class KonnektingDevice {
 
     // prog methods
     void sendMsgAck(byte ackType, byte errorCode);
+    bool waitForAck(byte ackCountBefore, unsigned long timeout);
+
+    void handleMsgAck(byte *msg);
     void handleMsgReadDeviceInfo(byte *msg);
+
+    void handleMsgUnload(byte *msg);
     void handleMsgRestart(byte *msg);
     
     void handleMsgProgrammingModeWrite(byte *msg);
