@@ -1,11 +1,7 @@
 /*
- *    This file is part of KONNEKTING Knx Device Library.
- * 
- *    It is derived from another GPLv3 licensed project:
- *      The Arduino Knx Bus Device library allows to turn Arduino into "self-made" KNX bus device.
- *      Copyright (C) 2014 2015 Franck MARINI (fm@liwan.fr)
+ *    This file is part of KONNEKTING Device Library.
  *
- *    The KONNEKTING Knx Device Library is free software: you can redistribute it and/or modify
+ *    The KONNEKTING Device Library is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation, either version 3 of the License, or
  *    (at your option) any later version.
@@ -19,18 +15,12 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-// File : KnxComObject.h
-// Author : Franck Marini
-// Modified: Alexander Christian <info(at)root1.de>
-// Description : Handling of the KNX Communication Objects
-// Module dependencies : KnxTelegram
-
 #ifndef KNXCOMOBJECT_H
 #define KNXCOMOBJECT_H
 
-#include "KnxTelegram.h"
 #include "KnxDataPointTypes.h"
+#include "KnxTelegram.h"
+#include "DebugUtil.h"
 
 // !!!!!!!!!!!!!!! FLAG OPTIONS !!!!!!!!!!!!!!!!!
 
@@ -38,54 +28,52 @@
 // See "knx.org" for comobject indicators specification
 // See: https://redaktion.knx-user-forum.de/lexikon/flags/
 // INDICATOR field : B7  B6  B5  B4  B3  B2  B1  B0
-//                   xx  xx   C   R   W   T   U   I  
-//                   xx  xx   K   L   S   Ü   A   I  
-#define KNX_COM_OBJ_C_INDICATOR	0x20 // Comuunication (C)
-#define KNX_COM_OBJ_R_INDICATOR	0x10 // Read (R)
-#define KNX_COM_OBJ_W_INDICATOR	0x08 // Write (W)
-#define KNX_COM_OBJ_T_INDICATOR	0x04 // Transmit (T)
-#define KNX_COM_OBJ_U_INDICATOR	0x02 // Update (U)
-#define KNX_COM_OBJ_I_INDICATOR	0x01 // Init Read (I)
+//                   xx  xx   C   R   W   T   U   I
+//                   xx  xx   K   L   S   Ü   A   I
+#define KNX_COM_OBJ_C_INDICATOR 0x20  // Communication (C)
+#define KNX_COM_OBJ_R_INDICATOR 0x10  // Read (R)
+#define KNX_COM_OBJ_W_INDICATOR 0x08  // Write (W)
+#define KNX_COM_OBJ_T_INDICATOR 0x04  // Transmit (T)
+#define KNX_COM_OBJ_U_INDICATOR 0x02  // Update (U)
+#define KNX_COM_OBJ_I_INDICATOR 0x01  // Init Read (I)
 
 // Definition of predefined com obj profiles
 // Sensor profile : COM_OBJ_SENSOR
 #define COM_OBJ_SENSOR KNX_COM_OBJ_C_R_T_INDICATOR
-#define KNX_COM_OBJ_C_R_T_INDICATOR 0x34 // ( Communication | Read | Transmit )
+#define KNX_COM_OBJ_C_R_T_INDICATOR 0x34  // ( Communication | Read | Transmit )
 
 // Logic input profile : COM_OBJ_LOGIC_IN
 #define COM_OBJ_LOGIC_IN KNX_COM_OBJ_C_W_U_INDICATOR
 
-#define KNX_COM_OBJ_C_W_U_INDICATOR 0x2A  // ( Communication | Write | Update )
+#define KNX_COM_OBJ_C_W_U_INDICATOR 0x2A    // ( Communication | Write | Update )
 #define KNX_COM_OBJ_C_W_U_T_INDICATOR 0x2E  // ( Communication | Write | Update | Transmit )
 
 // Logic input to be initialized at bus power-up profile : COM_OBJ_LOGIC_IN_INIT
 #define COM_OBJ_LOGIC_IN_INIT KNX_COM_OBJ_C_W_U_I_INDICATOR
 #define KNX_COM_OBJ_C_W_U_I_INDICATOR 0x2B  // ( Communication | Write | Update | Init)
 
-#define KNX_COM_OBJECT_OK       0
-#define KNX_COM_OBJECT_ERROR    255
+#define KNX_COM_OBJECT_OK 0
+#define KNX_COM_OBJECT_ERROR 255
 
 class KnxComObject {
-    
-    /**
-     * true: CO can be used, false: CO is "offline"
-     */
+
+    // set to active if GA has been set
     bool _active;
-    
+
     /**
      *  Group Address value
      */
-    word _addr; 
+    word _addr;
 
     /**
      * DPT
      */
-    byte _dptId; 
+    byte _dptId;
 
     /**
      * C/R/W/T/U/I indicators
      */
-    byte _indicator; 
+    byte _indicator;
 
     /** 
      * Com object data length is calculated in the same way as telegram payload length
@@ -108,18 +96,17 @@ class KnxComObject {
         };
         // field used in case of long value (2 bytes width or more, i.e. length > 2)
         // The data space is allocated dynamically by the constructor
-        byte *_longValue;
+        byte* _longValue;
     };
 
-public:
+   public:
     // Constructor :
     KnxComObject(KnxDpt dptId, byte indicator);
 
     // Destructor
     ~KnxComObject();
-    
+
     bool isActive(void);
-    void setActive(bool flag);
 
     // INLINED functions (see definitions later in this file)
     word getAddr(void) const;
@@ -130,6 +117,8 @@ public:
      * @param the GA to set
      */
     void setAddr(word);
+
+    void setIndicator(byte);
 
     byte getDptId(void) const;
 
@@ -193,9 +182,7 @@ public:
      * @param dest
      */
     void copyValue(KnxTelegram& dest) const;
-
 };
-
 
 // --------------- Definition of the INLINE functions -----------------
 
@@ -205,6 +192,11 @@ inline word KnxComObject::getAddr(void) const {
 
 inline void KnxComObject::setAddr(word addr) {
     _addr = addr;
+    _active = true;
+}
+
+inline void KnxComObject::setIndicator(byte indicator) {
+    _indicator = indicator & 0x3F /* mask for bit 0..b5, b6+b7 is not used here*/;
 }
 
 inline byte KnxComObject::getDptId(void) const {
@@ -246,4 +238,4 @@ inline void KnxComObject::toggleValue(void) {
     _value = !_value;
 }
 
-#endif // KNXCOMOBJECT_H
+#endif  // KNXCOMOBJECT_H

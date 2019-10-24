@@ -1,3 +1,4 @@
+#define KONNEKTING_SYSTEM_TYPE_SIMPLE
 #include <KonnektingDevice.h>
 
 // ################################################
