@@ -225,6 +225,7 @@ enum KnxDpt {
   KNX_DPT_9_026, // 9.026 F16 DPT_Rain_Amount
   KNX_DPT_9_027, // 9.027 F16 DPT_Value_Temp_F
   KNX_DPT_9_028, // 9.028 F16 DPT_Value_Wsp_kmh
+  KNX_DPT_9_029, // 9.029 F16 DPT_Value_Abs_Humidity
   KNX_DPT_10_001, // 10.001 N3N5r2N6r2N6 DPT_TimeOfDay
   KNX_DPT_11_001, // 11.001 r3N5r4N4r1U7 DPT_Date
   KNX_DPT_12_000, // 12.000 U32 general unsigned long
@@ -426,6 +427,7 @@ const byte KnxDptToFormat[] PROGMEM = {
   KNX_DPT_FORMAT_F16, //  KNX_DPT_9_026, // 9.026 F16 DPT_Rain_Amount
   KNX_DPT_FORMAT_F16, //  KNX_DPT_9_027, // 9.027 F16 DPT_Value_Temp_F
   KNX_DPT_FORMAT_F16, //  KNX_DPT_9_028, // 9.028 F16 DPT_Value_Wsp_kmh
+  KNX_DPT_FORMAT_F16, //  KNX_DPT_9.029, // 9.029 F16 DPT_Value_Abs_Humidity
   KNX_DPT_FORMAT_N3N5R2N6R2N6, //  KNX_DPT_10_001, // 10.001 N3N5r2N6r2N6 DPT_TimeOfDay
   KNX_DPT_FORMAT_R3N5R4N4R1U7, //  KNX_DPT_11_001, // 11.001 r3N5r4N4r1U7 DPT_Date
   KNX_DPT_FORMAT_U32, //  KNX_DPT_12_000, // 12.000 U32 general unsigned long
