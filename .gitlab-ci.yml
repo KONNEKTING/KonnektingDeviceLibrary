@@ -2,10 +2,11 @@
 # see https://docs.gitlab.com/ce/ci/yaml/README.html for all available options
 
 # you can delete this line if you're not using Docker
-image: byrnedo/alpine-curl:latest
+image: alpine:latest
 
 before_script:
   - echo "sourcing arduino build from adafruit ..."
+  - apk add curl
   - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
   - echo "sourcing arduino build from adafruit ... *DONE*"  
 
@@ -19,10 +20,6 @@ install:
   stage: build
   script:
     - arduino --install-library "OneWire","DallasTemperature","SparkFun HTU21D Humidity and Temperature Sensor Breakout","FlashStorage","CRC32"
-    
-build:
-  stage: build
-  script:
 #   - build_main_platforms
     - build_platform uno
     - build_platform leonardo
