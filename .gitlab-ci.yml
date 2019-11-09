@@ -8,7 +8,7 @@ before_script:
   - apt-get update
   - apt-get -y install curl
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-  - mkdir ~/arduino/libraries/KONNEKTING
+  - mkdir -p ~/arduino/libraries/KONNEKTING
   - cp -pR * ~/arduino/libraries/KONNEKTING/
   - bin/arduino-cli core update-index
   
