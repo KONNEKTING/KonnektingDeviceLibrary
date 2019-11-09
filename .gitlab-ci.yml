@@ -10,8 +10,8 @@ before_script:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
   
   # copy our lib to sketchbook lib folder
-  - mkdir -p ~/arduino/libraries/KONNEKTING
-  - cp -pR * ~/arduino/libraries/KONNEKTING/
+  - mkdir -p ~/Arduino/libraries/KONNEKTING
+  - cp -pR * ~/Arduino/libraries/KONNEKTING/
   
   # show config
   - bin/arduino-cli config dump
