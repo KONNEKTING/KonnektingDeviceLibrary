@@ -5,6 +5,8 @@
 image: debian:testing-slim
 
 before_script:
+  - apt update
+  - apt install curl
   - echo "sourcing arduino build from adafruit ..."
   - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
   - echo "sourcing arduino build from adafruit ... *DONE*"  
