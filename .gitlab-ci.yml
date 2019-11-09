@@ -9,12 +9,17 @@ before_script:
   - apt-get -y install curl
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
   - bin/arduino-cli core update-index
+  
   # install SAMD core
   - bin/arduino-cli core install arduino:samd
+  
   # install ESP8266 core
-  - bin/arduino-cli core install --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+  #- bin/arduino-cli core install --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+  
+  # list installed cores and boards
   - bin/arduino-cli core list
   - bin/arduino-cli board listall
+  
   # install libs
   - arduino-cli lib install "OneWire"
   - arduino-cli lib install "DallasTemperature"
@@ -25,14 +30,8 @@ before_script:
 build_DemoSketch:
   stage: build
   script:
-    - arduino-cli lib install "OneWire"
-    - arduino-cli lib install "DallasTemperature"
-    - arduino-cli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout"
-    - arduino-cli lib install "FlashStorage"
-    - arduino-cli lib install "CRC32"
-    # fehlt noch UNO und Leonardo und ESP ...
     - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch
-    - bin/arduino-cli compile -b esp32:esp32:esp32 examples/DemoSketch/DemoSketch 
+    #- bin/arduino-cli compile -b esp32:esp32:esp32 examples/DemoSketch/DemoSketch 
     - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch 
     - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch 
     
