@@ -2,26 +2,51 @@
 # see https://docs.gitlab.com/ce/ci/yaml/README.html for all available options
 
 # you can delete this line if you're not using Docker
-image: alpine:latest
+image: debian:testing-slim
 
 before_script:
-  - echo "sourcing arduino build from adafruit ..."
-  - apk add curl
-  - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
-  - echo "sourcing arduino build from adafruit ... *DONE*"  
+  - apt-get update
+  - apt-get -y install curl
+  - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+  
+  # copy our lib to sketchbook lib folder
+  - mkdir -p ~/Arduino/libraries/KONNEKTING
+  - cp -pR * ~/Arduino/libraries/KONNEKTING/
+  
+  # show config
+  - bin/arduino-cli config dump
+  
+  # update core board index
+  - bin/arduino-cli core update-index
+  
+  # install SAMD core
+  - bin/arduino-cli core install arduino:samd
+  
+  # install UNO/Leonardo/...
+  - bin/arduino-cli core install arduino:avr
+  
+  # install ESP8266 core
+  #- bin/arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+  
+  # list installed cores and boards
+  - bin/arduino-cli core list
+  - bin/arduino-cli board listall
+  
+  # install libs
+  - bin/arduino-cli lib install "OneWire"
+  - bin/arduino-cli lib install "DallasTemperature"
+  - bin/arduino-cli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout"
+  - bin/arduino-cli lib install "FlashStorage"
+  - bin/arduino-cli lib install "CRC32"
+  
+  # list libs
+  - bin/arduino-cli lib list
 
-after_script:
-#  - echo "After script section"
-#  - echo "For example you might do some cleanup here"
-#  - source <(curl -SLs  https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/library_check.sh)
-#  - source <(curl -SLs  https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/doxy_gen_and_deploy.sh)  
-
-install:
+build_DemoSketch:
   stage: build
   script:
-    - arduino --install-library "OneWire","DallasTemperature","SparkFun HTU21D Humidity and Temperature Sensor Breakout","FlashStorage","CRC32"
-#   - build_main_platforms
-    - build_platform uno
-    - build_platform leonardo
-    - build_platform zero
-#    - build_platform esp8266
+    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch.ino
+    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
+    - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino 
+    - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch.ino
+    
