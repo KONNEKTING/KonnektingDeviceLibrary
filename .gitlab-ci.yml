@@ -2,11 +2,10 @@
 # see https://docs.gitlab.com/ce/ci/yaml/README.html for all available options
 
 # you can delete this line if you're not using Docker
-image: alpine:latest
+image: debian:testing-slim
 
 before_script:
   - echo "sourcing arduino build from adafruit ..."
-  - apk add curl
   - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
   - echo "sourcing arduino build from adafruit ... *DONE*"  
 
