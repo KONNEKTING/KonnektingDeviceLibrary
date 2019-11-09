@@ -8,8 +8,15 @@ before_script:
   - apt-get update
   - apt-get -y install curl
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+  
+  # copy our lib to sketchbook lib folder
   - mkdir -p ~/arduino/libraries/KONNEKTING
   - cp -pR * ~/arduino/libraries/KONNEKTING/
+  
+  # show config
+  - bin/arduino-cli config dump
+  
+  # update core board index
   - bin/arduino-cli core update-index
   
   # install SAMD core
