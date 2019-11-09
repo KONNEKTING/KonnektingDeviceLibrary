@@ -28,6 +28,9 @@ before_script:
   - bin/arduino-cli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout"
   - bin/arduino-cli lib install "FlashStorage"
   - bin/arduino-cli lib install "CRC32"
+  
+  # list libs
+  - bin/arduino-cli lib list
 
 build_DemoSketch:
   stage: build
