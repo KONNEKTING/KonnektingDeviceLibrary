@@ -30,8 +30,8 @@ before_script:
 build_DemoSketch:
   stage: build
   script:
-    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch
-    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch 
-    - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch 
-    - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch 
+    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch.ino
+    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
+    - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino 
+    - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch.ino
     
