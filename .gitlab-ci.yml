@@ -8,8 +8,8 @@ install Arduino CLI:
   stage: .pre
   cache:
     paths:
-      - ~/Arduino/*
-      - bin/*
+      - ~/Arduino/**
+      - bin/**
   script:
     # install CURL command to be able to install Arduino CLI
     - apt-get -q update
