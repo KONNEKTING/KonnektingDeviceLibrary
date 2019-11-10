@@ -5,11 +5,14 @@
 image: debian:testing-slim
 
 before_script:
+  # install CURL command to be able to install Arduino CLI
   - apt-get update
   - apt-get -y install curl
+  
+  # install Arduino CLI
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
   
-  # copy our lib to sketchbook lib folder
+  # ake our project available as library for Arduino
   - mkdir -p ~/Arduino/libraries/KONNEKTING
   - cp -pR * ~/Arduino/libraries/KONNEKTING/
   
@@ -26,7 +29,7 @@ before_script:
   - bin/arduino-cli core install arduino:avr
   
   # install ESP8266 core
-  #- bin/arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+  - bin/arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
   
   # list installed cores and boards
   - bin/arduino-cli core list
