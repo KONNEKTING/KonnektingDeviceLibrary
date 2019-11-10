@@ -25,6 +25,7 @@ install Arduino CLI:
 
     # make our project available as library for Arduino
     - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
+    - ls -lha
     - cp -pR * $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING/
   
     # show config
