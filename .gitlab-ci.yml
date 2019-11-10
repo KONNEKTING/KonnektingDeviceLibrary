@@ -34,6 +34,7 @@ install Arduino CLI:
     - bin/arduino-cli core update-index
   
     # install ESP8266 core
+    - bin/arduino-cli core update-index --additional-urls "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
     - bin/arduino-cli core install esp8266:esp8266 --additional-urls "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
   
     # list installed cores and boards
