@@ -18,8 +18,8 @@ install Arduino CLI:
     
     - mkdir $CI_PROJECT_DIR/Arduino
     - mkdir $CI_PROJECT_DIR/.arduino15
-    - "echo 'sketchbook_path: '"${CI_PROJECT_DIR}"'/Arduino' > preferences.txt"
-    - "echo 'arduino_data: $CI_PROJECT_DIR/.arduino15' >> preferences.txt"
+    - "echo \"sketchbook_path: $CI_PROJECT_DIR/Arduino\" > preferences.txt"
+    - "echo \"arduino_data: $CI_PROJECT_DIR/.arduino15\" >> preferences.txt"
     - cat preferences.txt
     - echo $CI_PROJECT_DIR
 
