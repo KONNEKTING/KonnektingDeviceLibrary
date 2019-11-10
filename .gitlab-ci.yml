@@ -20,7 +20,7 @@ install Arduino CLI:
     - mkdir $CI_PROJECT_DIR/Arduino
     - mkdir $CI_PROJECT_DIR/.arduino15
     - echo "sketchbook_path: $CI_PROJECT_DIR/Arduino" > $CI_PROJECT_DIR/preferences.txt
-    - echo "arduino_data: $CI_PROJECT_DIR/.arduino15" >> $CI_PROJECT_DIR/preferences.txt
+    - echo "arduino_data: $CI_PROJECT_DIR/.arduino15" > $CI_PROJECT_DIR/preferences.txt
 
     # make our project available as library for Arduino
     - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
