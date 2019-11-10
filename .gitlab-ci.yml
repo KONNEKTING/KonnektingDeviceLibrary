@@ -1,5 +1,8 @@
 image: debian:testing-slim
 
+before_script:
+  - alias arduino-cli="bin/arduino-cli --config-file $CI_PROJECT_DIR/preferences.txt"
+
 install Arduino CLI:
   stage: .pre
   cache:
@@ -15,7 +18,9 @@ install Arduino CLI:
     
     - mkdir $CI_PROJECT_DIR/Arduino
     - mkdir $CI_PROJECT_DIR/.arduino15
-    - echo "sketchbook_path:y" 
+    - "echo 'sketchbook_path: $CI_PROJECT_DIR/Arduino' > preferences.txt"
+    - "echo 'arduino_data: $CI_PROJECT_DIR/.arduino15' >> preferences.txt"
+    - cat preferences.txt
 
     # make our project available as library for Arduino
     - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
