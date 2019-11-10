@@ -12,6 +12,7 @@ cache:
     - preferences.txt
     - Arduino/**
     - .arduino15/**  
+    - bin/**
   
 install Arduino CLI:
   stage: .pre
@@ -67,7 +68,6 @@ install Arduino CLI:
 build DemoSketch:
   stage: build
   script:
-    - ls -lha
     - arduinocli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch.ino
     - arduinocli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
     - arduinocli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino
