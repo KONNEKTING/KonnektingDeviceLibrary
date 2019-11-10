@@ -16,69 +16,69 @@ install Arduino CLI:
     # install Arduino CLI
     - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
     
+    # make local arduino folders and preferences, preferences will be used by ALIAS command, see 'before_script' above
     - mkdir $CI_PROJECT_DIR/Arduino
     - mkdir $CI_PROJECT_DIR/.arduino15
     - "echo \"sketchbook_path: $CI_PROJECT_DIR/Arduino\" > preferences.txt"
     - "echo \"arduino_data: $CI_PROJECT_DIR/.arduino15\" >> preferences.txt"
     - cat preferences.txt
-    - echo $CI_PROJECT_DIR
 
     # make our project available as library for Arduino
     - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
     - cp -pR * $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING/
   
     # show config
-    - bin/arduino-cli config dump 
+    - arduino-cli config dump 
   
     # update core board index
-    - bin/arduino-cli core update-index
+    - arduino-cli core update-index
   
     # install SAMD core
-    - bin/arduino-cli core install arduino:samd
+    - arduino-cli core install arduino:samd
   
     # install UNO/Leonardo/...
-    - bin/arduino-cli core install arduino:avr
+    - arduino-cli core install arduino:avr
 
     # install ESP8266 core
-    - bin/arduino-cli core update-index --additional-urls "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
-    - bin/arduino-cli core install esp8266:esp8266 --additional-urls "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
+    - arduino-cli core update-index --additional-urls "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
+    - arduino-cli core install esp8266:esp8266 --additional-urls "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
   
     # list installed cores and boards
-    - bin/arduino-cli core list
-    - bin/arduino-cli board listall
+    - arduino-cli core list
+    - arduino-cli board listall
   
     # install libs
-    - bin/arduino-cli lib install "OneWire"
-    - bin/arduino-cli lib install "DallasTemperature"
-    - bin/arduino-cli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout"
-    - bin/arduino-cli lib install "FlashStorage"
-    - bin/arduino-cli lib install "CRC32"
+    - arduino-cli lib install "OneWire"
+    - arduino-cli lib install "DallasTemperature"
+    - arduino-cli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout"
+    - arduino-cli lib install "FlashStorage"
+    - arduino-cli lib install "CRC32"
   
     # list libs
-    - bin/arduino-cli lib list
+    - arduino-cli lib list
 
 build DemoSketch:
   stage: build
   script:
-    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch.ino --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino  --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch.ino --config-file $CI_PROJECT_DIR/preferences.txt
+    - arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch.ino
+    - arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
+    - arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino
+    - arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch.ino
     
 build Communication_test:
   stage: build
   script:
-    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/Communication_test/Communication_test.ino --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b esp8266:esp8266:generic examples/Communication_test/Communication_test.ino --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b arduino:avr:uno examples/Communication_test/Communication_test.ino  --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b arduino:avr:leonardo examples/Communication_test/Communication_test.ino  --config-file $CI_PROJECT_DIR/preferences.txt  
+    - arduino-cli compile -b arduino:samd:mzero_bl examples/Communication_test/Communication_test.ino
+    - arduino-cli compile -b esp8266:esp8266:generic examples/Communication_test/Communication_test.ino
+    - arduino-cli compile -b arduino:avr:uno examples/Communication_test/Communication_test.ino
+    - arduino-cli compile -b arduino:avr:leonardo examples/Communication_test/Communication_test.ino
 
 build DemoSketch_without_pins:
   stage: build
   script:
-    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch_without_pins/DemoSketch_without_pins.ino --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch_without_pins/DemoSketch_without_pins.ino --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch_without_pins/DemoSketch_without_pins.ino  --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch_without_pins/DemoSketch_without_pins.ino    --config-file $CI_PROJECT_DIR/preferences.txt    
+    - arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
+    - arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
+    - arduino-cli compile -b arduino:avr:uno examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
+    - arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
     
     
