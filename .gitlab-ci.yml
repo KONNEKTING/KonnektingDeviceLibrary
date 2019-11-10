@@ -4,7 +4,12 @@
 # you can delete this line if you're not using Docker
 image: debian:testing-slim
 
-before_script:
+stages:
+  - setup
+  - build
+
+setup:
+  stage: setup
   # install CURL command to be able to install Arduino CLI
   - apt-get update
   - apt-get -y install curl
@@ -28,8 +33,11 @@ before_script:
   # install UNO/Leonardo/...
   - bin/arduino-cli core install arduino:avr
   
+  # update core board index
+  - bin/arduino-cli core update-index
+  
   # install ESP8266 core
-  - bin/arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+  - bin/arduino-cli core install esp8266:esp8266 --additional-urls "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
   
   # list installed cores and boards
   - bin/arduino-cli core list
@@ -52,4 +60,21 @@ build_DemoSketch:
     #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
     - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino 
     - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch.ino
+    
+build_Communication_test:
+  stage: build
+  script:
+    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/Communication_test/Communication_test.ino
+    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/Communication_test/Communication_test.ino
+    - bin/arduino-cli compile -b arduino:avr:uno examples/Communication_test/Communication_test.ino 
+    - bin/arduino-cli compile -b arduino:avr:leonardo examples/Communication_test/Communication_test.ino   
+
+build_DemoSketch_without_pins:
+  stage: build
+  script:
+    - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
+    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
+    - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch_without_pins/DemoSketch_without_pins.ino 
+    - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch_without_pins/DemoSketch_without_pins.ino       
+    
     
