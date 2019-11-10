@@ -19,6 +19,7 @@ install Arduino CLI:
     
     - mkdir $CI_PROJECT_DIR/Arduino
     - mkdir $CI_PROJECT_DIR/.arduino15
+    - echo "Hello World"
 
     # make our project available as library for Arduino
     - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
