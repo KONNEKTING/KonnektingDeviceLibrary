@@ -52,7 +52,7 @@ build DemoSketch:
   stage: build
   script:
     - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch.ino
-    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
+    - bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
     - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino 
     - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch.ino
     
@@ -60,7 +60,7 @@ build Communication_test:
   stage: build
   script:
     - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/Communication_test/Communication_test.ino
-    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/Communication_test/Communication_test.ino
+    - bin/arduino-cli compile -b esp8266:esp8266:generic examples/Communication_test/Communication_test.ino
     - bin/arduino-cli compile -b arduino:avr:uno examples/Communication_test/Communication_test.ino 
     - bin/arduino-cli compile -b arduino:avr:leonardo examples/Communication_test/Communication_test.ino   
 
@@ -68,7 +68,7 @@ build DemoSketch_without_pins:
   stage: build
   script:
     - bin/arduino-cli compile -b arduino:samd:mzero_bl examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
-    #- bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
+    - bin/arduino-cli compile -b esp8266:esp8266:generic examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
     - bin/arduino-cli compile -b arduino:avr:uno examples/DemoSketch_without_pins/DemoSketch_without_pins.ino 
     - bin/arduino-cli compile -b arduino:avr:leonardo examples/DemoSketch_without_pins/DemoSketch_without_pins.ino       
     
