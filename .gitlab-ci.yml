@@ -5,11 +5,11 @@
 image: debian:testing-slim
 
 stages:
-  - setup
+  - install
   - build
 
-setup:
-  stage: setup
+install_arduino_cli:
+  stage: install
   # install CURL command to be able to install Arduino CLI
   - apt-get update
   - apt-get -y install curl
