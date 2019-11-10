@@ -18,7 +18,7 @@ install Arduino CLI:
   script:
     # install CURL command to be able to install Arduino CLI
     - apt-get -q -q update
-    - apt-get -y -qq install curl rsync
+    - apt-get -y -q -q install curl rsync
   
     # install Arduino CLI
     - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
