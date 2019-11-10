@@ -24,14 +24,14 @@ install Arduino CLI:
     - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
     
     # make local arduino folders and preferences, preferences will be used by ALIAS command, see 'before_script' above
-    - mkdir $CI_PROJECT_DIR/Arduino
-    - mkdir $CI_PROJECT_DIR/.arduino15
+    - mkdir -f $CI_PROJECT_DIR/Arduino
+    - mkdir -f $CI_PROJECT_DIR/.arduino15
     - "echo \"sketchbook_path: $CI_PROJECT_DIR/Arduino\" > preferences.txt"
     - "echo \"arduino_data: $CI_PROJECT_DIR/.arduino15\" >> preferences.txt"
     - cat preferences.txt
 
     # make our project available as library for Arduino
-    - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
+    - mkdir -pf $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
     - rsync -avz --exclude 'Arduino' --exclude 'bin' --exclude '.arduino15' * Arduino/
   
     # show config
