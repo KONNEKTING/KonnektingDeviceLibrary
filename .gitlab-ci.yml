@@ -4,7 +4,7 @@
 # you can delete this line if you're not using Docker
 image: debian:testing-slim
 
-install Arduino CLI:
+prepare:
   stage: .pre
   # install CURL command to be able to install Arduino CLI
   - apt-get update
