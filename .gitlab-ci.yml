@@ -1,6 +1,7 @@
 image: debian:testing-slim
 
 before_script:
+  - shopt -s expand_aliases
   - alias arduinocli="bin/arduino-cli --config-file $CI_PROJECT_DIR/preferences.txt"
   
 install Arduino CLI:
@@ -12,8 +13,6 @@ install Arduino CLI:
       - .arduino15/**
       
   script:
-    - alias arduinocli="bin/arduino-cli --config-file $CI_PROJECT_DIR/preferences.txt"
-    
     # install CURL command to be able to install Arduino CLI
     - apt-get -q -q update
     - apt-get -y -qq install curl rsync
