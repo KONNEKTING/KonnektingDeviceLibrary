@@ -33,7 +33,7 @@ install Arduino CLI:
 
     # make our project available as library for Arduino
     - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
-    - rsync -avz --exclude 'Arduino' --exclude 'bin' --exclude '.arduino15' * Arduino/
+    - rsync -avz --exclude 'Arduino' --exclude 'bin' --exclude '.arduino15' * Arduino/libraries/KONNEKTING
   
     # show config
     - arduinocli config dump 
