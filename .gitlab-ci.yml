@@ -27,31 +27,31 @@ install Arduino CLI:
     - cp -pR * $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING/
   
     # show config
-    - bin/arduino-cli config dump --config-file $CI_PROJECT_DIR/preferences.txt
+    - bin/arduino-cli config dump 
   
     # update core board index
-    - bin/arduino-cli core update-index --config-file $CI_PROJECT_DIR/preferences.txt
+    - bin/arduino-cli core update-index
   
     # install SAMD core
-    - bin/arduino-cli core install arduino:samd --config-file $CI_PROJECT_DIR/preferences.txt
+    - bin/arduino-cli core install arduino:samd
   
     # install UNO/Leonardo/...
-    - bin/arduino-cli core install arduino:avr --config-file $CI_PROJECT_DIR/preferences.txt
+    - bin/arduino-cli core install arduino:avr
 
     # install ESP8266 core
-    - bin/arduino-cli core update-index --additional-urls "http://arduino.esp8266.com/stable/package_esp8266com_index.json" --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli core install esp8266:esp8266 --additional-urls "https://arduino.esp8266.com/stable/package_esp8266com_index.json" --config-file $CI_PROJECT_DIR/preferences.txt
+    - bin/arduino-cli core update-index --additional-urls "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
+    - bin/arduino-cli core install esp8266:esp8266 --additional-urls "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
   
     # list installed cores and boards
-    - bin/arduino-cli core list --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli board listall --config-file $CI_PROJECT_DIR/preferences.txt
+    - bin/arduino-cli core list
+    - bin/arduino-cli board listall
   
     # install libs
-    - bin/arduino-cli lib install "OneWire" --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli lib install "DallasTemperature" --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout" --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli lib install "FlashStorage" --config-file $CI_PROJECT_DIR/preferences.txt
-    - bin/arduino-cli lib install "CRC32" --config-file $CI_PROJECT_DIR/preferences.txt
+    - bin/arduino-cli lib install "OneWire"
+    - bin/arduino-cli lib install "DallasTemperature"
+    - bin/arduino-cli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout"
+    - bin/arduino-cli lib install "FlashStorage"
+    - bin/arduino-cli lib install "CRC32"
   
     # list libs
     - bin/arduino-cli lib list
