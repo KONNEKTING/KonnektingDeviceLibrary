@@ -280,39 +280,39 @@ template <typename T>
 KnxDeviceStatus KnxDevice::write(byte objectIndex, T value) {
     TxAction action;
     byte* destValue;
-    DEBUG_PRINTLN(F("KnxDevice::write 1"));
+    //DEBUG_PRINTLN(F("KnxDevice::write 1"));
     KnxComObject* comObj = (objectIndex == 255 ? &_progComObj : &_comObjectsList[objectIndex]);
     if (!comObj->isActive()) {
         return KNX_DEVICE_COMOBJ_INACTIVE;
     }
-    DEBUG_PRINTLN(F("KnxDevice::write 2"));
+    //DEBUG_PRINTLN(F("KnxDevice::write 2"));
     byte length = comObj->getLength();
 
-    DEBUG_PRINTLN(F("KnxDevice::write 3"));
+    //DEBUG_PRINTLN(F("KnxDevice::write 3"));
     if (length <= 2) {
-        DEBUG_PRINTLN(F("KnxDevice::write 4"));
+        //DEBUG_PRINTLN(F("KnxDevice::write 4"));
         action.byteValue = (byte)value;         // short object case
     } else {                                      // long object case, let's try to translate value to the com object DPT
-        DEBUG_PRINTLN(F("KnxDevice::write 5"));
+        //DEBUG_PRINTLN(F("KnxDevice::write 5"));
         destValue = (byte*)malloc(length - 1);  // allocate the memory for DPT
-        DEBUG_PRINTLN(F("KnxDevice::write 6"));
+        //DEBUG_PRINTLN(F("KnxDevice::write 6"));
         KnxDeviceStatus status = ConvertToDpt(value, destValue, pgm_read_byte(&KnxDptToFormat[comObj->getDptId()]));
-        DEBUG_PRINTLN(F("KnxDevice::write 7"));
+        //DEBUG_PRINTLN(F("KnxDevice::write 7"));
         if (status)  // translation error
         {
             free(destValue);
-            DEBUG_PRINTLN(F("KnxDevice::write 8"));
+            //DEBUG_PRINTLN(F("KnxDevice::write 8"));
             return status;  // we cannot convert, we stop here
         } else {
             action.valuePtr = destValue;
-            DEBUG_PRINTLN(F("KnxDevice::write 9"));
+            //DEBUG_PRINTLN(F("KnxDevice::write 9"));
         }
     }
     // add WRITE action in the TX action queue
     action.command = KNX_WRITE_REQUEST;
     action.index = objectIndex;
     _txActionList.append(action);
-    DEBUG_PRINTLN(F("KnxDevice::write 10"));
+    //DEBUG_PRINTLN(F("KnxDevice::write 10"));
     return KNX_DEVICE_OK;
 }
 
