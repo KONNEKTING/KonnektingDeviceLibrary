@@ -3,11 +3,11 @@
         {
             "name": "Linux",
             "includePath": [
-                "/home/achristian/.arduino15/packages/arduino/tools/**",
-                "/home/achristian/.arduino15/packages/arduino/hardware/samd/1.6.20/**"
+                "/home/alexander/.arduino15/packages/arduino/hardware/samd/1.6.20/**",
+                "/home/alexander/.arduino15/packages/arduino/tools/**"
             ],
             "forcedInclude": [
-                "/home/achristian/.arduino15/packages/arduino/hardware/samd/1.6.20/cores/arduino/Arduino.h"
+                "/home/alexander/.arduino15/packages/arduino/hardware/samd/1.6.20/cores/arduino/Arduino.h"
             ],
             "intelliSenseMode": "gcc-x64",
             "compilerPath": "/usr/bin/clang",

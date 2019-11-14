@@ -1064,6 +1064,10 @@ void KonnektingDevice::handleMsgDataRead(byte msg[]) {
         // iterate over file in 11 byte steps, read data and send over bus
         int remainingBytes = size;
         while (remainingBytes > 0) {
+
+            // reset ack counter, otherwise too many data blocks might overflow the counter
+            _ackCounter=0;
+
             int toRead = min(11, remainingBytes);
             DEBUG_PRINTLN(F(" toRead=%i"), toRead);
 
@@ -1106,6 +1110,9 @@ void KonnektingDevice::handleMsgDataRead(byte msg[]) {
                 return;
             }
         }
+
+        // finally reset ack counter last time after al blocks have been transferred
+        _ackCounter=0;
 
         // close file
         if (!_dataCloseFunc()) {
