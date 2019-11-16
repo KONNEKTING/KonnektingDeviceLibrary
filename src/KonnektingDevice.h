@@ -93,7 +93,8 @@
 #define MSGTYPE_DATA_READ_DATA 0x2D   ///< Message Type: Data Read Data 0x2D
 #define MSGTYPE_DATA_REMOVE 0x2E   ///< Message Type: Data Remove 0x2E
 
-#define DATA_TYPE_ID_UPDATE 0x00
+#define DATA_TYPE_ID_UPDATE 0x00 ///< Firmware update for KONNEKTING device
+#define DATA_TYPE_ID_DATA 0x01 ///< Data, f.i. additional configuration, images, sounds, ...
 
 #define WAIT_FOR_ACK_TIMEOUT 5000
 
