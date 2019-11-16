@@ -179,10 +179,12 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
          * Read eeprom stuff
          */
 
-        // PA
-        byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
-        byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
-        _individualAddress = __WORD(hiAddr, loAddr);
+        if (isIndividualAddressSet()) {}
+            // PA
+            byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
+            byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
+            _individualAddress = __WORD(hiAddr, loAddr);
+        }
         DEBUG_PRINTLN(F("ia=0x%04x"), _individualAddress);
 
         // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_GROUPADDRESSTABLE = 0x%04x"), KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
@@ -190,93 +192,95 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
         // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
 
-        DEBUG_PRINT(F("Reading commobj table..."));
-        uint8_t commObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
-        DEBUG_PRINTLN(F("%i entries"), commObjTableEntries);
+        if (isComObjSet) {
+            DEBUG_PRINT(F("Reading commobj table..."));
+            uint8_t commObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
+            DEBUG_PRINTLN(F("%i entries"), commObjTableEntries);
 
-        if (commObjTableEntries != Knx.getNumberOfComObjects()) {
-            while (true) {
-                DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory (%d)."), Knx.getNumberOfComObjects(), commObjTableEntries);
-                delay(1000);
+            if (commObjTableEntries != Knx.getNumberOfComObjects()) {
+                while (true) {
+                    DEBUG_PRINTLN(F("Knx init ERROR. ComObj size in sketch (%d) does not fit comobj size in memory (%d)."), Knx.getNumberOfComObjects(), commObjTableEntries);
+                    delay(1000);
+                }
             }
-        }
 
-        /* *************************************
-         * read comobj configs from memory
-         * *************************************/
-        for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
-            byte config = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE + 1 + i);
-            DEBUG_PRINTLN(F("  ComObj #%d config: hex=0x%02x bin=" BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
-            // set comobj config
-            Knx.setComObjectIndicator(i, config & 0x3F);
-        }
-        DEBUG_PRINTLN(F("Reading commobj table...*done*"));
+            /* *************************************
+            * read comobj configs from memory
+            * *************************************/
+            for (byte i = 0; i < Knx.getNumberOfComObjects(); i++) {
+                byte config = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE + 1 + i);
+                DEBUG_PRINTLN(F("  ComObj #%d config: hex=0x%02x bin=" BYTETOBINARYPATTERN), i, config, BYTETOBINARY(config));
+                // set comobj config
+                Knx.setComObjectIndicator(i, config & 0x3F);
+            }
+            DEBUG_PRINTLN(F("Reading commobj table...*done*"));
 
-        /* *************************************
-         * read address table from memory
-         * *************************************/
-        DEBUG_PRINT(F("Reading address table..."));
-        _addressTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
-        DEBUG_PRINTLN(F("%i entries"), _addressTable.size);
+            /* *************************************
+            * read address table from memory
+            * *************************************/
+            DEBUG_PRINT(F("Reading address table..."));
+            _addressTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE);
+            DEBUG_PRINTLN(F("%i entries"), _addressTable.size);
 
-        _addressTable.address = (word *)malloc(_addressTable.size * sizeof(word));
+            _addressTable.address = (word *)malloc(_addressTable.size * sizeof(word));
 
-        for (byte i = 0; i < _addressTable.size; i++) {
-            byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2));
-            byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2) + 1);
-            word ga = __WORD(gaHi, gaLo);
+            for (byte i = 0; i < _addressTable.size; i++) {
+                byte gaHi = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2));
+                byte gaLo = memoryRead(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE + 1 + (i * 2) + 1);
+                word ga = __WORD(gaHi, gaLo);
 
-            DEBUG_PRINTLN(F("  index=%d GA: hex=0x%02x"), i, ga);
-            // store copy of addresstable in RAM
-            _addressTable.address[i] = ga;
-        }
-        DEBUG_PRINTLN(F("Reading address table...*done*"));
+                DEBUG_PRINTLN(F("  index=%d GA: hex=0x%02x"), i, ga);
+                // store copy of addresstable in RAM
+                _addressTable.address[i] = ga;
+            }
+            DEBUG_PRINTLN(F("Reading address table...*done*"));
 
-        /* *************************************
-         * read association table from memory
-         * *************************************/
-        DEBUG_PRINT(F("Reading association table..."));
-        _associationTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
-        DEBUG_PRINTLN(F("%i entries"), _associationTable.size);
+            /* *************************************
+            * read association table from memory
+            * *************************************/
+            DEBUG_PRINT(F("Reading association table..."));
+            _associationTable.size = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE);
+            DEBUG_PRINTLN(F("%i entries"), _associationTable.size);
 
-        _associationTable.gaId = (byte *)malloc(_associationTable.size * sizeof(byte));
-        _associationTable.coId = (byte *)malloc(_associationTable.size * sizeof(byte));
+            _associationTable.gaId = (byte *)malloc(_associationTable.size * sizeof(byte));
+            _associationTable.coId = (byte *)malloc(_associationTable.size * sizeof(byte));
 
-        int overallMax = 0;
-        int currentMax = 0;
-        int currentAddrId = -1;
+            int overallMax = 0;
+            int currentMax = 0;
+            int currentAddrId = -1;
 
-        for (byte i = 0; i < _associationTable.size; i++) {
-            byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2));
-            byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2) + 1);
+            for (byte i = 0; i < _associationTable.size; i++) {
+                byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2));
+                byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2) + 1);
 
-            if (currentAddrId == addressId) {
-                currentMax++;
-            } else {  // different GA detected
+                if (currentAddrId == addressId) {
+                    currentMax++;
+                } else {  // different GA detected
 
-                // if the last known currentMax is bigger than the overallMax, replace overallMax
-                if (currentMax > overallMax) {
-                    overallMax = currentMax;
+                    // if the last known currentMax is bigger than the overallMax, replace overallMax
+                    if (currentMax > overallMax) {
+                        overallMax = currentMax;
+                    }
+
+                    currentMax = 1;             // found different GA association, so we found 1 assoc for this GA so far
+                    currentAddrId = addressId;  // remember that we are currently counting for this address
                 }
 
-                currentMax = 1;             // found different GA association, so we found 1 assoc for this GA so far
-                currentAddrId = addressId;  // remember that we are currently counting for this address
+                // store copy of association table in RAM
+                _associationTable.gaId[i] = addressId;
+                _associationTable.coId[i] = commObjectId;
+
+                // get group address by it's ID from already read address table
+                word ga = _addressTable.address[addressId];
+
+                DEBUG_PRINTLN(F("  index=%d ComObj=%d ga=0x%04x"), i, commObjectId, ga);
+
+                Knx.setComObjectAddress(commObjectId, ga);
             }
-
-            // store copy of association table in RAM
-            _associationTable.gaId[i] = addressId;
-            _associationTable.coId[i] = commObjectId;
-
-            // get group address by it's ID from already read address table
-            word ga = _addressTable.address[addressId];
-
-            DEBUG_PRINTLN(F("  index=%d ComObj=%d ga=0x%04x"), i, commObjectId, ga);
-
-            Knx.setComObjectAddress(commObjectId, ga);
+            _assocMaxTableEntries = overallMax;
+            DEBUG_PRINTLN(F("Reading association table...*done* _assocMaxTableEntries=%d"), _assocMaxTableEntries);
         }
-        _assocMaxTableEntries = overallMax;
-        DEBUG_PRINTLN(F("Reading association table...*done* _assocMaxTableEntries=%d"), _assocMaxTableEntries);
-
+        
         // params are read either on demand or in setup() and not on init() ...
 
     } else {
@@ -377,8 +381,32 @@ bool KonnektingDevice::isActive() { return _initialized; }
 /**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
     // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
-    bool isFactory = _deviceFlags == 0xff || (_deviceFlags & DEVICEFLAG_FACTORY_BIT) == DEVICEFLAG_FACTORY_BIT;
+    bool isFactory = _deviceFlags == 0xFF || (_deviceFlags & DEVICEFLAG_FACTORY_BIT) == 0;
     return isFactory;
+}
+
+bool KonnektingDevice::isIndividualAddressSet() {
+    // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
+    bool isSet = (_deviceFlags & DEVICEFLAG_IA_BIT) == 0;
+    return isSet;
+}
+
+bool KonnektingDevice::isComObjSet() {
+    // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
+    bool isSet = (_deviceFlags & DEVICEFLAG_CO_BIT) == 0;
+    return isSet;
+}
+
+bool KonnektingDevice::isParamsSet() {
+    // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
+    bool isSet = (_deviceFlags & DEVICEFLAG_PARAM_BIT) == 0;
+    return isSet;
+}
+
+bool KonnektingDevice::isDataSet() {
+    // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
+    bool isSet = (_deviceFlags & DEVICEFLAG_DATA_BIT) == 0;
+    return isSet;
 }
 
 /**************************************************************************/
@@ -785,9 +813,8 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
                 response[3] = __LO(_manufacturerID);
                 response[4] = _deviceID;
                 response[5] = _revisionID;
-                response[6] = _deviceFlags;
-                response[7] = SYSTEM_TYPE_DEFAULT;
-                fillEmpty(response, 8);
+                response[6] = SYSTEM_TYPE_DEFAULT;
+                fillEmpty(response, 7);
                 break;
             default:
                 fillEmpty(response, 0);
@@ -801,8 +828,44 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
 
 void KonnektingDevice::handleMsgUnload(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgUnload"));
-    _deviceFlags = 0xFF;
-    DEBUG_PRINTLN(F(" reset to factory setting in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+    if (msg[2] == 0xFF) {
+
+        // set all bits back to 1
+        _deviceFlags = 0xFF;
+
+        // clearing all up to userspace
+        for (int i=0;i<getMemoryUserSpaceStart(); i++) {
+            memoryWrite(i, 0xFF);
+        }
+
+    } else {
+
+        // set bits back to 1
+        if (msg[3] == 0xFF) {
+            _deviceFlags |= DEVICEFLAG_IA_BIT;
+            memoryWrite(EEPROM_INDIVIDUALADDRESS_HI, 0xFF);
+            memoryWrite(EEPROM_INDIVIDUALADDRESS_LO, 0xFF);
+        }
+        if (msg[4] == 0xFF) {
+            _deviceFlags |= DEVICEFLAG_CO_BIT;
+            for (int i=KONNEKTING_MEMORYADDRESS_ADDRESSTABLE;i<KONNEKTING_MEMORYADDRESS_PARAMETERTABLE; i++) {
+                memoryWrite(i, 0xFF);
+            }
+        }
+        if (msg[5] == 0xFF) {
+            _deviceFlags |= DEVICEFLAG_PARAM_BIT;
+            for (int i=KONNEKTING_MEMORYADDRESS_PARAMETERTABLE;i<getMemoryUserSpaceStart(); i++) {
+                memoryWrite(i, 0xFF);
+            }
+        }
+        if (msg[6] == 0xFF) {
+            _deviceFlags |= DEVICEFLAG_DATA_BIT;
+            
+        }
+
+    }
+    
+    DEBUG_PRINTLN(F(" unloaded. new device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
     memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
     sendMsgAck(ACK, ERR_CODE_OK);
     DEBUG_PRINTLN(F("handleMsgUnload *done*"));
@@ -872,64 +935,62 @@ void KonnektingDevice::handleMsgProgrammingModeRead(byte /*msg*/[]) {
 void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgMemoryWrite"));
 
-    boolean systemTableChanged = false;
-
     uint8_t count = msg[2];
     uint16_t startAddr = __WORD(msg[3], msg[4]);
     DEBUG_PRINTLN(F("  count=%d startAddr=0x%04x"), count, startAddr);
 
-    if (startAddr >= 16 && startAddr < 32 && count > 0) {
-        systemTableChanged = true;
+    // It makes no sense to write anything if there is no data.
+    // It also makes no sense to send no data.
+    // But we never know .. so we check.
+    if (count>0) {}
 
-    }
+        // write data to memory
+        for (uint8_t i = 0; i < count; i++) {
+            uint16_t addr = startAddr + i;
+            byte data = msg[5 + i];
+            memoryWrite(addr, data);
+        }
 
-    for (uint8_t i = 0; i < count; i++) {
-        uint16_t addr = startAddr + i;
-        byte data = msg[5 + i];
+        // reload all system table related r/w data, if required
+        if (startAddr >= 16 && startAddr < 32) {
+            // FIXME introduce extra method for this? Is this called anywhere else as well?
+            DEBUG_PRINTLN(F(" reload system table data due to change"));
+            byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
+            byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
+            _individualAddress = __WORD(hiAddr, loAddr);        
+        }
 
-        memoryWrite(addr, data);
-    }
+        // howto: clearing bits: https://stackoverflow.com/questions/47981/how-do-you-set-clear-and-toggle-a-single-bit
 
-    if (systemTableChanged) {
-        DEBUG_PRINTLN(F(" reload system table data due to change"));
-        // reload all system table related r/w data
-        byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
-        byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
-        _individualAddress = __WORD(hiAddr, loAddr);        
-    }
+        if (isFactorySetting()) {
+            _deviceFlags &= ~DEVICEFLAG_FACTORY_BIT;
+            DEBUG_PRINTLN(F(" set  factory setting bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+        }
 
-    if (isFactorySetting()) {
-        // clear factory setting bit to 0
-        _deviceFlags &= ~DEVICEFLAG_FACTORY_BIT;
-        DEBUG_PRINTLN(F(" toggled factory setting bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
-    }
+        // check if IA has been touched AND IA bit is still on factory
+        if ((startAddr == EEPROM_INDIVIDUALADDRESS_HI || startAddr == EEPROM_INDIVIDUALADDRESS_LO)
+        && ((_deviceFlags & DEVICEFLAG_IA_BIT) == DEVICEFLAG_IA_BIT) ) {
+            _deviceFlags &= ~DEVICEFLAG_IA_BIT;
+            DEBUG_PRINTLN(F(" set IA bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+        }
 
-    // check if IA has been touched AND IA bit is still on factory
-    if ((startAddr == EEPROM_INDIVIDUALADDRESS_HI || startAddr == EEPROM_INDIVIDUALADDRESS_LO)
-     && ((_deviceFlags & DEVICEFLAG_IA_BIT) == 0) ) {
-        // clear IA flag to 0 as IA has been set
-        _deviceFlags &= ~DEVICEFLAG_IA_BIT;
-        DEBUG_PRINTLN(F(" toggled IA bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
-    }
+        // check if COs have been touched (memoryaddress within Address, Assoc or CO table)) AND CO bit is still on factory
+        if (startAddr >= KONNEKTING_MEMORYADDRESS_ADDRESSTABLE && startAddr < KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
+        && ((_deviceFlags & DEVICEFLAG_CO_BIT) == DEVICEFLAG_CO_BIT) ) {
+            _deviceFlags &= ~DEVICEFLAG_CO_BIT;
+            DEBUG_PRINTLN(F(" set CO bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+        }
 
-    // check if COs have been touched (memoryaddress within Address, Assoc or CO table)) AND CO bit is still on factory
-    if (startAddr >= KONNEKTING_MEMORYADDRESS_ADDRESSTABLE && startAddr < KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
-     && ((_deviceFlags & DEVICEFLAG_CO_BIT) == 0) ) {
-        // clear IA flag to 0 as IA has been set
-        _deviceFlags &= ~DEVICEFLAG_CO_BIT;
-        DEBUG_PRINTLN(F(" toggled CO bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
-    }
-
-    // check if params have been touched AND params bit is still on factory
-    if ((startAddr >= KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
-     && ((_deviceFlags & DEVICEFLAG_PARAM_BIT) == 0) ) {
-        // clear IA flag to 0 as IA has been set
-        _deviceFlags &= ~DEVICEFLAG_PARAM_BIT;
-        DEBUG_PRINTLN(F(" toggled Params bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+        // check if params have been touched AND params bit is still on factory
+        if ((startAddr >= KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
+        && ((_deviceFlags & DEVICEFLAG_PARAM_BIT) == DEVICEFLAG_PARAM_BIT) ) {
+            _deviceFlags &= ~DEVICEFLAG_PARAM_BIT;
+            DEBUG_PRINTLN(F(" set Params bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+        }
     }
 
     sendMsgAck(ACK, ERR_CODE_OK);
@@ -1193,7 +1254,7 @@ void KonnektingDevice::handleMsgDataRead(byte msg[]) {
 }
 
 void KonnektingDevice::handleMsgDataRemove(byte msg[]) {
-    // TODO
+    DEBUG_PRINTLN(F("handleMsgDataRemove: NOT YET IMPLEMENTED"));
 }
 
 byte KonnektingDevice::memoryRead(int index) {
@@ -1467,7 +1528,7 @@ String KonnektingDevice::getSTRING11Param(int index) {
  *  @return eeprom address at which the "user space" starts
  */
 /**************************************************************************/
-int KonnektingDevice::getFreeEepromOffset() {
+int KonnektingDevice::getMemoryUserSpaceStart() {
     int offset = KONNEKTING_MEMORYADDRESS_PARAMETERTABLE;
     for (int i = 0; i < _numberOfParams; i++) {
         offset += _paramSizeList[i];

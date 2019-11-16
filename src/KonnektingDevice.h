@@ -241,7 +241,15 @@ class KonnektingDevice {
     String getSTRING11Param(int index);
 
     bool isActive();
+
+    // -----------------------------
+    // device flags
     bool isFactorySetting();
+    bool isIndividualAddressSet();
+    bool isComObjSet();
+    bool isParamsSet();
+    bool isDataSet();
+    // -----------------------------
 
     bool isProgState();
 
@@ -249,7 +257,7 @@ class KonnektingDevice {
 
     void setProgState(bool state);
 
-    int getFreeEepromOffset();
+    int getMemoryUserSpaceStart();
 
    private:
     CRC32 _crc32;
