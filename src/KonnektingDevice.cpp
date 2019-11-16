@@ -377,7 +377,7 @@ bool KonnektingDevice::isActive() { return _initialized; }
 /**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
     // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
-    bool isFactory = _deviceFlags == 0xff || (_deviceFlags & 0x80) == 0x80;
+    bool isFactory = _deviceFlags == 0xff || (_deviceFlags & DEVICEFLAG_FACTORY_BIT) == DEVICEFLAG_FACTORY_BIT;
     return isFactory;
 }
 
@@ -801,7 +801,9 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
 
 void KonnektingDevice::handleMsgUnload(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgUnload"));
-    // TODO implement me
+    _deviceFlags = 0xFF;
+    DEBUG_PRINTLN(F(" reset to factory setting in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+    memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
     sendMsgAck(ACK, ERR_CODE_OK);
     DEBUG_PRINTLN(F("handleMsgUnload *done*"));
 }
@@ -878,6 +880,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
 
     if (startAddr >= 16 && startAddr < 32 && count > 0) {
         systemTableChanged = true;
+
     }
 
     for (uint8_t i = 0; i < count; i++) {
@@ -886,19 +889,49 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
 
         memoryWrite(addr, data);
     }
-    if (isFactorySetting()) {
-        // clear factory setting bit to 0
-        _deviceFlags &= ~0x80;
-        DEBUG_PRINTLN(F(" toggled factory setting in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
-    }
+
     if (systemTableChanged) {
         DEBUG_PRINTLN(F(" reload system table data due to change"));
         // reload all system table related r/w data
         byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
         byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
-        _individualAddress = __WORD(hiAddr, loAddr);
+        _individualAddress = __WORD(hiAddr, loAddr);        
     }
+
+    if (isFactorySetting()) {
+        // clear factory setting bit to 0
+        _deviceFlags &= ~DEVICEFLAG_FACTORY_BIT;
+        DEBUG_PRINTLN(F(" toggled factory setting bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    }
+
+    // check if IA has been touched AND IA bit is still on factory
+    if ((startAddr == EEPROM_INDIVIDUALADDRESS_HI || startAddr == EEPROM_INDIVIDUALADDRESS_LO)
+     && ((_deviceFlags & DEVICEFLAG_IA_BIT) == 0) ) {
+        // clear IA flag to 0 as IA has been set
+        _deviceFlags &= ~DEVICEFLAG_IA_BIT;
+        DEBUG_PRINTLN(F(" toggled IA bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    }
+
+    // check if COs have been touched (memoryaddress within Address, Assoc or CO table)) AND CO bit is still on factory
+    if (startAddr >= KONNEKTING_MEMORYADDRESS_ADDRESSTABLE && startAddr < KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
+     && ((_deviceFlags & DEVICEFLAG_CO_BIT) == 0) ) {
+        // clear IA flag to 0 as IA has been set
+        _deviceFlags &= ~DEVICEFLAG_CO_BIT;
+        DEBUG_PRINTLN(F(" toggled CO bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    }
+
+    // check if params have been touched AND params bit is still on factory
+    if ((startAddr >= KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
+     && ((_deviceFlags & DEVICEFLAG_PARAM_BIT) == 0) ) {
+        // clear IA flag to 0 as IA has been set
+        _deviceFlags &= ~DEVICEFLAG_PARAM_BIT;
+        DEBUG_PRINTLN(F(" toggled Params bit in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+        memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    }
+
     sendMsgAck(ACK, ERR_CODE_OK);
     DEBUG_PRINTLN(F("handleMsgMemoryWrite *done*"));
 }

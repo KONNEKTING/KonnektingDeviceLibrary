@@ -96,6 +96,12 @@
 #define DATA_TYPE_ID_UPDATE 0x00 ///< Firmware update for KONNEKTING device
 #define DATA_TYPE_ID_DATA 0x01 ///< Data, f.i. additional configuration, images, sounds, ...
 
+#define DEVICEFLAG_FACTORY_BIT 0x80
+#define DEVICEFLAG_IA_BIT 0x40
+#define DEVICEFLAG_CO_BIT 0x20
+#define DEVICEFLAG_PARAM_BIT 0x10
+#define DEVICEFLAG_DATA_BIT 0x08
+
 #define WAIT_FOR_ACK_TIMEOUT 5000
 
 #define PARAM_INT8 1
