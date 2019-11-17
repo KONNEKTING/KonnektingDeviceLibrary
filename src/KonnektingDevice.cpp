@@ -179,7 +179,7 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
          * Read eeprom stuff
          */
 
-        if (isIndividualAddressSet()) {}
+        if (isIndividualAddressSet()) {
             // PA
             byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
             byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
@@ -942,7 +942,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
     // It makes no sense to write anything if there is no data.
     // It also makes no sense to send no data.
     // But we never know .. so we check.
-    if (count>0) {}
+    if (count>0) {
 
         // write data to memory
         for (uint8_t i = 0; i < count; i++) {
@@ -977,7 +977,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
         }
 
         // check if COs have been touched (memoryaddress within Address, Assoc or CO table)) AND CO bit is still on factory
-        if (startAddr >= KONNEKTING_MEMORYADDRESS_ADDRESSTABLE && startAddr < KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
+        if ((startAddr >= KONNEKTING_MEMORYADDRESS_ADDRESSTABLE && startAddr < KONNEKTING_MEMORYADDRESS_PARAMETERTABLE)
         && ((_deviceFlags & DEVICEFLAG_CO_BIT) == DEVICEFLAG_CO_BIT) ) {
             _deviceFlags &= ~DEVICEFLAG_CO_BIT;
             DEBUG_PRINTLN(F(" set CO bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
