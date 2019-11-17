@@ -192,7 +192,7 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE   = 0x%04x"), KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
         // DEBUG_PRINTLN(F("KONNEKTING_MEMORYADDRESS_PARAMETERTABLE    = 0x%04x"), KONNEKTING_MEMORYADDRESS_PARAMETERTABLE);
 
-        if (isComObjSet) {
+        if (isComObjSet()) {
             DEBUG_PRINT(F("Reading commobj table..."));
             uint8_t commObjTableEntries = memoryRead(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE);
             DEBUG_PRINTLN(F("%i entries"), commObjTableEntries);
