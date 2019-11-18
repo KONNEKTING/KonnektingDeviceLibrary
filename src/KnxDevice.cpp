@@ -88,16 +88,23 @@ KnxDeviceStatus KnxDevice::begin(HardwareSerial& serial, word physicalAddr) {
 
 // Stop the KNX Device
 void KnxDevice::end() {
-    TxAction action;
-
+    //TxAction action;
+    DEBUG_PRINTLN(F("KnxDevice::end begin ..."));
+    //while (_txActionList.pop(action))
+        //;  // empty ring buffer
+        //
+        // ensure all telegrams are sent
+        while (_txActionList.getItemCount()>0) {
+            DEBUG_PRINTLN(F("KnxDevice::end working on open tasks: %d"), _txActionList.getItemCount());
+            task();
+        }
     _state = INIT;
-    while (_txActionList.pop(action))
-        ;  // empty ring buffer
     _initCompleted = false;
     _initIndex = 0;
     _rxTelegram = NULL;
     delete (_tpuart);
     _tpuart = NULL;
+    DEBUG_PRINTLN(F("KnxDevice::end *done*"));
 }
 
 /** 

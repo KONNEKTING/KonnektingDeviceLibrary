@@ -590,6 +590,7 @@ KnxComObject KonnektingDevice::createProgComObject() {
  */
 /**************************************************************************/
 void KonnektingDevice::reboot() {
+    
     Knx.end();
 
 #if defined(ESP8266) || defined(ESP32)
@@ -873,7 +874,7 @@ void KonnektingDevice::handleMsgUnload(byte msg[]) {
 
 void KonnektingDevice::handleMsgRestart(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgRestart"));
-
+    sendMsgAck(ACK, ERR_CODE_OK);
     if (_individualAddress == __WORD(msg[2], msg[3])) {
 #ifdef DEBUG_PROTOCOL
         DEBUG_PRINTLN(F("matching IA"));

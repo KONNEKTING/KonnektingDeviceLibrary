@@ -14,6 +14,8 @@
         "unordered_map": "cpp",
         "vector": "cpp",
         "system_error": "cpp",
-        "cstddef": "cpp"
+        "cstddef": "cpp",
+        "string": "cpp",
+        "string_view": "cpp"
     }
 }
