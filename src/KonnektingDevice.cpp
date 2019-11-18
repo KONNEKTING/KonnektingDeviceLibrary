@@ -381,7 +381,7 @@ bool KonnektingDevice::isActive() { return _initialized; }
 /**************************************************************************/
 bool KonnektingDevice::isFactorySetting() {
     // see: https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Device_Flags
-    bool isFactory = _deviceFlags == 0xFF || (_deviceFlags & DEVICEFLAG_FACTORY_BIT) == 0;
+    bool isFactory = _deviceFlags == 0xFF || (_deviceFlags & DEVICEFLAG_FACTORY_BIT) == DEVICEFLAG_FACTORY_BIT;
     return isFactory;
 }
 
@@ -874,16 +874,16 @@ void KonnektingDevice::handleMsgUnload(byte msg[]) {
 
 void KonnektingDevice::handleMsgRestart(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgRestart"));
-    sendMsgAck(ACK, ERR_CODE_OK);
     if (_individualAddress == __WORD(msg[2], msg[3])) {
+        sendMsgAck(ACK, ERR_CODE_OK);
 #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("matching IA"));
+        DEBUG_PRINTLN(F("matching IA: 0x%04X"), _individualAddress);
 #endif
         // trigger restart
         reboot();
     } else {
 #ifdef DEBUG_PROTOCOL
-        DEBUG_PRINTLN(F("no matching: IA 0x%04X <- 0x%04X"), _individualAddress, __WORD(msg[2], msg[3]));
+        DEBUG_PRINTLN(F("no matching IA: self=0x%04X got=0x%04X"), _individualAddress, __WORD(msg[2], msg[3]));
 #endif
     }
 }
