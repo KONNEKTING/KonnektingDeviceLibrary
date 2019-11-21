@@ -192,6 +192,7 @@ class KonnektingDevice {
     unsigned long (*_dataOpenReadFunc)(byte, byte);
     bool (*_dataWriteFunc)(byte*, int);
     bool (*_dataReadFunc)(byte*, int);
+    bool (*_dataRemoveFunc)(byte, byte);
     bool (*_dataCloseFunc)(void);
 
     // Constructor, Destructor
@@ -212,6 +213,7 @@ class KonnektingDevice {
     void setDataOpenReadFunc(unsigned long (*func)(byte, byte));
     void setDataWriteFunc(bool (*func)(byte*, int));
     void setDataReadFunc(bool (*func)(byte*, int));
+    void setDataRemoveFunc(bool (*func)(byte, byte));
     void setDataCloseFunc(bool (*func)());
 
     void init(HardwareSerial &serial, void (*progIndicatorFunc)(bool),

@@ -16,6 +16,10 @@
         "system_error": "cpp",
         "cstddef": "cpp",
         "string": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "type_traits": "cpp",
+        "chrono": "cpp",
+        "ratio": "cpp",
+        "ostream": "cpp"
     }
 }

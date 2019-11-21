@@ -1110,10 +1110,10 @@ void KonnektingDevice::handleMsgDataWriteFinish(byte msg[]) {
 
 void KonnektingDevice::handleMsgDataRead(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgDataRead"));
-    byte type = msg[2];
-    byte id = msg[3];
 
     if (*_dataOpenReadFunc != NULL && *_dataReadFunc != NULL && *_dataCloseFunc != NULL) {
+        byte type = msg[2];
+        byte id = msg[3];
         _crc32.reset();
         DEBUG_PRINTLN(F(" using fctptr type=%i id=%i"), type, id);
 
@@ -1255,7 +1255,24 @@ void KonnektingDevice::handleMsgDataRead(byte msg[]) {
 }
 
 void KonnektingDevice::handleMsgDataRemove(byte msg[]) {
-    DEBUG_PRINTLN(F("handleMsgDataRemove: NOT YET IMPLEMENTED"));
+
+    DEBUG_PRINTLN(F("handleMsgDataRemove:"));
+
+    if (*_dataRemoveFunc != NULL) {
+        byte type = msg[2];
+        byte id = msg[3];
+        DEBUG_PRINTLN(F(" using fctptr type=%i id=%i"), type, id);
+        bool success = _dataRemoveFunc(type, id);
+        if (success) {
+            sendMsgAck(ACK, ERR_CODE_OK);
+        } else {
+            sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
+        }
+    } else {
+        DEBUG_PRINTLN(F("handleMsgDataRemove: missing FCTPTR!"));
+        sendMsgAck(NACK, ERR_CODE_NOT_SUPPORTED);
+    }
+
 }
 
 byte KonnektingDevice::memoryRead(int index) {
@@ -1585,6 +1602,7 @@ void KonnektingDevice::setMemoryCommitFunc(void (*func)(void)) {
     _eepromCommitFunc = func;
 }
 
+// SPI Flash file storage function pointer setters
 void KonnektingDevice::setDataOpenWriteFunc(bool (*func)(byte, byte, unsigned long)) {
     _dataOpenWriteFunc = func;
 }
@@ -1596,6 +1614,9 @@ void KonnektingDevice::setDataWriteFunc(bool (*func)(byte *, int)) {
 }
 void KonnektingDevice::setDataReadFunc(bool (*func)(byte *, int)) {
     _dataReadFunc = func;
+}
+void KonnektingDevice::setDataRemoveFunc(bool (*func)(byte, byte)) {
+    _dataRemoveFunc = func;
 }
 void KonnektingDevice::setDataCloseFunc(bool (*func)()) {
     _dataCloseFunc = func;
