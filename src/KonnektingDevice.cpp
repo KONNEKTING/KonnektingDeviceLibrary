@@ -829,47 +829,73 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
 
 void KonnektingDevice::handleMsgUnload(byte msg[]) {
     DEBUG_PRINTLN(F("handleMsgUnload"));
+    byte newDeviceFlags = _deviceFlags;
     if (msg[2] == 0xFF) {
-
+        DEBUG_PRINTLN(F(" factory reset"));
         // set all bits back to 1
-        _deviceFlags = 0xFF;
+        newDeviceFlags = 0xFF;
 
         // clearing all up to userspace
         for (int i=0;i<getMemoryUserSpaceStart(); i++) {
             memoryWrite(i, 0xFF);
         }
 
+        // clear all spi flash data
+        if (*_dataRemoveFunc != NULL) {
+            byte type = 0x01;
+            for (int id = 0; id<256; id+=1) {
+                DEBUG_PRINTLN(F("  removing id=%i"), type, id);
+                _dataRemoveFunc(type, id);
+            } 
+        } else {
+            DEBUG_PRINTLN(F(" nothing to removing, no fctptr availavle"));
+        }
+
     } else {
 
         // set bits back to 1
         if (msg[3] == 0xFF) {
-            _deviceFlags |= DEVICEFLAG_IA_BIT;
+            DEBUG_PRINTLN(F(" IA"));
+            newDeviceFlags |= DEVICEFLAG_IA_BIT;
             memoryWrite(EEPROM_INDIVIDUALADDRESS_HI, 0xFF);
             memoryWrite(EEPROM_INDIVIDUALADDRESS_LO, 0xFF);
         }
         if (msg[4] == 0xFF) {
-            _deviceFlags |= DEVICEFLAG_CO_BIT;
+            DEBUG_PRINTLN(F(" CO"));
+            newDeviceFlags |= DEVICEFLAG_CO_BIT;
             for (int i=KONNEKTING_MEMORYADDRESS_ADDRESSTABLE;i<KONNEKTING_MEMORYADDRESS_PARAMETERTABLE; i++) {
                 memoryWrite(i, 0xFF);
             }
         }
         if (msg[5] == 0xFF) {
-            _deviceFlags |= DEVICEFLAG_PARAM_BIT;
+            DEBUG_PRINTLN(F(" param"));
+            newDeviceFlags |= DEVICEFLAG_PARAM_BIT;
             for (int i=KONNEKTING_MEMORYADDRESS_PARAMETERTABLE;i<getMemoryUserSpaceStart(); i++) {
                 memoryWrite(i, 0xFF);
             }
         }
         if (msg[6] == 0xFF) {
-            _deviceFlags |= DEVICEFLAG_DATA_BIT;
-            
+            DEBUG_PRINTLN(F(" data"));
+            newDeviceFlags |= DEVICEFLAG_DATA_BIT;
+            if (*_dataRemoveFunc != NULL) {
+                byte type = 0x01;
+               for (int id = 0; id<256; id+=1) {
+                    DEBUG_PRINTLN(F("  removing id=%i"), type, id);
+                    _dataRemoveFunc(type, id);
+                } 
+            } else {
+                DEBUG_PRINTLN(F(" nothing to removing, no fctptr availavle"));
+            }
         }
 
     }
     
-    DEBUG_PRINTLN(F(" unloaded. new device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-    memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    DEBUG_PRINTLN(F(" unloaded. new device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(newDeviceFlags));
     sendMsgAck(ACK, ERR_CODE_OK);
+    _deviceFlags = newDeviceFlags;
+    memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
     DEBUG_PRINTLN(F("handleMsgUnload *done*"));
+    reboot();
 }
 
 void KonnektingDevice::handleMsgRestart(byte msg[]) {
