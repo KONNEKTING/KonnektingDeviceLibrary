@@ -841,14 +841,17 @@ void KonnektingDevice::handleMsgUnload(byte msg[]) {
         }
 
         // clear all spi flash data
-        if (*_dataRemoveFunc != NULL) {
-            byte type = 0x01;
-            for (int id = 0; id<256; id+=1) {
-                DEBUG_PRINTLN(F("  removing id=%i"), type, id);
-                _dataRemoveFunc(type, id);
-            } 
+        if (*_dataRemoveFunc != NULL) {            
+            for (int typeId = 0x01; typeId<256; typeId++) {
+                DEBUG_PRINT(F("\n  removing data for typeId=%i\n\t"), typeId);
+                for (int dataId = 0; dataId<256; dataId+=1) {
+                    bool res = _dataRemoveFunc(typeId, dataId);
+                    DEBUG_PRINT(F("%s%s"), (res?".":"x"), (dataId%64==63?"\n\t":""));
+                } 
+            }
+            DEBUG_PRINTLN(F(""));
         } else {
-            DEBUG_PRINTLN(F(" nothing to removing, no fctptr availavle"));
+            DEBUG_PRINTLN(F(" nothing to remove, no fctptr available"));
         }
 
     } else {
@@ -875,16 +878,20 @@ void KonnektingDevice::handleMsgUnload(byte msg[]) {
             }
         }
         if (msg[6] == 0xFF) {
-            DEBUG_PRINTLN(F(" data"));
+            DEBUG_PRINT(F(" data"));
             newDeviceFlags |= DEVICEFLAG_DATA_BIT;
-            if (*_dataRemoveFunc != NULL) {
-                byte type = 0x01;
-               for (int id = 0; id<256; id+=1) {
-                    DEBUG_PRINTLN(F("  removing id=%i"), type, id);
-                    _dataRemoveFunc(type, id);
-                } 
+            // clear all spi flash data
+            if (*_dataRemoveFunc != NULL) {            
+                for (int typeId = 0x01; typeId<256; typeId++) {
+                    DEBUG_PRINT(F("\n  removing data for typeId=%i\n\t"), typeId);
+                    for (int dataId = 0; dataId<256; dataId+=1) {
+                        bool res = _dataRemoveFunc(typeId, dataId);
+                        DEBUG_PRINT(F("%s%s"), (res?".":"x"), (dataId%64==63?"\n\t":""));
+                    } 
+                }
+                DEBUG_PRINTLN(F(""));
             } else {
-                DEBUG_PRINTLN(F(" nothing to removing, no fctptr availavle"));
+                DEBUG_PRINTLN(F(" nothing to remove, no fctptr available"));
             }
         }
 
