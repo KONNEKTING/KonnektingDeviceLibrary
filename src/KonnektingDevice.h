@@ -137,13 +137,13 @@ inline unsigned long __DWORD(byte b0, byte b1, byte b2, byte b3) { return (unsig
 // process intercepted knxEvents-calls with this method
 extern void konnektingKnxEvents(byte index);
 
-typedef struct AssociationTable {
+struct AssociationTable {
     byte size;
     byte* gaId;
     byte* coId;
 };
 
-typedef struct AddressTable {
+struct AddressTable {
     byte size;
     word* address;
 };
@@ -151,7 +151,7 @@ typedef struct AddressTable {
 /**
  * see https://wiki.konnekting.de/index.php?title=KONNEKTING_Protocol_Specification_0x01#0x28_DataWritePrepare
  */
-typedef struct DataWrite {
+struct DataWrite {
     byte count;
     byte data[11];
 };
