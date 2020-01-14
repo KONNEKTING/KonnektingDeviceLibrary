@@ -1,12 +1,10 @@
 image: debian:testing-slim
 
 before_script:
-  # make aliases be usable from different jobs, see: https://gitlab.com/gitlab-org/gitlab-runner/issues/1083
-  - shopt -s expand_aliases
-  # alias dir Arduino CLI to always include custom config file
-  - alias arduinocli="bin/arduino-cli --config-file $CI_PROJECT_DIR/preferences.txt"
+  - echo "doing before script ..."
+  - echo "doing before script ... *DONE*"
   
-# cache the Arduino CLI setup and config  
+# cache the Arduino CLI setup and config from .pre
 cache:
   paths:
     - preferences.txt
@@ -17,7 +15,6 @@ cache:
 install Arduino CLI:
   stage: .pre
   script:
-    # install CURL command to be able to install Arduino CLI
     - ./setup-build-env.sh  
 
 build DemoSketch:

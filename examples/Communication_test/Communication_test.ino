@@ -1,6 +1,7 @@
 #define KONNEKTING_SYSTEM_TYPE_SIMPLE
 #include <KonnektingDevice.h>
-
+//#include <SerialFlash.h>
+//#include <SerialFlash.h>
 // ################################################
 // ### KNX DEVICE CONFIGURATION
 // ################################################
