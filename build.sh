@@ -1,25 +1,46 @@
 #!/bin/bash
 
+rootcheck () {
+    if [ $(id -u) != "0" ]
+    then
+    	echo "!! We require root permissions, try SUDO ?"
+        echo ""
+        echo ""
+#        sudo "$0" "$1"  # Modified as suggested below.
+        exit $?
+    else
+       echo "-> Ok, we have root permissions."
+    fi
+}
+
 printCheckmark() {
     echo -e "\xe2\x9c\x93"
     echo ""
 }
+
+echo "========================================"
+echo "Arduino CLI Build "
+echo "========================================"
+echo
+rootcheck
 
 WORKING_DIR="${CI_PROJECT_DIR:-/tmp/arduino-cli-build}"
 # script argument #1 --> which sketch to compile
 SKETCH=$1
 # script argument #2 --> which output dir to use
 OUT_DIR="${2:-$WORKING_DIR/bin}"
-OUTFILE=$OUT_DIR/`basename -a -s .ino $SKETCH`
+mkdir -p $OUT_DIR
+OUT_FILE=`basename -a -s .ino $SKETCH`
 ARDUINO_DIR=$WORKING_DIR/Arduino
 ARDUINO_LIB_DIR=$ARDUINO_DIR/libraries
 ARDUINO_15_DIR=$WORKING_DIR/.arduino15
 ARDUINO_CLI_DIR=$WORKING_DIR/arduino-cli
 PATH="$ARDUINO_CLI_DIR:$PATH"
-alias arduinocli="$ARDUINO_CLI_DIR/arduino-cli --config-file $ARDUINO_CLI_DIR/preferences.txt"
+alias arduinocli="$ARDUINO_CLI_DIR/arduino-cli --config-file $ARDUINO_CLI_DIR/arduino-cli.yaml"
 # make this script expand alias, see alias usage below...
 shopt -s expand_aliases
 
+echo "Sketch: $SKETCH"
 echo "Using working directory: $WORKING_DIR"
 echo "Using output directory: $OUT_DIR"
 
@@ -39,15 +60,15 @@ done
 echo ""
 
 echo "Compiling $SKETCH for SAMD ..."
-arduinocli compile -b arduino:samd:mzero_bl -o ${OUTFILE}_samd.bin $SKETCH
+arduinocli compile -b arduino:samd:mzero_bl -o $OUT_DIR/${OUT_FILE}_samd.bin $SKETCH
 
 #echo "Compiling $SKETCH for ESP8266 ..."
-#- arduinocli compile -b esp8266:esp8266:generic -o ${OUTFILE}_esp8266.bin $SKETCH
+#- arduinocli compile -b esp8266:esp8266:generic -o $OUT_DIR/${OUT_FILE}_esp8266.bin $SKETCH
 
 echo "Compiling $SKETCH for UNO ..."
-arduinocli compile -b arduino:avr:uno -o ${OUTFILE}_uno.bin $SKETCH
+arduinocli compile -b arduino:avr:uno -o $OUT_DIR/${OUT_FILE}_uno.bin $SKETCH
 
 echo "Compiling $SKETCH for Leonardo ..."
-arduinocli compile -b arduino:avr:leonardo -o ${OUTFILE}_leonardo.bin $SKETCH
+arduinocli compile -b arduino:avr:leonardo -o $OUT_DIR/${OUT_FILE}_leonardo.bin $SKETCH
 
 echo "build *done*"
