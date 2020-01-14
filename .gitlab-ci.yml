@@ -18,75 +18,20 @@ install Arduino CLI:
   stage: .pre
   script:
     # install CURL command to be able to install Arduino CLI
-    - apt-get -q -q update
-    - apt-get -y -q -q install curl rsync
-  
-    # install Arduino CLI
-    - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-    
-    # make local arduino folders and preferences, preferences will be used by ALIAS command, see 'before_script' above
-    - mkdir -p $CI_PROJECT_DIR/Arduino
-    - mkdir -p $CI_PROJECT_DIR/.arduino15
-    - "echo \"sketchbook_path: $CI_PROJECT_DIR/Arduino\" > preferences.txt"
-    - "echo \"arduino_data: $CI_PROJECT_DIR/.arduino15\" >> preferences.txt"
-    - cat preferences.txt
-
-    # make our project available as library for Arduino
-    - mkdir -p $CI_PROJECT_DIR/Arduino/libraries/KONNEKTING
-    - rsync -avz --exclude 'Arduino' --exclude 'bin' --exclude '.arduino15' * Arduino/libraries/KONNEKTING
-  
-    # show config
-    - arduinocli config dump 
-  
-    # update core board index
-    - arduinocli core update-index
-  
-    # install SAMD core
-    - arduinocli core install arduino:samd
-  
-    # install UNO/Leonardo/...
-    - arduinocli core install arduino:avr
-
-    # install ESP8266 core
-    - arduinocli core update-index --additional-urls "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
-    - arduinocli core install esp8266:esp8266 --additional-urls "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
-  
-    # list installed cores and boards
-    - arduinocli core list
-    - arduinocli board listall
-  
-    # install libs
-    - arduinocli lib install "OneWire"
-    - arduinocli lib install "DallasTemperature"
-    - arduinocli lib install "SparkFun HTU21D Humidity and Temperature Sensor Breakout"
-    - arduinocli lib install "FlashStorage"
-    - arduinocli lib install "CRC32"
-  
-    # list libs
-    - arduinocli lib list
+    - ./setup-build-env.sh  
 
 build DemoSketch:
   stage: build
   script:
-    - arduinocli compile -b arduino:samd:mzero_bl examples/DemoSketch/DemoSketch.ino
-    #- arduinocli compile -b esp8266:esp8266:generic examples/DemoSketch/DemoSketch.ino
-    - arduinocli compile -b arduino:avr:uno examples/DemoSketch/DemoSketch.ino
-    - arduinocli compile -b arduino:avr:leonardo examples/DemoSketch/DemoSketch.ino
+    - ./build.sh examples/DemoSketch/DemoSketch.ino
     
 build Communication_test:
   stage: build
   script:
-    - arduinocli compile -b arduino:samd:mzero_bl examples/Communication_test/Communication_test.ino
-    #- arduinocli compile -b esp8266:esp8266:generic examples/Communication_test/Communication_test.ino
-    - arduinocli compile -b arduino:avr:uno examples/Communication_test/Communication_test.ino
-    - arduinocli compile -b arduino:avr:leonardo examples/Communication_test/Communication_test.ino
+    - ./build.sh examples/Communication_test/Communication_test.ino
 
 build DemoSketch_without_pins:
   stage: build
   script:
-    - arduinocli compile -b arduino:samd:mzero_bl examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
-    #- arduinocli compile -b esp8266:esp8266:generic examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
-    - arduinocli compile -b arduino:avr:uno examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
-    - arduinocli compile -b arduino:avr:leonardo examples/DemoSketch_without_pins/DemoSketch_without_pins.ino
-    
+    - ./build.sh examples/DemoSketch_without_pins/DemoSketch_without_pins.ino    
     
