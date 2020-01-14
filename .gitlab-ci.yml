@@ -7,10 +7,9 @@ before_script:
 # cache the Arduino CLI setup and config from .pre
 cache:
   paths:
-    - preferences.txt
     - Arduino/**
     - .arduino15/**  
-    - bin/**
+    - arduino-cli/**
   
 install Arduino CLI:
   stage: .pre

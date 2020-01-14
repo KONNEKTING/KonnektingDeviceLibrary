@@ -38,9 +38,9 @@ ARDUINO_15_DIR=$WORKING_DIR/.arduino15
 ARDUINO_CLI_DIR=$WORKING_DIR/arduino-cli
 PATH="$ARDUINO_CLI_DIR:$PATH"
 
-echo -n "-> Cleanup old stuff "
-rm -Rf $WORKING_DIR
-printCheckmark
+#echo -n "-> Cleanup old stuff "
+#rm -Rf $WORKING_DIR
+#printCheckmark
 
 echo "-> Using working directory: $WORKING_DIR"
 
