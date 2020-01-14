@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # script argument #1 --> which sketch to compile
 SKETCH=$1

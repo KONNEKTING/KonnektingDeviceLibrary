@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # setup the build environment: 
 #  * install Arduino CLI
