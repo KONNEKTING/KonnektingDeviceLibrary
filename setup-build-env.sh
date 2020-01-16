@@ -26,12 +26,16 @@ echo "========================================"
 echo "Setup Arduino Build Environment "
 echo "========================================"
 echo
-rootcheck
+#rootcheck
 
 # make this script expand alias, see alias usage below...
 shopt -s expand_aliases
 
-WORKING_DIR="${CI_PROJECT_DIR:-/tmp/arduino-cli-build}"
+WORKING_DIR="${CI_PROJECT_DIR:-./arduino-cli-build}"
+if [ -e $WORKING_DIR ]; then
+  echo "existing setup in $WORKING_DIR detected. Nothing to install."
+  #exit;
+fi
 ARDUINO_DIR=$WORKING_DIR/Arduino
 ARDUINO_LIB_DIR=$ARDUINO_DIR/libraries
 ARDUINO_15_DIR=$WORKING_DIR/.arduino15
@@ -51,8 +55,8 @@ echo "-> Using working directory: $WORKING_DIR"
 
 # install CURL command to be able to install Arduino CLI
 echo -n "-> APT update and install curl+rsync "
-apt-get -q -q update
-apt-get -y -q -q install curl rsync
+sudo apt-get -q -q update
+sudo apt-get -y -q -q install curl rsync gawk
 printCheckmark
 
 # install Arduino CLI
@@ -85,10 +89,12 @@ alias arduinocli="$ARDUINO_CLI_DIR/arduino-cli --config-file $ARDUINO_CLI_DIR/ar
 printCheckmark;
 
 # make our project available as library for Arduino
-echo -n "-> Copy our lib "
-mkdir -p $ARDUINO_LIB_DIR/MYLIBRARY
-rsync -avzq --exclude 'Arduino' --exclude 'bin' --exclude '.arduino15' * $ARDUINO_LIB_DIR/MYLIBRARY
-printCheckmark;
+if [ ! -z $1 ]; then
+  echo -n "-> Copy $1 to sketchbook libraries "
+  mkdir -p $ARDUINO_LIB_DIR/MYLIBRARY
+  rsync -avzq --exclude 'Arduino' --exclude 'arduino-cli-build' --exclude 'bin' --exclude '.arduino15' $1 $ARDUINO_LIB_DIR/MYLIBRARY
+  printCheckmark;
+fi
 
 # show config
 echo "-> Arduino CLI config dump: "
@@ -98,13 +104,13 @@ arduinocli config dump
 echo "-> Update Core index"
 arduinocli core update-index
 
-# install SAMD core
-echo "-> Install SAMD core"
-arduinocli core install arduino:samd
-
 # install UNO/Leonardo/...
 echo "-> Install Arduino AVR core"
 arduinocli core install arduino:avr
+
+# install SAMD core
+echo "-> Install SAMD core"
+arduinocli core install arduino:samd
 
 # install ESP8266 core
 echo "-> Install Arduino ESP8266 core"

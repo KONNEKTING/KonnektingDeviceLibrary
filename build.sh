@@ -1,6 +1,9 @@
 #!/bin/bash
 
-rootcheck () {
+# -e exits on error, -u errors on undefined variables, and -o (for option) pipefail exits on command pipe failures.
+# set -euo pipefail
+
+function rootcheck () {
     if [ $(id -u) != "0" ]
     then
     	echo "!! We require root permissions, try SUDO ?"
@@ -13,22 +16,46 @@ rootcheck () {
     fi
 }
 
-printCheckmark() {
+function printCheckmark() {
     echo -e "\xe2\x9c\x93"
     echo ""
 }
+
+function printHelp() {
+    echo "Usage: "
+    echo "  sudo ./build.sh <sketch> <fqbn> <outputfolder>"
+    echo "  -> sketch: Path and folder to sketch.ino file"
+    echo "  -> fqbn (optional): full qualified board name. Supported (* = default if none specified): "
+    echo "     esp8266:esp8266:generic"
+    echo "     arduino:avr:uno"
+    echo "     arduino:avr:leonardo"
+    echo "     arduino:samd:mzero_bl *"
+    echo "  -> outputfolder (optional): folder to put the compiled binary to. (./bin if none specified)"
+    echo 
+    echo "Example: "
+    echo "  sudo ./build.sh exampleFolder/ExampleSketch.ino arduino:samd:mzero_bl ./bin"
+    echo
+}
+
 
 echo "========================================"
 echo "Arduino CLI Build "
 echo "========================================"
 echo
-rootcheck
+if [ -z $1 ]; then
+    printHelp
+    exit 0
+fi
 
-WORKING_DIR="${CI_PROJECT_DIR:-/tmp/arduino-cli-build}"
+#rootcheck
+
+WORKING_DIR="${CI_PROJECT_DIR:-./arduino-cli-build}"
 # script argument #1 --> which sketch to compile
 SKETCH=$1
+BOARD="${2:-arduino:samd:mzero_bl}"
+BOARD_SHORT=`echo $BOARD | gawk 'match($0, /^.*:(.*)$/, a) {print a[1]}'`
 # script argument #2 --> which output dir to use
-OUT_DIR="${2:-$WORKING_DIR/bin}"
+OUT_DIR="${3:-./bin}"
 mkdir -p $OUT_DIR
 OUT_FILE=`basename -a -s .ino $SKETCH`
 ARDUINO_DIR=$WORKING_DIR/Arduino
@@ -41,6 +68,8 @@ alias arduinocli="$ARDUINO_CLI_DIR/arduino-cli --config-file $ARDUINO_CLI_DIR/ar
 shopt -s expand_aliases
 
 echo "Sketch: $SKETCH"
+echo "Board: $BOARD"
+echo "Board short: $BOARD_SHORT"
 echo "Using working directory: $WORKING_DIR"
 echo "Using output directory: $OUT_DIR"
 
@@ -48,27 +77,24 @@ echo "Using output directory: $OUT_DIR"
 #   http://librarymanager/All#xxx @ 1.2.3
 # This will extract the lib name (xxx) and version (1.2.3) so that arduino CLI can install it
 LIBLINES=`cat $SKETCH | gawk 'match($0, /^.* http:\/\/librarymanager\/.*#(.*) @ (.*)$/, a) {print a[1]"@"a[2]}'`
-echo "Detected dependencies: "
-echo $LIBLINES
-echo 
-for libline in $LIBLINES
-do
-   echo "Installing dependency: $libline"
-   arduinocli lib install "$libline"
-   echo "*done*"
-done
+
+if [ -z $LIBLINES ]; then
+    echo "Detected dependencies: <none>"
+else
+    echo "Detected dependencies: "
+    echo $LIBLINES
+    echo 
+    for libline in $LIBLINES
+    do
+    echo "Installing dependency: $libline"
+    arduinocli lib install "$libline"
+    echo "*done*"
+    done
+fi
 echo ""
 
-echo "Compiling $SKETCH for SAMD ..."
-arduinocli compile -b arduino:samd:mzero_bl -o $OUT_DIR/${OUT_FILE}_samd.bin $SKETCH
+echo "Compiling $SKETCH for $BOARD ..."
 
-#echo "Compiling $SKETCH for ESP8266 ..."
-#- arduinocli compile -b esp8266:esp8266:generic -o $OUT_DIR/${OUT_FILE}_esp8266.bin $SKETCH
-
-echo "Compiling $SKETCH for UNO ..."
-arduinocli compile -b arduino:avr:uno -o $OUT_DIR/${OUT_FILE}_uno.bin $SKETCH
-
-echo "Compiling $SKETCH for Leonardo ..."
-arduinocli compile -b arduino:avr:leonardo -o $OUT_DIR/${OUT_FILE}_leonardo.bin $SKETCH
+arduinocli compile -b $BOARD -o $OUT_DIR/${OUT_FILE}_${BOARD_SHORT}.bin $SKETCH || echo "build *failed*"; exit 1;
 
 echo "build *done*"

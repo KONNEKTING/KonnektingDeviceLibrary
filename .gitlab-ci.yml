@@ -14,20 +14,28 @@ cache:
 install Arduino CLI:
   stage: .pre
   script:
-    - ./setup-build-env.sh  
+    - ./setup-build-env.sh . 
 
 build DemoSketch:
   stage: build
   script:
-    - ./build.sh examples/DemoSketch/DemoSketch.ino
+    - ./build.sh examples/DemoSketch/DemoSketch.ino arduino:avr:uno
+    - ./build.sh examples/DemoSketch/DemoSketch.ino arduino:avr:leonardo
+    - ./build.sh examples/DemoSketch/DemoSketch.ino arduino:samd:mzero_bl
+
     
 build Communication_test:
   stage: build
   script:
-    - ./build.sh examples/Communication_test/Communication_test.ino
+    - ./build.sh examples/Communication_test/Communication_test.ino arduino:avr:uno
+    - ./build.sh examples/Communication_test/Communication_test.ino arduino:avr:leonardo
+    - ./build.sh examples/Communication_test/Communication_test.ino arduino:samd:mzero_bl
 
 build DemoSketch_without_pins:
   stage: build
   script:
-    - ./build.sh examples/DemoSketch_without_pins/DemoSketch_without_pins.ino    
+    - ./build.sh examples/DemoSketch_without_pins/DemoSketch_without_pins.ino arduino:avr:uno
+    - ./build.sh examples/DemoSketch_without_pins/DemoSketch_without_pins.ino arduino:avr:leonardo
+    - ./build.sh examples/DemoSketch_without_pins/DemoSketch_without_pins.ino arduino:samd:mzero_bl
+
     
