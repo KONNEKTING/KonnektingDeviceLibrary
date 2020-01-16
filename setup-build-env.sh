@@ -55,8 +55,14 @@ echo "-> Using working directory: $WORKING_DIR"
 
 # install CURL command to be able to install Arduino CLI
 echo -n "-> APT update and install curl+rsync "
-sudo apt-get -q -q update
-sudo apt-get -y -q -q install curl rsync gawk
+if [ $(id -u) != "0" ]; then
+  # not root, need sudo
+  sudo apt-get -q -q update
+  sudo apt-get -y -q -q install curl rsync gawk
+else 
+  apt-get -q -q update
+  apt-get -y -q -q install curl rsync gawk
+fi 
 printCheckmark
 
 # install Arduino CLI

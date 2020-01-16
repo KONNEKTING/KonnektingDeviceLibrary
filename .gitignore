@@ -1,3 +1,4 @@
 /doc/
 /docs/
-./arduino-cli-build/
+arduino-cli-build/
+bin/
