@@ -54,16 +54,18 @@ echo "-> Using working directory: $WORKING_DIR"
 #  * install required libs (may be something more than we really need, but this does not hurt)
 
 # install CURL command to be able to install Arduino CLI
-echo -n "-> APT update and install curl+rsync "
-if [ $(id -u) != "0" ]; then
-  # not root, need sudo
-  sudo apt-get -q -q update
-  sudo apt-get -y -q -q install curl rsync gawk
-else 
-  apt-get -q -q update
-  apt-get -y -q -q install curl rsync gawk
-fi 
-printCheckmark
+if [ -z $(which rsync)]; then
+  echo -n "-> APT update and install curl+rsync "
+  if [ $(id -u) != "0" ]; then
+    # not root, need sudo
+    sudo apt-get -q -q update
+    sudo apt-get -y -q -q install rsync
+  else 
+    apt-get -q -q update
+    apt-get -y -q -q install rsync
+  fi 
+  printCheckmark
+fi
 
 # install Arduino CLI
 echo "-> Install Arduino CLI ..."

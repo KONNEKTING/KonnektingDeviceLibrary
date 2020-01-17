@@ -53,7 +53,7 @@ WORKING_DIR="${CI_PROJECT_DIR:-./arduino-cli-build}"
 # script argument #1 --> which sketch to compile
 SKETCH=$1
 BOARD="${2:-arduino:samd:mzero_bl}"
-BOARD_SHORT=`echo $BOARD | gawk 'match($0, /^.*:(.*)$/, a) {print a[1]}'`
+BOARD_SHORT=`echo $BOARD | perl -n -e 'm/^.*:(.*)$/ && print $1'`
 # script argument #2 --> which output dir to use
 OUT_DIR="${3:-./bin}"
 mkdir -p $OUT_DIR
@@ -76,7 +76,7 @@ echo "Using output directory: $OUT_DIR"
 # searching for lines which contains something like
 #   http://librarymanager/All#xxx @ 1.2.3
 # This will extract the lib name (xxx) and version (1.2.3) so that arduino CLI can install it
-LIBLINES=`cat $SKETCH | gawk 'match($0, /^.* http:\/\/librarymanager\/.*#(.*) @ (.*)$/, a) {print a[1]"@"a[2]}'`
+LIBLINES=`cat $SKETCH | perl -n -e 'm/^.* http:\/\/librarymanager\/.*#(.*) @ (.*)$/ && print "${1}\@${2}"'`
 
 if [ -z $LIBLINES ]; then
     echo "Detected dependencies: <none>"
@@ -95,6 +95,6 @@ echo ""
 
 echo "Compiling $SKETCH for $BOARD ..."
 
-arduinocli compile -b $BOARD -o $OUT_DIR/${OUT_FILE}_${BOARD_SHORT}.bin $SKETCH || echo "build *failed*"; exit 1;
+#arduinocli compile -b $BOARD -o $OUT_DIR/${OUT_FILE}_${BOARD_SHORT}.bin $SKETCH || echo "build *failed*"; exit 1;
 
 echo "build *done*"

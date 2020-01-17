@@ -1,3 +1,4 @@
+// http://library manager/all#Foo @ 1.2.3
 #define KONNEKTING_SYSTEM_TYPE_SIMPLE
 #include <KonnektingDevice.h>
 //#include <SerialFlash.h>
