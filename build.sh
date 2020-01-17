@@ -95,6 +95,6 @@ echo ""
 
 echo "Compiling $SKETCH for $BOARD ..."
 
-#arduinocli compile -b $BOARD -o $OUT_DIR/${OUT_FILE}_${BOARD_SHORT}.bin $SKETCH || echo "build *failed*"; exit 1;
+arduinocli compile -b $BOARD -o $OUT_DIR/${OUT_FILE}_${BOARD_SHORT}.bin $SKETCH || echo "build *failed*"; exit 1;
 
 echo "build *done*"
