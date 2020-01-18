@@ -1,3 +1,4 @@
 {
-    "board": "arduino:samd:arduino_zero_native"
+    "board": "arduino:samd:arduino_zero_native",
+    "port": "/dev/ttyACM0"
 }

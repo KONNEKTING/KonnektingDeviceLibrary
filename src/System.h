@@ -14,21 +14,28 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+//#define LOG_SYSTEM 1
 
 // per known device, set the device's best matching system type
 #if defined(ESP8266) || defined(ESP32)
 
-    #warning Using KONNEKTING for ESP8266/ESP32
+    #if defined(LOG_SYSTEM) 
+        #warning Using KONNEKTING for ESP8266/ESP32
+    #endif
     #define KONNEKTING_SYSTEM_TYPE_DEFAULT
 
 #elif defined ARDUINO_ARCH_STM32    
 
-    #warning Using KONNEKTING for STM32
+    #if defined(LOG_SYSTEM) 
+        #warning Using KONNEKTING for STM32
+    #endif
     #define KONNEKTING_SYSTEM_TYPE_DEFAULT
 
 #elif defined ARDUINO_ARCH_SAMD
 
-    #warning Using KONNEKTING for SAMD
+    #if defined(LOG_SYSTEM) 
+        #warning Using KONNEKTING for SAMD
+    #endif
     #define KONNEKTING_SYSTEM_TYPE_DEFAULT
 
 #elif defined __AVR_ATmega32U4__    
@@ -45,7 +52,9 @@
 // per system type, set required stuff
 #if defined KONNEKTING_SYSTEM_TYPE_SIMPLE
 
-    #warning Using KONNEKTING System Type Simple
+    #if defined(LOG_SYSTEM) 
+        #warning Using KONNEKTING System Type Simple
+    #endif
     #define KONNEKTING_NUMBER_OF_ADDRESSES 128
     #define KONNEKTING_NUMBER_OF_ASSOCIATIONS 128
     #define KONNEKTING_NUMBER_OF_COMOBJECTS 128
@@ -63,7 +72,9 @@
 
 #elif defined KONNEKTING_SYSTEM_TYPE_DEFAULT
 
-    #warning Using KONNEKTING System Type Default
+    #if defined(LOG_SYSTEM) 
+        #warning Using KONNEKTING System Type Default
+    #endif
     #define KONNEKTING_NUMBER_OF_ADDRESSES 255
     #define KONNEKTING_NUMBER_OF_ASSOCIATIONS 255
     #define KONNEKTING_NUMBER_OF_COMOBJECTS 255 // one is for prog com obj

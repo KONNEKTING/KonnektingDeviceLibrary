@@ -13,6 +13,13 @@
         "deque": "cpp",
         "unordered_map": "cpp",
         "vector": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "cstddef": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "type_traits": "cpp",
+        "chrono": "cpp",
+        "ratio": "cpp",
+        "ostream": "cpp"
     }
 }
