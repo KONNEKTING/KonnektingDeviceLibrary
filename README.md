@@ -1,4 +1,5 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/72d0332d535e4f199f1870471927aa3d?branch=protocol-changes)](https://app.codacy.com/app/tuxedo0801/KonnektingDeviceLibrary?utm_source=github.com&utm_medium=referral&utm_content=KONNEKTING/KonnektingDeviceLibrary&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/aecc97de6ea249dbbb5e500492636e56)](https://www.codacy.com/gl/konnekting/KonnektingDeviceLibrary/dashboard?utm_source=gitlab.com&amp;utm_medium=referral&amp;utm_content=konnekting/KonnektingDeviceLibrary&amp;utm_campaign=Badge_Grade)
+
 [![Build Status](https://travis-ci.com/KONNEKTING/KonnektingDeviceLibrary.svg?branch=master)](https://travis-ci.com/KONNEKTING/KonnektingDeviceLibrary)
 
 # KONNEKTING Device Library
