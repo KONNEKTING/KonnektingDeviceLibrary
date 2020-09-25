@@ -59,10 +59,10 @@ if [ -z $(which rsync)]; then
   if [ $(id -u) != "0" ]; then
     # not root, need sudo
     sudo apt-get -q -q update
-    sudo apt-get -y -q -q install rsync
+    sudo apt-get -y -q -q install curl rsync
   else 
     apt-get -q -q update
-    apt-get -y -q -q install rsync
+    apt-get -y -q -q install curl rsync
   fi 
   printCheckmark
 fi
