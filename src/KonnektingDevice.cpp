@@ -814,7 +814,7 @@ void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
                 response[3] = __LO(_manufacturerID);
                 response[4] = _deviceID;
                 response[5] = _revisionID;
-                response[6] = SYSTEM_TYPE_DEFAULT;
+                response[6] = KONNEKTING_SYSTEM_TYPE; // current set system type, see System.h for reference
                 fillEmpty(response, 7);
                 break;
             default:
