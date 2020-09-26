@@ -2,3 +2,4 @@
 /docs/
 arduino-cli-build/
 bin/
+.vscode/

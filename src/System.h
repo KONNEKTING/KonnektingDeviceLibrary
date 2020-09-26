@@ -55,6 +55,7 @@
     #if defined(LOG_SYSTEM) 
         #warning Using KONNEKTING System Type Simple
     #endif
+    #define KONNEKTING_SYSTEM_TYPE 0x00
     #define KONNEKTING_NUMBER_OF_ADDRESSES 128
     #define KONNEKTING_NUMBER_OF_ASSOCIATIONS 128
     #define KONNEKTING_NUMBER_OF_COMOBJECTS 128
@@ -75,6 +76,7 @@
     #if defined(LOG_SYSTEM) 
         #warning Using KONNEKTING System Type Default
     #endif
+    #define KONNEKTING_SYSTEM_TYPE 0x01
     #define KONNEKTING_NUMBER_OF_ADDRESSES 255
     #define KONNEKTING_NUMBER_OF_ASSOCIATIONS 255
     #define KONNEKTING_NUMBER_OF_COMOBJECTS 255 // one is for prog com obj
