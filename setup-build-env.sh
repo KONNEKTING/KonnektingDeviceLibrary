@@ -32,10 +32,10 @@ echo
 shopt -s expand_aliases
 
 WORKING_DIR="${CI_PROJECT_DIR:-./arduino-cli-build}"
-#if [ -e $WORKING_DIR ]; then
-#  echo "existing setup in $WORKING_DIR detected. Nothing to install."
-#  exit;
-#fi
+if [ -e $WORKING_DIR ]; then
+  echo "existing setup in $WORKING_DIR detected. Nothing to install."
+  exit;
+fi
 ARDUINO_DIR=$WORKING_DIR/Arduino
 ARDUINO_LIB_DIR=$ARDUINO_DIR/libraries
 ARDUINO_15_DIR=$WORKING_DIR/.arduino15
@@ -49,13 +49,14 @@ PATH="$ARDUINO_CLI_DIR:$PATH"
 echo "-> Using working directory: $WORKING_DIR"
 
 # setup the build environment: 
+#  * install required command line tools like rsync and curl
 #  * install Arduino CLI
 #  * install boards
-#  * install required libs (may be something more than we really need, but this does not hurt)
+#  * install required Arduino libs (may be something more than we really need, but this does not hurt)
 
 # install CURL command to be able to install Arduino CLI
 if [ -z $(which rsync) ] && [ -z $(which curl) ]; then
-  echo -n "-> APT update and install curl+rsync "
+  echo "-> APT update and install curl+rsync "
   if [ $(id -u) != "0" ]; then
     # not root, need sudo
     sudo apt-get -q -q update
@@ -131,10 +132,12 @@ arduinocli core install esp8266:esp8266 --additional-urls "https://arduino.esp82
 echo "-> Installed cores: "
 arduinocli core list
 echo ""
+echo -n "-> Installing cores "; printCheckmark;
 
 echo "-> Installed boards: "
 arduinocli board listall
 echo ""
+echo -n "-> Installing boards "; printCheckmark;
 
 # install libs
 echo "-> Installing libs ..."
@@ -150,5 +153,4 @@ echo "-> List of installed libs: "
 arduinocli lib list
 echo ""
 
-echo -n "-> Setup Arduino Build Environment "
-printCheckmark
+echo -n "-> Setup Arduino Build Environment "; printCheckmark;
