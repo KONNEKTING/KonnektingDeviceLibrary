@@ -285,6 +285,14 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
 
     } else {
         DEBUG_PRINTLN(F("->FACTORY"));
+
+        // ensure the tables are empty and contain reliable content
+        _addressTable.size = 0; // no single GA has been set
+        _addressTable.address = (word *)malloc(0); // and there is no single cell in table reserved for entries
+        _associationTable.size = 0; // no single GA has been assigned
+        _associationTable.gaId = (byte *)malloc(0); // and there is no single cell in table reserved for entries
+        _associationTable.coId = (byte *)malloc(0); // ...
+        
     }
 
     DEBUG_PRINTLN(F("IA: 0x%04x"), _individualAddress);

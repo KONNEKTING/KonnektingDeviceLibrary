@@ -26,6 +26,12 @@ setMemoryReadFunc	KEYWORD2
 setMemoryWriteFunc	KEYWORD2
 setMemoryUpdateFunc	KEYWORD2
 setMemoryCommitFunc	KEYWORD2
+setDataOpenWriteFunc KEYWORD2
+setDataOpenReadFunc KEYWORD2
+setDataWriteFunc KEYWORD2
+setDataReadFunc KEYWORD2
+setDataRemoveFunc KEYWORD2
+setDataCloseFunc KEYWORD2
 init	KEYWORD2
 isActive	KEYWORD2
 isFactorySetting	KEYWORD2
