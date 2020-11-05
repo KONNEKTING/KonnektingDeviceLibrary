@@ -151,7 +151,8 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     DEBUG_PRINTLN(F("clear eeprom *done*"));
     */
 
-    // FIXME when this is called? when doing programming?
+    // This happens if the version IN MEMORY does not fit to the KONNEKTING version the firmware is compiled with. 
+    // In that case, the memory layout will change!
     if (version != KONNEKTING_VERSION) {
         DEBUG_PRINTLN(F("##### setting read-only memory of system table for first time?..."));
         memoryWrite(0x0000, HI__(KONNEKTING_VERSION));
@@ -165,6 +166,10 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
         memoryWrite(0x0008, __LO(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
         memoryWrite(0x0009, HI__(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
         memoryWrite(0x000A, __LO(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
+        memoryCommit();
+
+        // TODO is it required to clear the remaining memory? Obviously the memory layout has changed due to new KONNEKTING version and might be incompatible...
+
         DEBUG_PRINTLN(F("##### setting read-only memory of system table *done*"));
     }
 
@@ -998,7 +1003,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
 
         if (isFactorySetting()) {
             _deviceFlags &= ~DEVICEFLAG_FACTORY_BIT;
-            DEBUG_PRINTLN(F(" set  factory setting bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+            DEBUG_PRINTLN(F(" set factory flag bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
             memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
         }
 
@@ -1026,7 +1031,6 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
             memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
         }
     }
-
     sendMsgAck(ACK, ERR_CODE_OK);
     DEBUG_PRINTLN(F("handleMsgMemoryWrite *done*"));
 }
