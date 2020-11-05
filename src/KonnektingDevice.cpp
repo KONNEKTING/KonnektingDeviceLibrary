@@ -247,23 +247,32 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
 
             int overallMax = 0;
             int currentMax = 0;
-            int currentAddrId = -1;
+            int currentAddrId = 0;
+            bool is1stAddrId = true; // when we start, we need a flag to detect the start to set the first id for addressId comparison 
 
             for (byte i = 0; i < _associationTable.size; i++) {
                 byte addressId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2));
                 byte commObjectId = memoryRead(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE + 1 + (i * 2) + 1);
 
+                if (is1stAddrId) {
+                    currentAddrId = addressId;
+                    is1stAddrId = false;
+                }
+
                 if (currentAddrId == addressId) {
-                    currentMax++;
+                    currentMax++; // increase counter for current GA association count
+
                 } else {  // different GA detected
+                    currentMax = 1; // found different GA association, so we found 1 assoc for this GA so far
+                    currentAddrId = addressId; // remember that we are currently counting for this address
 
-                    // if the last known currentMax is bigger than the overallMax, replace overallMax
-                    if (currentMax > overallMax) {
-                        overallMax = currentMax;
-                    }
+                }
+                //DEBUG_PRINTLN(F("  currentMax=%d"), currentMax);
 
-                    currentMax = 1;             // found different GA association, so we found 1 assoc for this GA so far
-                    currentAddrId = addressId;  // remember that we are currently counting for this address
+                // if the last known currentMax is bigger than the overallMax, replace overallMax
+                if (currentMax > overallMax) {
+                    overallMax = currentMax;
+                    //DEBUG_PRINTLN(F("  new overallMax=%d"), overallMax);
                 }
 
                 // store copy of association table in RAM
