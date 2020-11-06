@@ -45,9 +45,32 @@
 #endif
 #endif
 
-#define EEPROM_DEVICE_FLAGS 2           ///< EEPROM index for device flags
-#define EEPROM_INDIVIDUALADDRESS_HI 16  ///< EEPROM index for IA, high byte
-#define EEPROM_INDIVIDUALADDRESS_LO 17  ///< EEPROM index for IA, low byte
+
+// ---------------------------------------------------------------------------------------------------
+// System Table Memory Layout, see https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#System_Table
+
+// ReadOnly Section:
+// ===================
+#define SYSTEMTABLE_VERSION 0 // 2 bytes
+#define SYSTEMTABLE_DEVICE_FLAGS 2           ///< EEPROM index for device flags
+
+// actual addresses are defined by System.h
+#define SYSTEMTABLE_ADDRESSTABLE_ADDRESS 3 // 2 bytes
+#define SYSTEMTABLE_ASSOCIATIONTABLE_ADDRESS 5 // 2 bytes
+#define SYSTEMTABLE_COMMOBJECTTABLE_ADDRESS 7 // 2 bytes 
+#define SYSTEMTABLE_PARAMETERTABLE_ADDRESS 9 // 2 bytes
+
+#define SYSTEMTABLE_CRC_SYSTEMTABLE 11 // 4 bytes
+#define SYSTEMTABLE_CRC_ADDRESSTABLE 15 // 4 bytes
+#define SYSTEMTABLE_CRC_ASSOCIATIONTABLE 19 // 4 bytes
+#define SYSTEMTABLE_CRC_COMMOBJECTTABLE 23 // 4 bytes
+#define SYSTEMTABLE_CRC_PARAMETERTABLE 27 // 4 bytes
+
+// Read+Write Section:
+// ===================
+#define SYSTEMTABLE_INDIVIDUALADDRESS 48  ///< EEPROM index for IA, high byte, +1 = LO byte
+// ---------------------------------------------------------------------------------------------------
+
 
 #define KONNEKTING_VERSION 0x0000
 #define PROTOCOLVERSION 1
@@ -63,6 +86,7 @@
 #define ERR_CODE_DATA_CRC_FAILED 0x06
 #define ERR_CODE_TIMEOUT 0x07
 #define ERR_CODE_ILLEGAL_STATE 0x08
+#define ERR_CODE_TABLE_CRC_FAILED 0x09
 
 #define SYSTEM_TYPE_SIMPLE 0x00
 #define SYSTEM_TYPE_DEFAULT 0x01
@@ -73,6 +97,8 @@
 #define MSGTYPE_ACK 0x00                     ///< Message Type: ACK 0x00
 #define MSGTYPE_PROPERTY_PAGE_READ 0x01      ///< Message Type: Property Page Read 0x01
 #define MSGTYPE_PROPERTY_PAGE_RESPONSE 0x02  ///< Message Type: Property Page Response 0x02
+
+#define MSGTYPE_CHECKSUM_SET 0x03            ///< Message Type: Checksum Set 0x03
 
 #define MSGTYPE_UNLOAD 0x08                  ///< Message Type: Unload 0x08
 #define MSGTYPE_RESTART 0x09                 ///< Message Type: Restart 0x09
@@ -101,6 +127,12 @@
 #define DEVICEFLAG_CO_BIT 0x20
 #define DEVICEFLAG_PARAM_BIT 0x10
 #define DEVICEFLAG_DATA_BIT 0x08
+
+#define CHECKSUM_ID_SYSTEM_TABLE 0x00
+#define CHECKSUM_ID_ADDRESS_TABLE 0x01
+#define CHECKSUM_ID_ASSOCIATION_TABLE 0x02
+#define CHECKSUM_ID_COMMOBJECT_TABLE 0x03
+#define CHECKSUM_ID_PARAMETER_TABLE 0x04
 
 #define WAIT_FOR_ACK_TIMEOUT 5000
 
@@ -284,6 +316,8 @@ class KonnektingDevice {
 
     bool _progState;
 
+    bool checkTableCRC(byte crcId);
+
     KnxComObject createProgComObject();
 
     void internalInit(HardwareSerial &serial, word manufacturerID, byte deviceID, byte revisionID);
@@ -300,6 +334,8 @@ class KonnektingDevice {
 
     void handleMsgUnload(byte *msg);
     void handleMsgRestart(byte *msg);
+
+    void handleMsgChecksumSet(byte *msg);
     
     void handleMsgProgrammingModeWrite(byte *msg);
     void handleMsgProgrammingModeRead(byte *msg);

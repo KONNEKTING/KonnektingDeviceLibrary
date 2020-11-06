@@ -531,7 +531,7 @@ boolean KnxTpUart::getMonitoringData(MonitorData& data) {
  * @return true if assigned & active, false if not
  */
 boolean KnxTpUart::isAddressAssigned(word addr) {
-    long start = micros();
+    //long start = micros();
     //DEBUG_PRINTLN(F("isAddressAssigned: Searching for 0x%04x"), addr);
 
     // clean up old findings
@@ -550,6 +550,7 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
 
     // search for adressid in address table
     AddressTable addressTable = Konnekting._addressTable;
+
     byte l = 0;                                    // left end of array
     byte r = addressTable.size - 1;  // right end of array
     boolean addressFound = false;                  // true if address found in address table
