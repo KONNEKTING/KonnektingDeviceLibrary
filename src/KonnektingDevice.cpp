@@ -47,7 +47,9 @@
  */
 
 #define DEBUG_PROTOCOL
+
 #define WRITEMEM
+
 // reboot feature via progbutton
 //#define REBOOT_BUTTON
 
@@ -124,6 +126,7 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     _manufacturerID = manufacturerID;
     _deviceID = deviceID;
     _revisionID = revisionID;
+    
 #ifdef REBOOT_BUTTON
     _lastProgbtn = 0;
     _progbtnCount = 0;
@@ -132,13 +135,13 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     setProgState(false);
 
     // hardcoded stuff
-    DEBUG_PRINTLN(F("Manufacturer: 0x%02x Device: 0x%02x Revision: 0x%02x"), _manufacturerID, _deviceID, _revisionID);
+    DEBUG_PRINTLN(F("Manufacturer: 0x%04X Device: 0x%02X Revision: 0x%02X SystemType=0x%02X"), _manufacturerID, _deviceID, _revisionID, KONNEKTING_SYSTEM_TYPE);
 
-    _individualAddress = P_ADDR(1, 1, 254);
+    _individualAddress = P_ADDR(1, 1, 254); // default IA is none is set
 
     // force read-only memory
-    byte versionHi = memoryRead(0x0000);
-    byte versionLo = memoryRead(0x0001);
+    byte versionHi = memoryRead(SYSTEMTABLE_VERSION + 0);
+    byte versionLo = memoryRead(SYSTEMTABLE_VERSION + 1);
     word version = __WORD(versionHi, versionLo);
 
     DEBUG_PRINTLN(F("version: 0x%04X expected: 0x%04X"), version, KONNEKTING_VERSION);
@@ -151,31 +154,58 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
     DEBUG_PRINTLN(F("clear eeprom *done*"));
     */
 
-    // This happens if the version IN MEMORY does not fit to the KONNEKTING version the firmware is compiled with. 
-    // In that case, the memory layout will change!
+    // if version from memory does not match this sketch, force to update/set read-only part of system table
     if (version != KONNEKTING_VERSION) {
-        DEBUG_PRINTLN(F("##### setting read-only memory of system table for first time?..."));
-        memoryWrite(0x0000, HI__(KONNEKTING_VERSION));
-        memoryWrite(0x0001, __LO(KONNEKTING_VERSION));
-        memoryWrite(0x0002, 0xff);  // device flags
-        memoryWrite(0x0003, HI__(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE));
-        memoryWrite(0x0004, __LO(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE));
-        memoryWrite(0x0005, HI__(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
-        memoryWrite(0x0006, __LO(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
-        memoryWrite(0x0007, HI__(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
-        memoryWrite(0x0008, __LO(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
-        memoryWrite(0x0009, HI__(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
-        memoryWrite(0x000A, __LO(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
-        memoryCommit();
-
-        // TODO is it required to clear the remaining memory? Obviously the memory layout has changed due to new KONNEKTING version and might be incompatible...
-
+        DEBUG_PRINTLN(F("##### setting read-only memory of system table due to version mismatch..."));
+        memoryWrite(SYSTEMTABLE_VERSION + 0,                  HI__(KONNEKTING_VERSION));
+        memoryWrite(SYSTEMTABLE_VERSION + 1,                  __LO(KONNEKTING_VERSION));
+        memoryWrite(SYSTEMTABLE_DEVICE_FLAGS,                 0xFF); // device flags
+        memoryWrite(SYSTEMTABLE_ADDRESSTABLE_ADDRESS + 0,     HI__(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE));
+        memoryWrite(SYSTEMTABLE_ADDRESSTABLE_ADDRESS + 1,     __LO(KONNEKTING_MEMORYADDRESS_ADDRESSTABLE));
+        memoryWrite(SYSTEMTABLE_ASSOCIATIONTABLE_ADDRESS + 0, HI__(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
+        memoryWrite(SYSTEMTABLE_ASSOCIATIONTABLE_ADDRESS + 1, __LO(KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE));
+        memoryWrite(SYSTEMTABLE_COMMOBJECTTABLE_ADDRESS + 0,  HI__(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
+        memoryWrite(SYSTEMTABLE_COMMOBJECTTABLE_ADDRESS + 1,  __LO(KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE));
+        memoryWrite(SYSTEMTABLE_PARAMETERTABLE_ADDRESS + 0,   HI__(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
+        memoryWrite(SYSTEMTABLE_PARAMETERTABLE_ADDRESS + 1,   __LO(KONNEKTING_MEMORYADDRESS_PARAMETERTABLE));
         DEBUG_PRINTLN(F("##### setting read-only memory of system table *done*"));
+    }
+
+    // verify CRC of tables
+    bool deviceFlagDirty = false;
+    if (!checkTableCRC(CHECKSUM_ID_SYSTEM_TABLE)) {
+        DEBUG_PRINTLN(F("!!! SystemTable CRC bad."));
+        _deviceFlags |= DEVICEFLAG_IA_BIT; // set bit with "|=", see https://stackoverflow.com/questions/47981/how-do-you-set-clear-and-toggle-a-single-bit
+        deviceFlagDirty = true;
+    }
+    if (!checkTableCRC(CHECKSUM_ID_ADDRESS_TABLE)) {
+        DEBUG_PRINTLN(F("!!! AddressTable CRC bad."));
+        _deviceFlags |= DEVICEFLAG_CO_BIT;
+        deviceFlagDirty = true;
+    }
+    if (!checkTableCRC(CHECKSUM_ID_ASSOCIATION_TABLE)) {
+        DEBUG_PRINTLN(F("!!! AssocTable CRC bad."));
+        _deviceFlags |= DEVICEFLAG_CO_BIT;
+        deviceFlagDirty = true;
+    }
+    if (!checkTableCRC(CHECKSUM_ID_COMMOBJECT_TABLE)) {
+        DEBUG_PRINTLN(F("!!! CommObjTable CRC bad."));
+        _deviceFlags |= DEVICEFLAG_CO_BIT;
+        deviceFlagDirty = true;
+    }
+    if (!checkTableCRC(CHECKSUM_ID_PARAMETER_TABLE)) {
+        DEBUG_PRINTLN(F("!!! ParamTable CRC bad."));
+        _deviceFlags |= DEVICEFLAG_PARAM_BIT;
+        deviceFlagDirty = true;
+    }
+    if (deviceFlagDirty) {
+        DEBUG_PRINTLN(F("update device flag due to CRC issues"));
+        memoryWrite(SYSTEMTABLE_DEVICE_FLAGS, _deviceFlags); 
     }
 
     DEBUG_PRINTLN(F("comobjs in sketch: %d"), Knx.getNumberOfComObjects());
 
-    _deviceFlags = memoryRead(EEPROM_DEVICE_FLAGS);
+    _deviceFlags = memoryRead(SYSTEMTABLE_DEVICE_FLAGS);
     DEBUG_PRINTLN(F("_deviceFlags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
 
     if (!isFactorySetting()) {
@@ -186,8 +216,8 @@ void KonnektingDevice::internalInit(HardwareSerial &serial, word manufacturerID,
 
         if (isIndividualAddressSet()) {
             // PA
-            byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
-            byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
+            byte hiAddr = memoryRead(SYSTEMTABLE_INDIVIDUALADDRESS + 0);
+            byte loAddr = memoryRead(SYSTEMTABLE_INDIVIDUALADDRESS + 1);
             _individualAddress = __WORD(hiAddr, loAddr);
         }
         DEBUG_PRINTLN(F("ia=0x%04x"), _individualAddress);
@@ -674,7 +704,7 @@ void KonnektingDevice::reboot() {
  */
 /**************************************************************************/
 bool KonnektingDevice::internalKnxEvents(byte index) {
-    DEBUG_PRINTLN(F("internalKnxEvents index=%d"), index);
+
     bool consumed = false;
     switch (index) {
         case 255:  // prog com object index 255 has been updated
@@ -682,19 +712,17 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
             byte buffer[14];
             Knx.read(PROGCOMOBJ_INDEX, buffer);
 #ifdef DEBUG_PROTOCOL
-            for (int i = 0; i < 14; i++) {
-                DEBUG_PRINTLN(
-                    F("buffer[%02d]\thex=0x%02x bin=" BYTETOBINARYPATTERN), i,
-                    buffer[i], BYTETOBINARY(buffer[i]));
-            }
+            // for (int i = 0; i < 14; i++) {
+            //     DEBUG_PRINTLN(F("buffer[%02d]\thex=0x%02x bin=" BYTETOBINARYPATTERN), i, buffer[i], BYTETOBINARY(buffer[i]));
+            // }
 #endif
 
             byte protocolversion = buffer[0];
             byte msgType = buffer[1];
 
-            DEBUG_PRINTLN(F("protocolversion=0x%02x"), protocolversion);
+            // DEBUG_PRINTLN(F("protocolversion=0x%02x"), protocolversion);
 
-            DEBUG_PRINTLN(F("msgType=0x%02x"), msgType);
+            // DEBUG_PRINTLN(F("msgType=0x%02x"), msgType);
 
             if (protocolversion != PROTOCOLVERSION) {
                 DEBUG_PRINTLN(F("Unsupported protocol version. Using: %d Got: %d !"), PROTOCOLVERSION, protocolversion);
@@ -702,6 +730,9 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
                 switch (msgType) {
                     case MSGTYPE_ACK:
                         handleMsgAck(buffer);
+                        break;
+                    case MSGTYPE_CHECKSUM_SET:
+                        handleMsgChecksumSet(buffer);
                         break;
                     case MSGTYPE_PROPERTY_PAGE_READ:
                         handleMsgPropertyPageRead(buffer);
@@ -760,10 +791,10 @@ bool KonnektingDevice::internalKnxEvents(byte index) {
 /**************************************************************************/
 /*!
  *  @brief  Sending ACK message back to the bus
- *  @param  errorcode
- *          error code, if any
- *  @param  indexinformation
- *          indexinformation, if error is related to an index
+ *  @param  ackType
+ *          type of acknowledge, see https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Acknowledge_Type
+ *  @param  errorCode
+ *          code that determinates the error, see https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#Error_Code
  *  @return void
  */
 /**************************************************************************/
@@ -799,6 +830,114 @@ void KonnektingDevice::handleMsgAck(byte msg[]) {
     if (type == 0x00) {
         _ackCounter++;
     }
+}
+
+bool KonnektingDevice::checkTableCRC(byte crcId){
+
+    DEBUG_PRINTLN(F("checkTableCRC id=0x%02X"), crcId);
+
+    // memory index at which we start reading bytes to calculate crc value for comparison
+    int crcCheckStartIndex = -1;
+    // number of bytes we need to read from memory
+    int crcCheckLength = -1;
+
+    // memory index at whoch we find the current CRC32 value (4 bytes)
+    int crcIndex = -1;
+    switch(crcId) {
+        case CHECKSUM_ID_SYSTEM_TABLE:
+            crcIndex = SYSTEMTABLE_CRC_SYSTEMTABLE;
+            // only r/w part of system table
+            crcCheckStartIndex = 48; 
+            crcCheckLength = 16; 
+            break;
+        case CHECKSUM_ID_ADDRESS_TABLE:
+            crcIndex = SYSTEMTABLE_CRC_ADDRESSTABLE;
+            crcCheckStartIndex = KONNEKTING_MEMORYADDRESS_ADDRESSTABLE;
+            crcCheckLength = 1 + (KONNEKTING_NUMBER_OF_ADDRESSES * 2); // 2 bytes per address plus 1 byte for size information
+            break;
+        case CHECKSUM_ID_ASSOCIATION_TABLE:
+            crcIndex = SYSTEMTABLE_CRC_ASSOCIATIONTABLE;
+            crcCheckStartIndex = KONNEKTING_MEMORYADDRESS_ASSOCIATIONTABLE;
+            crcCheckLength = 1 + (KONNEKTING_NUMBER_OF_ASSOCIATIONS * 2); // 2 bytes per association plus 1 byte for size information
+            break;
+        case CHECKSUM_ID_COMMOBJECT_TABLE:
+            crcIndex = SYSTEMTABLE_CRC_COMMOBJECTTABLE;
+            crcCheckStartIndex = KONNEKTING_MEMORYADDRESS_COMMOBJECTTABLE;
+            crcCheckLength = 1 + KONNEKTING_NUMBER_OF_COMOBJECTS; // 1 bytes per association plus 1 byte for size information
+            break;
+        case CHECKSUM_ID_PARAMETER_TABLE:
+            crcIndex = SYSTEMTABLE_CRC_PARAMETERTABLE;
+            crcCheckStartIndex = KONNEKTING_MEMORYADDRESS_PARAMETERTABLE;
+            int paramSizeTotal = 0;
+            for(int i=0;i<_numberOfParams;i++) {
+                paramSizeTotal += _paramSizeList[i];
+            }
+            crcCheckLength = paramSizeTotal; // 1 bytes per association plus 1 byte for size information
+            break;
+    }
+
+    // read CRC32 from system table
+    byte crc0 = memoryRead(crcIndex + 0);
+    byte crc1 = memoryRead(crcIndex + 1);
+    byte crc2 = memoryRead(crcIndex + 2);
+    byte crc3 = memoryRead(crcIndex + 3);
+    unsigned long crcValue = __DWORD(crc0, crc1, crc2, crc3);
+
+    DEBUG_PRINTLN(F(" crc=0x%04X startIndex=0x%04x length=%d"), crcValue, crcCheckStartIndex, crcCheckLength);
+    CRC32 crcMemory;
+    crcMemory.reset();
+    for (int i=crcCheckStartIndex; i<crcCheckStartIndex+crcCheckLength; i++) {
+        uint8_t b = memoryRead(i);
+        crcMemory.update(b);
+    }
+    unsigned long crcMemoryValue = crcMemory.finalize();
+
+    if (crcMemoryValue != crcValue) {
+        DEBUG_PRINTLN(F("crc check failed. expected=0x%04X is=0x%04X"), crcValue, crcMemoryValue);
+        return false;
+    } else {
+        DEBUG_PRINTLN(F("crc checksum SUCCESS"));
+        return true;
+    }
+}
+
+
+void KonnektingDevice::handleMsgChecksumSet(byte msg[]) {
+    byte crcId = msg[2];
+    unsigned long crcValue = __DWORD(msg[3], msg[4], msg[5], msg[6]);
+    DEBUG_PRINTLN(F("handleMsgChecksumSet crcId=0x%02x crc32=%lu/0x%04X"), crcId, crcValue, crcValue);
+
+
+    // for startindex spec, see https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#System_Table
+    int crcIndex = -1;
+    switch(crcId) {
+        case CHECKSUM_ID_SYSTEM_TABLE:        
+        crcIndex = SYSTEMTABLE_CRC_SYSTEMTABLE;
+        break;
+        case CHECKSUM_ID_ADDRESS_TABLE:
+        crcIndex = SYSTEMTABLE_CRC_ADDRESSTABLE;
+        break;
+        case CHECKSUM_ID_ASSOCIATION_TABLE:
+        crcIndex = SYSTEMTABLE_CRC_ASSOCIATIONTABLE;
+        break;
+        case CHECKSUM_ID_COMMOBJECT_TABLE:
+        crcIndex = SYSTEMTABLE_CRC_COMMOBJECTTABLE;
+        break;
+        case CHECKSUM_ID_PARAMETER_TABLE:
+        crcIndex = SYSTEMTABLE_CRC_PARAMETERTABLE;
+        break;
+    }
+
+    // store CRC in system table
+    memoryWrite(crcIndex + 0, msg[3]);
+    memoryWrite(crcIndex + 1, msg[4]);
+    memoryWrite(crcIndex + 2, msg[5]);
+    memoryWrite(crcIndex + 3, msg[6]);
+
+    if (!checkTableCRC(crcId)) {
+        sendMsgAck(NACK, ERR_CODE_TABLE_CRC_FAILED);    
+    } else
+    sendMsgAck(ACK, ERR_CODE_OK);
 }
 
 void KonnektingDevice::handleMsgPropertyPageRead(byte msg[]) {
@@ -882,8 +1021,8 @@ void KonnektingDevice::handleMsgUnload(byte msg[]) {
         if (msg[3] == 0xFF) {
             DEBUG_PRINTLN(F(" IA"));
             newDeviceFlags |= DEVICEFLAG_IA_BIT;
-            memoryWrite(EEPROM_INDIVIDUALADDRESS_HI, 0xFF);
-            memoryWrite(EEPROM_INDIVIDUALADDRESS_LO, 0xFF);
+            memoryWrite(SYSTEMTABLE_INDIVIDUALADDRESS + 0, 0xFF);
+            memoryWrite(SYSTEMTABLE_INDIVIDUALADDRESS + 1, 0xFF);
         }
         if (msg[4] == 0xFF) {
             DEBUG_PRINTLN(F(" CO"));
@@ -922,7 +1061,7 @@ void KonnektingDevice::handleMsgUnload(byte msg[]) {
     DEBUG_PRINTLN(F(" unloaded. new device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(newDeviceFlags));
     sendMsgAck(ACK, ERR_CODE_OK);
     _deviceFlags = newDeviceFlags;
-    memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+    memoryWrite(SYSTEMTABLE_DEVICE_FLAGS, _deviceFlags);
     DEBUG_PRINTLN(F("handleMsgUnload *done*"));
     reboot();
 }
@@ -1011,8 +1150,8 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
         if (startAddr >= 16 && startAddr < 32) {
             // FIXME introduce extra method for this? Is this called anywhere else as well?
             DEBUG_PRINTLN(F(" reload system table data due to change"));
-            byte hiAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_HI);
-            byte loAddr = memoryRead(EEPROM_INDIVIDUALADDRESS_LO);
+            byte hiAddr = memoryRead(SYSTEMTABLE_INDIVIDUALADDRESS + 0);
+            byte loAddr = memoryRead(SYSTEMTABLE_INDIVIDUALADDRESS + 1);
             _individualAddress = __WORD(hiAddr, loAddr);        
         }
 
@@ -1020,16 +1159,16 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
 
         if (isFactorySetting()) {
             _deviceFlags &= ~DEVICEFLAG_FACTORY_BIT;
-            DEBUG_PRINTLN(F(" set factory flag bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+            DEBUG_PRINTLN(F(" set  factory setting bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
+            memoryWrite(SYSTEMTABLE_DEVICE_FLAGS, _deviceFlags);
         }
 
         // check if IA has been touched AND IA bit is still on factory
-        if ((startAddr == EEPROM_INDIVIDUALADDRESS_HI || startAddr == EEPROM_INDIVIDUALADDRESS_LO)
+        if ((startAddr == SYSTEMTABLE_INDIVIDUALADDRESS + 0 || startAddr == SYSTEMTABLE_INDIVIDUALADDRESS + 1)
         && ((_deviceFlags & DEVICEFLAG_IA_BIT) == DEVICEFLAG_IA_BIT) ) {
             _deviceFlags &= ~DEVICEFLAG_IA_BIT;
             DEBUG_PRINTLN(F(" set IA bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+            memoryWrite(SYSTEMTABLE_DEVICE_FLAGS, _deviceFlags);
         }
 
         // check if COs have been touched (memoryaddress within Address, Assoc or CO table)) AND CO bit is still on factory
@@ -1037,7 +1176,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
         && ((_deviceFlags & DEVICEFLAG_CO_BIT) == DEVICEFLAG_CO_BIT) ) {
             _deviceFlags &= ~DEVICEFLAG_CO_BIT;
             DEBUG_PRINTLN(F(" set CO bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+            memoryWrite(SYSTEMTABLE_DEVICE_FLAGS, _deviceFlags);
         }
 
         // check if params have been touched AND params bit is still on factory
@@ -1045,7 +1184,7 @@ void KonnektingDevice::handleMsgMemoryWrite(byte msg[]) {
         && ((_deviceFlags & DEVICEFLAG_PARAM_BIT) == DEVICEFLAG_PARAM_BIT) ) {
             _deviceFlags &= ~DEVICEFLAG_PARAM_BIT;
             DEBUG_PRINTLN(F(" set Params bit to 0 in device flags: (bin)" BYTETOBINARYPATTERN), BYTETOBINARY(_deviceFlags));
-            memoryWrite(EEPROM_DEVICE_FLAGS, _deviceFlags);
+            memoryWrite(SYSTEMTABLE_DEVICE_FLAGS, _deviceFlags);
         }
     }
     sendMsgAck(ACK, ERR_CODE_OK);
@@ -1138,7 +1277,7 @@ void KonnektingDevice::handleMsgDataWriteFinish(byte msg[]) {
         unsigned long otherCrc32 = __DWORD(msg[2], msg[3], msg[4], msg[5]);
         unsigned long thisCrc32 = _crc32.finalize();
 
-        DEBUG_PRINTLN(F(" using fctptr thiscrc32=%ld othercrc32=%ld"), thisCrc32, otherCrc32);
+        DEBUG_PRINTLN(F(" using fctptr thiscrc32=%lu othercrc32=%lu"), thisCrc32, otherCrc32);
         if (thisCrc32 == otherCrc32) {
             bool result = _dataCloseFunc();
             if (result) {
