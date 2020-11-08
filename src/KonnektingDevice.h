@@ -155,16 +155,29 @@
 #define PARAM_RAW11 11
 #define PARAM_STRING11 11
 
-inline byte HI__(word w) { return (byte)((w >> 8) & 0xff); }
-inline byte __LO(word w) { return (byte)((w >> 0) & 0xff); }
+inline byte HI__(word w) { return (byte)((w >> 8) & 0xFF); }
+inline byte __LO(word w) { return (byte)((w >> 0) & 0xFF); }
 
-inline byte BB______(unsigned long dw) { return (byte)((dw >> 24) & 0xff); }
-inline byte __BB____(unsigned long dw) { return (byte)((dw >> 16) & 0xff); }
-inline byte ____BB__(unsigned long dw) { return (byte)((dw >> 8) & 0xff); }
-inline byte ______BB(unsigned long dw) { return (byte)((dw >> 0) & 0xff); }
+inline byte BB______(unsigned long dw) { return (byte)((dw >> 24) & 0xFF); }
+inline byte __BB____(unsigned long dw) { return (byte)((dw >> 16) & 0xFF); }
+inline byte ____BB__(unsigned long dw) { return (byte)((dw >> 8) & 0xFF); }
+inline byte ______BB(unsigned long dw) { return (byte)((dw >> 0) & 0xFF); }
 
-inline word __WORD(byte hi, byte lo) { return (word)((hi << 8) + (lo << 0)); }
-inline unsigned long __DWORD(byte b0, byte b1, byte b2, byte b3) { return (unsigned long)((b0 << 24) + (b1 << 16) + (b2 << 8) + (b3 << 0)); }
+inline word __WORD(byte hi, byte lo) { 
+    return (word)(
+        ((word)hi << 8) + 
+        ((word)lo << 0) 
+    ); 
+}
+
+inline unsigned long __DWORD(byte b0, byte b1, byte b2, byte b3) { 
+    return (unsigned long)(
+        ((unsigned long)b0 << 24) + 
+        ((unsigned long)b1 << 16) + 
+        ((unsigned long)b2 << 8) + 
+        ((unsigned long)b3 << 0)
+    ); 
+}
 
 // process intercepted knxEvents-calls with this method
 extern void konnektingKnxEvents(byte index);

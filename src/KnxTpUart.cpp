@@ -542,8 +542,8 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
         return true;
     }
 
-    // in case of empty list, we return immediately
-    if (!_assignedComObjectsNb) return false;
+    // in case of empty COM-Flagged ComObj list or empty association list, we return immediately
+    if (!_assignedComObjectsNb || associationTable.size == 0) return false;
 
     // search for adressid in address table
     AddressTable addressTable = Konnekting._addressTable;
