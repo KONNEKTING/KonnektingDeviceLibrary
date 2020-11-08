@@ -542,12 +542,14 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
         return true;
     }
 
-    // in case of empty COM-Flagged ComObj list or empty association list, we return immediately
-    if (!_assignedComObjectsNb || associationTable.size == 0) return false;
+    // get address and association table from konnekting
+    AddressTable addressTable = Konnekting._addressTable;
+    AssociationTable associationTable = Konnekting._associationTable;
+
+    // in case of empty COM-Flagged ComObj list or empty association or address list, we return immediately
+    if (!_assignedComObjectsNb || addressTable.size == 0 || associationTable.size == 0) return false;
 
     // search for adressid in address table
-    AddressTable addressTable = Konnekting._addressTable;
-
     byte l = 0;                                    // left end of array
     byte r = addressTable.size - 1;  // right end of array
     boolean addressFound = false;    // true if address found in address table
@@ -579,11 +581,10 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
         //        DEBUG_PRINTLN(F("  0x%04x has id #%d"), addr, addressId);
     }
 
-    // get the assoc table from konnkting. We handle them as two arrays
+    // We handle the assoc table from konnkting as two arrays
     // to make search for GA easier, as we can search in an
     // AddressId-Array-Only for the matching index and can use the ComObj
     // array to get the ComObjID based on the found index
-    AssociationTable associationTable = Konnekting._associationTable;
 
     // inspired by https://www.geeksforgeeks.org/binary-search/
     l = 0;                          // left end of array
