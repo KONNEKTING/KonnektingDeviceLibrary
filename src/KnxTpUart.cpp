@@ -616,7 +616,7 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
     byte listIndex = 0;
 
     if (addressIdFound) {
-        //        DEBUG_PRINTLN(F("  addrID=%d found on assoc table index %d"), addressId, addressIdOnIndex);
+                // DEBUG_PRINTLN(F("  addrID=%d found on assoc table index %d"), addressId, addressIdOnIndex);
 
         // add first occurence
         _addressedComObjects.list[listIndex] = associationTable.coId[addressIdOnIndex];
@@ -626,27 +626,31 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
         // search backwards until other address gets visible
         byte i = addressIdOnIndex - 1;
 
-        if (i > 0) {
+        if (i >= 0) {
             while (associationTable.gaId[i] == addressId) {
                 //                DEBUG_PRINTLN(F("    found prev index: %d"), i);
 
                 _addressedComObjects.list[listIndex] = associationTable.coId[i];
                 _addressedComObjects.items++;
                 listIndex++;
-
+                
+                if(i == 0)  // stop when bottom of the table is reached, otherwise it will wrap around and search at index 255 even it does not exist
+                    break;
                 i--;
             }
         }
 
         // search forward until other address gets visible
         i = addressIdOnIndex + 1;
-        if (i < associationTable.size - 1) {
+        if (i <= associationTable.size - 1) {
             while (associationTable.gaId[i] == addressId) {
                 //                DEBUG_PRINTLN(F("    found next index: %d"), i);
                 _addressedComObjects.list[listIndex] = associationTable.coId[i];
                 _addressedComObjects.items++;
                 listIndex++;
 
+                if(i == associationTable.size - 1)  // stop when top of the table is reached
+                    break;
                 i++;
             }
         }
