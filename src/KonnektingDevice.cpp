@@ -883,7 +883,7 @@ bool KonnektingDevice::checkTableCRC(byte crcId){
     byte crc3 = memoryRead(crcIndex + 3);
     unsigned long crcValue = __DWORD(crc0, crc1, crc2, crc3);
 
-    DEBUG_PRINTLN(F(" crc=0x%04X startIndex=0x%04x length=%d"), crcValue, crcCheckStartIndex, crcCheckLength);
+    DEBUG_PRINTLN(F(" crc=0x%08X startIndex=0x%04x length=%d"), crcValue, crcCheckStartIndex, crcCheckLength);
     CRC32 crcMemory;
     crcMemory.reset();
     for (int i=crcCheckStartIndex; i<crcCheckStartIndex+crcCheckLength; i++) {
@@ -893,7 +893,7 @@ bool KonnektingDevice::checkTableCRC(byte crcId){
     unsigned long crcMemoryValue = crcMemory.finalize();
 
     if (crcMemoryValue != crcValue) {
-        DEBUG_PRINTLN(F("crc check failed. expected=0x%04X is=0x%04X"), crcValue, crcMemoryValue);
+        DEBUG_PRINTLN(F("crc check failed. expected=0x%08X is=0x%08X"), crcValue, crcMemoryValue);
         return false;
     } else {
         DEBUG_PRINTLN(F("crc checksum SUCCESS"));
@@ -905,7 +905,7 @@ bool KonnektingDevice::checkTableCRC(byte crcId){
 void KonnektingDevice::handleMsgChecksumSet(byte msg[]) {
     byte crcId = msg[2];
     unsigned long crcValue = __DWORD(msg[3], msg[4], msg[5], msg[6]);
-    DEBUG_PRINTLN(F("handleMsgChecksumSet crcId=0x%02x crc32=%lu/0x%04X"), crcId, crcValue, crcValue);
+    DEBUG_PRINTLN(F("handleMsgChecksumSet crcId=0x%02x crc32=%lu/0x%08X"), crcId, crcValue, crcValue);
 
 
     // for startindex spec, see https://wiki.konnekting.de/index.php/KONNEKTING_Protocol_Specification_0x01#System_Table
