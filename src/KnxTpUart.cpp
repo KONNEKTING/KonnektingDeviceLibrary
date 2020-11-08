@@ -615,7 +615,7 @@ boolean KnxTpUart::isAddressAssigned(word addr) {
     byte listIndex = 0;
 
     if (addressIdFound) {
-                DEBUG_PRINTLN(F("  addrID=%d found on assoc table index %d"), addressId, addressIdOnIndex);
+                // DEBUG_PRINTLN(F("  addrID=%d found on assoc table index %d"), addressId, addressIdOnIndex);
 
         // add first occurence
         _addressedComObjects.list[listIndex] = associationTable.coId[addressIdOnIndex];
