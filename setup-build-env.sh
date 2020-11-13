@@ -32,21 +32,25 @@ echo
 shopt -s expand_aliases
 
 WORKING_DIR="${CI_PROJECT_DIR:-./arduino-cli-build}"
-if [ -e $WORKING_DIR ]; then
-  echo "existing setup in $WORKING_DIR detected. Nothing to install."
-  exit;
-fi
+
+echo "-> WORKING_DIR   : $WORKING_DIR"
+
 ARDUINO_DIR=$WORKING_DIR/Arduino
 ARDUINO_LIB_DIR=$ARDUINO_DIR/libraries
 ARDUINO_15_DIR=$WORKING_DIR/.arduino15
 ARDUINO_CLI_DIR=$WORKING_DIR/arduino-cli
 PATH="$ARDUINO_CLI_DIR:$PATH"
 
+if [ -e $ARDUINO_CLI_DIR ]; then
+  echo "existing setup in $ARDUINO_CLI_DIR detected. Nothing to install."
+  exit;
+fi
+
 #echo -n "-> Cleanup old stuff "
 #rm -Rf $WORKING_DIR
 #printCheckmark
 
-echo "-> Using working directory: $WORKING_DIR"
+
 
 # setup the build environment: 
 #  * install required command line tools like rsync and curl
