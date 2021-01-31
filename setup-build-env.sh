@@ -22,6 +22,13 @@ printCheckmark() {
     echo ""
 }
 
+updateLibrary () {
+    echo -n "-> Copy $PROJECT_DIR to sketchbook libraries ";
+    mkdir -p $ARDUINO_LIB_DIR/MYLIBRARY
+    rsync -avzq --exclude 'Arduino' --exclude 'arduino-cli-build' --exclude 'bin' --exclude '.arduino15' $PROJECT_DIR $ARDUINO_LIB_DIR/MYLIBRARY
+    printCheckmark;
+}
+
 echo "========================================"
 echo "Setup Arduino Build Environment "
 echo "========================================"
@@ -35,6 +42,13 @@ WORKING_DIR="${CI_PROJECT_DIR:-./arduino-cli-build}"
 
 echo "-> WORKING_DIR   : $WORKING_DIR"
 
+PROJECT_DIR=$1
+if [ -z $1 ]; then
+    PROJECT_DIR=".";
+fi
+
+echo "-> PROJECT_DIR   : $PROJECT_DIR"
+
 ARDUINO_DIR=$WORKING_DIR/Arduino
 ARDUINO_LIB_DIR=$ARDUINO_DIR/libraries
 ARDUINO_15_DIR=$WORKING_DIR/.arduino15
@@ -42,7 +56,8 @@ ARDUINO_CLI_DIR=$WORKING_DIR/arduino-cli
 PATH="$ARDUINO_CLI_DIR:$PATH"
 
 if [ -e $ARDUINO_CLI_DIR ]; then
-  echo "existing setup in $ARDUINO_CLI_DIR detected. Nothing to install."
+  echo "existing setup in $ARDUINO_CLI_DIR detected. Just updateing library"
+  updateLibrary;
   exit;
 fi
 
@@ -104,12 +119,7 @@ alias arduinocli="$ARDUINO_CLI_DIR/arduino-cli --config-file $ARDUINO_CLI_DIR/ar
 printCheckmark;
 
 # make our project available as library for Arduino
-if [ ! -z $1 ]; then
-  echo -n "-> Copy $1 to sketchbook libraries "
-  mkdir -p $ARDUINO_LIB_DIR/MYLIBRARY
-  rsync -avzq --exclude 'Arduino' --exclude 'arduino-cli-build' --exclude 'bin' --exclude '.arduino15' $1 $ARDUINO_LIB_DIR/MYLIBRARY
-  printCheckmark;
-fi
+updateLibrary;
 
 # show config
 echo "-> Arduino CLI config dump: "

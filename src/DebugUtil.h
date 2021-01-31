@@ -24,7 +24,7 @@
 #include "stdarg.h"
 #endif
 
-#define DEBUG
+//#define DEBUG // --> This can be forced via arduino-cli build process: --build-property compiler.cpp.extra_flags="-DDEBUG"
 
 #ifdef DEBUG
     #define DEBUG_RAM() Debug.print(F("DEBUG! free ram: %d bytes \n"), Debug.freeRam());

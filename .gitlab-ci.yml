@@ -21,7 +21,7 @@ build DemoSketch:
   script:
     - ./build.sh examples/DemoSketch/DemoSketch.ino arduino:avr:uno
     - ./build.sh examples/DemoSketch/DemoSketch.ino arduino:avr:leonardo
-    - ./build.sh examples/DemoSketch/DemoSketch.ino arduino:samd:mzero_bl
+    - ./build.sh examples/DemoSketch/DemoSketch.ino arduino:samd:mzero_bl 
 
     
 build Communication_test:

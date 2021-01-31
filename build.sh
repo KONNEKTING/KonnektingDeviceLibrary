@@ -51,11 +51,13 @@ fi
 
 WORKING_DIR="${CI_PROJECT_DIR:-./arduino-cli-build}"
 # script argument #1 --> which sketch to compile
-SKETCH=$1
+SKETCH="$1"
+# script argument #2 --> which board to use
 BOARD="${2:-arduino:samd:mzero_bl}"
 BOARD_SHORT=`echo $BOARD | perl -n -e 'm/^.*:(.*)$/ && print $1'`
-# script argument #2 --> which output dir to use
+# script argument #3 --> which output dir to use
 OUT_DIR="${3:-./bin}"
+
 mkdir -p $OUT_DIR
 OUT_FILE=`basename -a -s .ino $SKETCH`
 ARDUINO_DIR=$WORKING_DIR/Arduino
@@ -69,6 +71,7 @@ shopt -s expand_aliases
 
 echo "Sketch: $SKETCH"
 echo "Board: $BOARD"
+echo "Extra: $EXTRA"
 echo "Board short: $BOARD_SHORT"
 echo "Using working directory: $WORKING_DIR"
 echo "Using output directory: $OUT_DIR"
@@ -95,6 +98,10 @@ echo ""
 
 echo "Compiling $SKETCH for $BOARD ..."
 
+# WITHOUT DEBUG
 arduinocli compile -b $BOARD --output-dir $OUT_DIR/${OUT_FILE}_${BOARD_SHORT}.bin $SKETCH || { echo "build *failed*"; exit 1; }
+
+# WITH DEBUG
+# arduinocli compile --build-property compiler.cpp.extra_flags="-DDEBUG" -b $BOARD --output-dir $OUT_DIR/${OUT_FILE}_${BOARD_SHORT}.bin $SKETCH || { echo "build *failed*"; exit 1; }
 
 echo "build *done*"
